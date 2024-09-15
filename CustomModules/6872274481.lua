@@ -2604,6 +2604,7 @@ run(function()
 	local InfiniteFlyVerticalSpeed = {Value = 40}
 	local InfiniteFlyVertical = {Enabled = true}
 	local InfiniteFlyNotifs = {Enabled = true}
+	local InfiniteFlyLandTime = {Value = 1.1}
 	local InfiniteFlyUp = false
 	local InfiniteFlyDown = false
 	local alternatelist = {"Normal", "AntiCheat A", "AntiCheat B"}
@@ -2806,8 +2807,8 @@ run(function()
 					entityLibrary.character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
 					disabledproper = false
 					if isnetworkowner(oldcloneroot) then
-						if InfiniteFlyNotifs.Enabled then warningNotification("InfiniteFly", "Waiting 1.1s to not flag", 3) end
-						task.delay(1.1, disablefunc)
+						if InfiniteFlyNotifs.Enabled then warningNotification("InfiniteFly", `Waiting {InfiniteFlyLandTime.Value}s to not flag`, 3) end
+						task.delay(InfiniteFlyLandTime.Value, disablefunc)
 					else
 						disablefunc()
 					end
@@ -2845,8 +2846,16 @@ run(function()
 		Function = function() end,
 		Default = true
 	})
+	InfiniteFlyLandTime = InfiniteFly.CreateSlider({
+		Name = "Land time",
+		Min = 0,
+		Max = 5,
+		Default = 1.1,
+		Function = void
+	})
 end)
 
+local vmy = 0
 run(function()
 	local killauraboxes = {}
 	local killauratargetframe = {Players = {Enabled = false}}
@@ -3033,6 +3042,26 @@ run(function()
 		end
 		return sword, swordmeta
 	end
+	
+	local function tweenNum(start, endt, dur, callback)
+	    local et = 0
+	    local deltaValue = endt - start
+	
+	    local function update(delta)
+	        et += delta
+	        local progress = math.clamp(et / dur, 0, 1)
+	        local currentValue = start + (deltaValue * progress)
+	        
+	        callback(currentValue)
+	
+	        if progress >= 1 then
+	            return true
+	        end
+	        return false
+	    end
+    
+    	return update
+	end
 
 	local function autoBlockLoop()
 		if not killauraautoblock.Enabled or not Killaura.Enabled then return end
@@ -3087,6 +3116,42 @@ run(function()
 							oldNearPlayer = killauraNearPlayer
 						end
 					until Killaura.Enabled == false
+				end)
+				
+				task.spawn(function()
+					while Killaura.Enabled do
+						task.wait()
+						if (killauraanimation.Enabled and not killauraswing.Enabled) then
+							if killauraNearPlayer then
+								--pcall(function()
+								task.wait(0.1)
+								local tween = tweenNum(vmy, vmy - 1, 0.1, function(value)
+							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
+							    end)
+									    
+							    while true do
+							        task.wait(0.01)
+							        if tween(0.01) then
+							            break
+							        end
+							    end
+									
+									    
+							    local tween2 = tweenNum(vmy - 1, vmy, 0.1, function(value)
+							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
+						    	end)
+									    
+							    while true do
+							        task.wait(0.01)
+							        if tween2(0.01) then
+							            break
+							        end
+							    end
+								--end)
+								task.wait(math.random(1, 1.5))
+							end
+						end
+					end
 				end)
 
 				oldViewmodelAnimation = bedwars.ViewmodelController.playAnimation
@@ -3208,9 +3273,6 @@ run(function()
 										if not killauraswing.Enabled then
 											bedwars.SwordController:playSwordEffect(swordmeta, false)
 										end
-										if swordmeta.displayName:find(" Scythe") then
-											--bedwars.ScytheController:playLocalAnimation()
-										end
 									end
 								end
 								if (workspace:GetServerTimeNow() - bedwars.SwordController.lastAttack) < 0.02 then
@@ -3266,6 +3328,7 @@ run(function()
 									killauracurrentanim:Cancel()
 								end)
 								if killauraanimationtween.Enabled then
+									bedwars.SwordController:playSwordEffect(swordmeta, false)
 									camera.Viewmodel.RightHand.RightWrist.C0 = originalArmC0
 								else
 									killauracurrentanim = tweenservice:Create(camera.Viewmodel.RightHand.RightWrist, TweenInfo.new(0.1), {C0 = originalArmC0})
@@ -8948,6 +9011,7 @@ run(function()
 					bedwars.ViewmodelController:setHeldItem(lplr.Character and lplr.Character:FindFirstChild("HandInvItem") and lplr.Character.HandInvItem.Value and lplr.Character.HandInvItem.Value:Clone())
 					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_DEPTH_OFFSET", -(viewmodeleditordepth.Value / 10))
 					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_HORIZONTAL_OFFSET", (viewmodeleditorhorizontal.Value / 10))
+					vmy = viewmodeleditorvertical.Value / 10
 					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", (viewmodeleditorvertical.Value / 10))
 					oldc1 = viewmodel.RightHand.RightWrist.C1
 					viewmodel.RightHand.RightWrist.C1 = oldc1 * CFrame.Angles(math.rad(rotationx.Value), math.rad(rotationy.Value), math.rad(rotationz.Value))
@@ -8964,6 +9028,7 @@ run(function()
 					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_HORIZONTAL_OFFSET", 0)
 					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", 0)
 					viewmodel.RightHand.RightWrist.C1 = oldc1
+					vmy = 0
 				end
 			end
 		end,
@@ -9029,6 +9094,7 @@ run(function()
 		Default = -2,
 		Function = function(val)
 			if viewmodeleditor.Enabled then
+				vmy = val / 10
 				lplr.PlayerScripts.TS.controllers.global.viewmodel["viewmodel-controller"]:SetAttribute("ConstantManager_VERTICAL_OFFSET", (val / 10))
 			end
 		end
@@ -9589,7 +9655,6 @@ run(function()
 	staffdetector.ToggleButton(true)
 end)
 
-getgenv().void = function() end
 run(function()
 	local Bypass = {Enabled = false}
 	local zephyr = {Enabled = false}
@@ -9643,7 +9708,7 @@ run(function()
 									direction = lplr.Character.HumanoidRootPart.CFrame.LookVector * 9e9
 								})
 								if entityLibrary.isAlive then
-									if entityLibrary.character.Head.Transparency ~= 0 or (ClientCrasher.Enabled and store.holdingscythe) then
+									if entityLibrary.character.Head.Transparency ~= 0 then
 										store.scythe = tick() + 1
 									end
 								else
