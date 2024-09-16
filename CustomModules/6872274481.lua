@@ -3328,7 +3328,7 @@ run(function()
 									killauracurrentanim:Cancel()
 								end)
 								if killauraanimationtween.Enabled then
-									bedwars.SwordController:playSwordEffect(swordmeta, false)
+									--bedwars.SwordController:playSwordEffect(swordmeta, false)
 									camera.Viewmodel.RightHand.RightWrist.C0 = originalArmC0
 								else
 									killauracurrentanim = tweenservice:Create(camera.Viewmodel.RightHand.RightWrist, TweenInfo.new(0.1), {C0 = originalArmC0})
