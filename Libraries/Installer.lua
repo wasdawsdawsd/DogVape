@@ -14,7 +14,7 @@ local function WriteFiles(link) -- main, libraries, games, assets
     for i,v in API.Get("files") do
         pcall(function() 
             writefile(baseDirectory..gitfiles..v, game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/main"..gitfiles..v, true))
-            task.wait(0.1)
+            task.wait(0.01)
             prog = prog + 1
         end)
     end
@@ -32,6 +32,7 @@ Paragraph:Set("Progress: 0%, Waiting")
 
 local butt
 butt = Tab1:AddButton({"Install", function()
+    butt:Destroy()
     local hm = "Waiting"
     local prog = 0
     task.spawn(function()
@@ -43,13 +44,13 @@ butt = Tab1:AddButton({"Install", function()
 
     WriteFiles("main")
     hm = "Installing main files"
-    for i = 0, 40 do prog = prog + 1 task.wait(0.05) end
+    for i = 0, 40 do prog = prog + 1 task.wait(0.005) end
     hm = "Installing libraries"
     WriteFiles("libraries")
-    for i = 0, 20 do prog = prog + 1 task.wait(0.05) end
+    for i = 0, 20 do prog = prog + 1 task.wait(0.005) end
     hm = "Installing games"
     WriteFiles("games")
-    for i = 0, 10 do prog = prog + 1 task.wait(0.05) end
+    for i = 0, 10 do prog = prog + 1 task.wait(0.005) end
     hm = "Installing assets"
     local assets = {}
     for i,v in game:GetService('HttpService'):JSONDecode(game:HttpGet('https://api.github.com/repos/7GrandDadPGN/VapeV4ForRoblox/contents/assets')) do
@@ -66,14 +67,13 @@ butt = Tab1:AddButton({"Install", function()
     if prog <= 100 then
         for i = 0, 99 - prog do
             prog += 1
-            task.wait(0.09)
+            task.wait(0.009)
         end
     end
     task.wait(0.75)
     hm = "Finished!"
-    butt:Destroy()
-	local butt2 = Tab1:AddButton({"Launch Cat",function()
-		game.CoreGui["redz Library V5"]:Destroy()
-		loadfile("vape/loader.lua")()
-	end})
+    local butt2 = Tab1:AddButton({"Launch Cat",function()
+	game.CoreGui["redz Library V5"]:Destroy()
+	loadfile("vape/loader.lua")()
+    end})
 end})
