@@ -10,7 +10,7 @@ run(function()
     local request
 
     API.New = function(url, method, catvapeurl) -- string, string, boolean
-        local addition = catvapeurl and "https://api-qwertyuis-projects.vercel.app/" or ""
+        local addition = catvapeurl and "https://catvape.vercel.app/" or ""
         
         request = http.request({
             Url = addition..url, -- replace with files/main or whatever files needed
