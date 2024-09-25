@@ -339,12 +339,12 @@ getgenv().isAlive = function(plr)
 	return plr and plr.Character and plr.Character.Parent ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChildWhichIsA('Humanoid') or false
 end
 
-local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()
-run(function()
+local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
 	local olduninject
 	function whitelist:get(plr)
 		local plrstr = self:hash(plr.Name..plr.UserId)
 		for i,v in self.data.WhitelistedUsers do
+			--print(v.hash, plrstr)
 			if v.hash == plrstr then
 				return v.level, v.attackable or whitelist.localprio >= v.level, v.tags
 			end
@@ -520,8 +520,12 @@ run(function()
 			local _, subbed = pcall(function() return game:HttpGet('https://github.com/qwertyui-is-back/Whitelist') end)
 			local commit = subbed:find('spoofed_commit_check')
 			commit = commit and subbed:sub(commit + 21, commit + 60) or nil
+			--print(commit)
 			commit = commit and #commit == 40 and commit or 'main'
-			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/Whitelist/'..commit..'/PlayerWhitelist.json', true)
+			print(commit)
+			--print(subbed)
+			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/Whitelist/main/PlayerWhitelist.json', true)
+			--print(textdata)
 		end)
 		if not whitelistloaded or not sha or not whitelist.get then return true end
 		whitelist.loaded = true
@@ -733,6 +737,7 @@ run(function()
 	end})
 end)
 shared.vapewhitelist = whitelist
+
 
 local RunLoops = {RenderStepTable = {}, StepTable = {}, HeartTable = {}}
 do
@@ -2884,109 +2889,6 @@ run(function()
         Function = function() end,
         Default = true
     })
-end)
-
-
-run(function()
-	local Disguise = {Enabled = false}
-	local DisguiseId = {Value = ""}
-	local DisguiseDescription
-
-	local function Disguisechar(char)
-		task.spawn(function()
-			if not char then return end
-			local hum = char:WaitForChild("Humanoid", 9e9)
-			char:WaitForChild("Head", 9e9)
-			local DisguiseDescription
-			if DisguiseDescription == nil then
-				local suc = false
-				repeat
-					suc = pcall(function()
-						DisguiseDescription = playersService:GetHumanoidDescriptionFromUserId(DisguiseId.Value == "" and 239702688 or tonumber(DisguiseId.Value))
-					end)
-					if suc then break end
-					task.wait(1)
-				until suc or (not Disguise.Enabled)
-			end
-			if (not Disguise.Enabled) then return end
-			local desc = hum:WaitForChild("HumanoidDescription", 2) or {HeightScale = 1, SetEmotes = function() end, SetEquippedEmotes = function() end}
-			DisguiseDescription.HeightScale = desc.HeightScale
-			char.Archivable = true
-			local Disguiseclone = char:Clone()
-			Disguiseclone.Name = "Disguisechar"
-			Disguiseclone.Parent = workspace
-			for i,v in pairs(Disguiseclone:GetChildren()) do
-				if v:IsA("Accessory") or v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") then
-					v:Destroy()
-				end
-			end
-			if not Disguiseclone:FindFirstChildWhichIsA("Humanoid") then
-				Disguiseclone:Destroy()
-				return
-			end
-			Disguiseclone.Humanoid:ApplyDescriptionClientServer(DisguiseDescription)
-			for i,v in pairs(char:GetChildren()) do
-				if (v:IsA("Accessory") and v:GetAttribute("InvItem") == nil and v:GetAttribute("ArmorSlot") == nil) or v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") or v:IsA("Folder") or v:IsA("Model") then
-					v.Parent = game
-				end
-			end
-			char.ChildAdded:Connect(function(v)
-				if ((v:IsA("Accessory") and v:GetAttribute("InvItem") == nil and v:GetAttribute("ArmorSlot") == nil) or v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors")) and v:GetAttribute("Disguise") == nil then
-					repeat task.wait() v.Parent = game until v.Parent == game
-				end
-			end)
-			for i,v in pairs(Disguiseclone:WaitForChild("Animate"):GetChildren()) do
-				v:SetAttribute("Disguise", true)
-				if not char:FindFirstChild("Animate") then return end
-				local real = char.Animate:FindFirstChild(v.Name)
-				if v:IsA("StringValue") and real then
-					real.Parent = game
-					v.Parent = char.Animate
-				end
-			end
-			for i,v in pairs(Disguiseclone:GetChildren()) do
-				v:SetAttribute("Disguise", true)
-				if v:IsA("Accessory") then
-					for i2,v2 in pairs(v:GetDescendants()) do
-						if v2:IsA("Weld") and v2.Part1 then
-							v2.Part1 = char[v2.Part1.Name]
-						end
-					end
-					v.Parent = char
-				elseif v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") then
-					v.Parent = char
-				elseif v.Name == "Head" and char.Head:IsA("MeshPart") then
-					char.Head.MeshId = v.MeshId
-				end
-			end
-			local localface = char:FindFirstChild("face", true)
-			local cloneface = Disguiseclone:FindFirstChild("face", true)
-			if localface and cloneface then localface.Parent = game cloneface.Parent = char.Head end
-			desc:SetEmotes(DisguiseDescription:GetEmotes())
-			desc:SetEquippedEmotes(DisguiseDescription:GetEquippedEmotes())
-			Disguiseclone:Destroy()
-		end)
-	end
-
-	Disguise = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
-		Name = "Disguise",
-		Function = function(callback)
-			if callback then
-				table.insert(Disguise.Connections, lplr.CharacterAdded:Connect(Disguisechar))
-				Disguisechar(lplr.Character)
-			end
-		end
-	})
-	DisguiseId = Disguise.CreateTextBox({
-		Name = "Disguise",
-		TempText = "Disguise User Id",
-		FocusLost = function(enter)
-			if Disguise.Enabled then
-				Disguise.ToggleButton(false)
-				Disguise.ToggleButton(false)
-			end
-		end
-	})
 end)
 
 run(function()
@@ -6662,3 +6564,223 @@ run(function()
 		Function = function(val) end
 	})
 end)
+
+run(function()
+	local Disguise = {Enabled = false}
+	local DisguiseId = {Value = ""}
+	local headless = {Enabled = false}
+	local DisguiseDescription
+
+	local function Disguisechar(char)
+		task.spawn(function()
+			if not char then return end
+			local hum = char:WaitForChild("Humanoid", 9e9)
+			char:WaitForChild("Head", 9e9)
+			local DisguiseDescription
+			if DisguiseDescription == nil then
+				local suc = false
+				repeat
+					suc = pcall(function()
+						DisguiseDescription = playersService:GetHumanoidDescriptionFromUserId(DisguiseId.Value == "" and 239702688 or tonumber(DisguiseId.Value))
+					end)
+					if suc then break end
+					task.wait(1)
+				until suc or (not Disguise.Enabled)
+			end
+			if (not Disguise.Enabled) then return end
+			local desc = hum:WaitForChild("HumanoidDescription", 2) or {HeightScale = 1, SetEmotes = function() end, SetEquippedEmotes = function() end}
+			DisguiseDescription.HeightScale = desc.HeightScale
+			char.Archivable = true
+			local Disguiseclone = char:Clone()
+			Disguiseclone.Name = "Disguisechar"
+			Disguiseclone.Parent = workspace
+			for i,v in pairs(Disguiseclone:GetChildren()) do
+				if v:IsA("Accessory") or v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") then
+					v:Destroy()
+				end
+			end
+			if not Disguiseclone:FindFirstChildWhichIsA("Humanoid") then
+				Disguiseclone:Destroy()
+				return
+			end
+			Disguiseclone.Humanoid:ApplyDescriptionClientServer(DisguiseDescription)
+			for i,v in pairs(char:GetChildren()) do
+				if (v:IsA("Accessory") and v:GetAttribute("InvItem") == nil and v:GetAttribute("ArmorSlot") == nil) or v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") or v:IsA("Folder") or v:IsA("Model") then
+					v.Parent = game
+				end
+			end
+			char.ChildAdded:Connect(function(v)
+				if ((v:IsA("Accessory") and v:GetAttribute("InvItem") == nil and v:GetAttribute("ArmorSlot") == nil) or v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors")) and v:GetAttribute("Disguise") == nil then
+					repeat task.wait() v.Parent = game until v.Parent == game
+				end
+			end)
+			for i,v in pairs(Disguiseclone:WaitForChild("Animate"):GetChildren()) do
+				v:SetAttribute("Disguise", true)
+				if not char:FindFirstChild("Animate") then return end
+				local real = char.Animate:FindFirstChild(v.Name)
+				if v:IsA("StringValue") and real then
+					real.Parent = game
+					v.Parent = char.Animate
+				end
+			end
+			for i,v in pairs(Disguiseclone:GetChildren()) do
+				v:SetAttribute("Disguise", true)
+				if v:IsA("Accessory") then
+					for i2,v2 in pairs(v:GetDescendants()) do
+						if v2:IsA("Weld") and v2.Part1 then
+							v2.Part1 = char[v2.Part1.Name]
+						end
+					end
+					v.Parent = char
+				elseif v:IsA("ShirtGraphic") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") then
+					v.Parent = char
+				elseif v.Name == "Head" and char.Head:IsA("MeshPart") then
+					char.Head.MeshId = v.MeshId
+				end
+			end
+			local localface = char:FindFirstChild("face", true)
+			local cloneface = Disguiseclone:FindFirstChild("face", true)
+			if localface and cloneface then localface.Parent = game cloneface.Parent = char.Head end
+			desc:SetEmotes(DisguiseDescription:GetEmotes())
+			desc:SetEquippedEmotes(DisguiseDescription:GetEquippedEmotes())
+			Disguiseclone:Destroy()
+		end)
+	end
+
+	Disguise = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+		Name = "AvatarMods",
+		Function = function(callback)
+			if callback then
+				RunLoops:BindToHeartbeat("avm", function()
+					pcall(function()
+						if lplr.Character ~= nil then
+							if headless.Enabled and lplr.Character.Head ~= nil then
+								lplr.Character.Head.Transparency = 1
+								lplr.Character.Head:FindFirstChild("face").Transparency = 1
+							end
+						end
+					end)
+				end)
+				table.insert(Disguise.Connections, lplr.CharacterAdded:Connect(Disguisechar))
+				Disguisechar(lplr.Character)
+			else
+				RunLoops:UnbindFromHeartbeat("avm")
+				lplr.Character.Head.Transparency = 0
+				lplr.Character.Head:FindFirstChild("face").Transparency = 0
+			end
+		end
+	})
+	headless = Disguise.CreateToggle({
+		Name = "Headless",
+		Function = void
+	})
+	DisguiseId = Disguise.CreateTextBox({
+		Name = "Disguise",
+		TempText = "Disguise User Id",
+		FocusLost = function(enter)
+			if Disguise.Enabled then
+				Disguise.ToggleButton(false)
+				Disguise.ToggleButton(false)
+			end
+		end
+	})
+end)
+
+--[[run(function()
+	local chatbypass = {}
+	local method = {Value = "Partial"}
+
+	local methods = {
+		Font = {
+		    q = "🅠",
+		    w = "🅦",
+		    e = "🅔",
+		    r = "🅡",
+		    t = "🅣",
+		    y = "🅨",
+		    u = "🅤",
+		    i = "🅘",
+		    o = "🅞",
+		    p = "🅟",
+		    a = "🅐",
+		    s = "🅢",
+		    d = "🅓",
+		    f = "🅕",
+		    g = "🅖",
+		    h = "🅗",
+		    j = "🅙",
+		    k = "🅚",
+		    l = "🅛",
+		    z = "🅩",
+		    x = "🅧",
+		    c = "🅒",
+		    v = "🅥",
+		    b = "🅑",
+		    n = "🅝",
+		    m = "🅜"
+		},
+		Partial = {
+			fuck = "f🅤🅒🅚",
+			shit = "shi🅣",
+			shat = "sha🅣",
+			faggot = "fa🅖🅖🅞t",
+			kys = "ky🅢",
+			stfu = "st🅕u",
+			retard = "r🅔t🅐r🅓",
+			ass = "🅐ss",
+			dick = "di🅒🅚",
+			cock = "co🅒🅚",
+			penis = "🅟🅔nis",
+			balls = "b🅐🅛🅛🅢",
+			testicles = "tes🅣🅘🅒🅛es",
+			pussy = "p🅤🅢🅢y",
+			pussies = "pu🅢🅢ies",
+			puss = "pu🅢🅢",
+			nigger = "ni🅖🅖e🅡",
+			negro = "ne🅖r🅞"
+		}
+	}
+	
+	chatbypass = vape.windows.utility.CreateOptionsButton({
+		Name = "ChatBypass",
+		Function = void,
+		ExtraText = function() return method.Value end
+	})
+	local modes = {}
+	for i,v in methods do
+		table.insert(modes, i)
+	end
+	method = chatbypass.CreateDropdown({
+		Name = "Method",
+		List = modes,
+		Function = void
+	})
+
+	local function bypassString(string, meths)
+		local meth = methods[meths]
+		
+		local str = string:lower()
+		
+	end
+	local remote = replicatedStorage.DefaultChatSystemChatEvents:WaitForChild("SayMessageRequest")
+	old = hookmetamethod(game, '__namecall', function(self, ...)
+		local args = {...}
+		print("hey")
+		if not checkcaller() and self == remote and getnamecallmethod() == 'FireServer' and chatbypass.Enabled then
+			print('chatted')
+			print(args[1])
+			local str = args[1]:lower()
+			print(str)
+			for i,v in methods[method.Value] do
+				print(i,v)
+				if str:find(i) then
+					args[1] = string.gsub(str, i, v)
+					print(str, args[1], method.Value)
+				end
+			end
+			print(str)
+			return old(self, unpack(args))
+		end
+		return old(self, ...)
+	end)
+end)]]
