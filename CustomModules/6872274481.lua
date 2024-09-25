@@ -359,9 +359,9 @@ local function getSword()
 		local swordMeta = bedwars.ItemTable[item.itemType].sword
 		if swordMeta then
 			local swordDamage = swordMeta.damage or 0
-			if swordDamage > bestSwordDamage then
+			if swordDamage > bestSwordDamage and item.tool.Name ~= 'guards_spear' then
 				bestSword, bestSwordSlot, bestSwordDamage = item, slot, swordDamage
-			end
+			end			
 		end
 	end
 	return bestSword, bestSwordSlot
@@ -2876,6 +2876,7 @@ run(function()
 	local killauraswing = {Enabled = false}
 	local killaurasync = {Enabled = false}
 	local killaurahandcheck = {Enabled = false}
+	local killaurasworddown = {Enabled = false}
 	local killauraanimation = {Enabled = false}
 	local killauraanimationtween = {Enabled = false}
 	local killauracolor = {Value = 0.44}
@@ -2987,6 +2988,10 @@ run(function()
 			{CFrame = CFrame.new(0.63, -0.7, 0.6) * CFrame.Angles(math.rad(-30), math.rad(55), math.rad(-115)), Time = 0.1},
 			{CFrame = CFrame.new(0.63, -0.7, 0.6) * CFrame.Angles(math.rad(-50), math.rad(70), math.rad(-60)), Time = 0.1},
 			{CFrame = CFrame.new(0.63, -0.7, 0.6) * CFrame.Angles(math.rad(-30), math.rad(70), math.rad(-70)), Time = 0.1}
+		},
+		Smooth = {
+			{CFrame = CFrame.new(0.69, -0.7, 0.1) * CFrame.Angles(math.rad(-65), math.rad(55), math.rad(-51)), Time = 0.1},
+			{CFrame = CFrame.new(0.69, -0.71, 0.6) * CFrame.Angles(math.rad(200), math.rad(60), math.rad(1)), Time = 0.15}
 		},
 		Astral = {
 			{CFrame = CFrame.new(0.7, -0.7, 0.6) * CFrame.Angles(math.rad(-16), math.rad(60), math.rad(-80)), Time = 0.1},
@@ -3121,11 +3126,11 @@ run(function()
 				task.spawn(function()
 					while Killaura.Enabled do
 						task.wait()
-						if (killauraanimation.Enabled and not killauraswing.Enabled) then
+						if (killauraanimation.Enabled and killaurasworddown.Enabled and not killauraswing.Enabled) then
 							if killauraNearPlayer then
 								--pcall(function()
 								task.wait(0.1)
-								local tween = tweenNum(vmy, vmy - 1, 0.1, function(value)
+								local tween = tweenNum(vmy, vmy - 2, 0.06, function(value)
 							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
 							    end)
 									    
@@ -3137,7 +3142,7 @@ run(function()
 							    end
 									
 									    
-							    local tween2 = tweenNum(vmy - 1, vmy, 0.1, function(value)
+							    local tween2 = tweenNum(vmy - 2, vmy, 0.06, function(value)
 							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
 						    	end)
 									    
@@ -3148,7 +3153,9 @@ run(function()
 							        end
 							    end
 								--end)
-								task.wait(math.random(1, 1.5))
+								task.wait(math.random(0.5, 1))
+							else
+								lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", vmy)
 							end
 						end
 					end
@@ -3295,24 +3302,6 @@ run(function()
 										selfPosition = attackValue(selfpos)
 									}
 								})
-								local spear = getItemNear('spear')
-								if spear then
-									switchItem(spear.tool)
-									killaurarealremote:FireServer({
-										weapon = spear.tool,
-										chargedAttack = {chargeRatio = swordmeta.sword.chargedAttack and not swordmeta.sword.chargedAttack.disableOnGrounded and 0.999 or 0},
-										entityInstance = plr.Character,
-										validate = {
-											raycast = {
-												cameraPosition = attackValue(root.Position),
-												cursorDirection = attackValue(CFrame.new(selfpos, root.Position).lookVector)
-											},
-											targetPosition = attackValue(root.Position),
-											selfPosition = attackValue(selfpos)
-										}
-									})
-								end
-								break
 							end
 						end
 					end
@@ -3638,6 +3627,7 @@ run(function()
 		Name = "Custom Animation",
 		Function = function(callback)
 			if killauraanimationtween.Object then killauraanimationtween.Object.Visible = callback end
+			if killaurasworddown.Object then killaurasworddown.Object.Visible = callback end
 		end,
 		HoverText = "Uses a custom animation for swinging"
 	})
@@ -3647,6 +3637,12 @@ run(function()
 		HoverText = "Disable's the in and out ease"
 	})
 	killauraanimationtween.Object.Visible = false
+	killaurasworddown = Killaura.CreateToggle({
+		Name = "Sword Down",
+		Function = void,
+		HoverText = "Makes the sword move down and back up\nLiie in Minecraft"
+	})
+	killaurasworddown.Object.Visible = false
 	killaurasync = Killaura.CreateToggle({
 		Name = "Synced Animation",
 		Function = function() end,
@@ -3803,13 +3799,13 @@ run(function()
 		end,
 		none = function()
 			local vec = entityLibrary.character.HumanoidRootPart.CFrame.lookVector
-			damagetimer = 25.4
+			damagetimer = 25.4 + getSpeed()
 			damagetimertick = tick() + 2.5
 			directionvec = Vector3.new(vec.X, 0, vec.Z).Unit
 			task.spawn(function()
 				if not vape.istoggled('Desync') then
 					task.wait(0.085)
-					damagetimer = 20.5
+					damagetimer = 20.5 + getSpeed()
 				else
 					task.wait(1.9)
 					local ray = workspace:Raycast(entityLibrary.character.HumanoidRootPart.Position, Vector3.new(0, -1000, 0), store.blockRaycast)
@@ -6812,7 +6808,7 @@ run(function()
 				local pot = getItem("heal_splash_potion")
 				if (item or pot) and AutoConsumeDelay <= tick() then
 					if item then
-						bedwars.Client:Get(bedwars.EatRemote):CallServerAsync({
+						bedwars.Client:Get(bedwars.EaRemote):CallServerAsync({
 							item = item.tool
 						})
 						AutoConsumeDelay = tick() + 0.6
@@ -9130,42 +9126,97 @@ run(function()
 		end
 	})
 end)
-
 run(function()
+
 	local bedtp = {}
+
 	local bedtpmethod = {}
+
 	local tween
 	bedtp = vape.windows.utility.CreateOptionsButton({
 		Name = 'BedTP',
 		Function = function(call)
 			if call then
-				if not store.holdingscythe then
-					if not isAlive() then return end
-					bedtp.ToggleButton()
+				bedtp.ToggleButton()
+				if not vape.istoggled('Disabler') then
 					warningNotification('Cat', 'Teleporting to the destination.', 4) 
 					lplr.Character.Humanoid.Health = 0
 					lplr.CharacterAdded:Wait()
 					task.wait(0.2)
 					local bed = getEnemyBed()
-					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 5, 0))})
+					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 10, 0))})
 					tween:Play()
 				else
-					bedtp.ToggleButton()
 					warningNotification('Cat', 'Teleporting to the destination.', 4) 
-					task.wait(0.2)
 					local bed = getEnemyBed()
 					local speed = 1
 					local mag = (lplr.Character.HumanoidRootPart.Position - bed.Bed.Position).magnitude
 					if mag >= 20 then speed = 2 end
-					if mag >= 40 then speed = 4 end
-					if mag >= 60 then speed = 8 end
-					if mag >= 100 then speed = 15 end
-					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(speed, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 5, 0))})
+					if mag >= 40 then speed = 3 end
+					if mag >= 60 then speed = 4 end
+					if mag >= 80 then speed = 7 end
+					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(speed, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 10, 0))})
 					tween:Play()
 				end
-			else
-				if tween then
-					tween:Cancel()
+			end
+		end
+	}) 
+end)
+
+run(function()
+	local playertp = {}
+	local playertpmethod = {}
+	local tween
+	local gettarget = function(dist)
+		local target = nil
+		local targetmag = 9e9
+		for i,v in players:GetPlayers() do
+			if v ~= lplr and isAlive(v) and v.TeamColor ~= lplr.TeamColor then
+				print('found '.. v.Name)
+				local mag = (lplr.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
+				if mag < (dist or math.huge) and targetmag > mag then
+					target = v
+					targetmag = mag
+				else
+					print('womp womp')
+				end
+			end
+		end
+		return target
+	end
+	playertp = vape.windows.utility.CreateOptionsButton({
+		Name = 'PlayerTP',
+		Function = function(call)
+			if call then
+				if not vape.istoggled('Disabler') then
+					playertp.ToggleButton()
+					warningNotification('Cat', 'Teleporting to the destination.', 4) 
+					lplr.Character.Humanoid.Health = 0
+					lplr.CharacterAdded:Wait()
+					task.wait(0.2)
+					local player = gettarget()
+					if player then
+						tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0))})
+						tween:Play()
+					end
+				else
+					playertp.ToggleButton()
+					warningNotification('Cat', 'Teleporting to the destination.', 4) 
+					task.wait(0.2)
+					local player = gettarget()
+					local speed = 1
+					if player then
+						local mag = (lplr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).magnitude
+						if mag >= 20 then speed = 3 end
+						if mag >= 40 then speed = 5 end
+						if mag >= 60 then speed = 7 end
+						if mag >= 80 then speed = 10 end
+						print('yes')
+						tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(speed, Enum.EasingStyle.Linear), {CFrame = (player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0))})
+						tween:Play()
+					else
+						return warningNotification('CatV5', 'Player not found.', 5)
+					end
 				end
 			end
 		end
@@ -9655,7 +9706,7 @@ run(function()
 	staffdetector.ToggleButton(true)
 end)
 
-run(function()
+run(function() -- Credits to stav for letting me use his scythe disabler
 	local Bypass = {Enabled = false}
 	local zephyr = {Enabled = false}
 	local scythe = {Enabled = false}
@@ -9663,6 +9714,14 @@ run(function()
 	local scythebypassspeed = {Value = 50}
 	local scythenokillaura = {Enabled = false}
 	local client = {Enabled = false}
+	local BypassMethod = {{Value = "LookVector + MoveDirection"}}
+	local DelayToggle = {Enabled = false}
+	local MultiplyDirection = {Value = 0.01}
+	local DivideDirection = {Value = 0.01}
+	local DivideVal = {Value = 2}
+	local direction
+	local ScytheTick = {Value = 2}
+	local ScytheDelay = {Value = 0}
 	local nukertick = 0
 	local bticks = 0
 	local Blinking = false
@@ -9689,34 +9748,41 @@ run(function()
 						end
 						if item then
 							if killauraNearPlayer and scythenokillaura.Enabled then
-								store.holdingscythe = false
-								store.scythe = 0
-							else
-								bticks = bticks + 1
-								if entityLibrary.isAlive then
-									if bticks >= scythebypassspeed.Value then
-										sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", false)
-										bticks = 0
-										Blinking = false
-									else
-										sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", true)
-										Blinking = true
-									end
-								end
-								store.holdingscythe = true
-								bedwars.Client:Get("ScytheDash"):SendToServer({
-									direction = lplr.Character.HumanoidRootPart.CFrame.LookVector * 9e9
-								})
-								if entityLibrary.isAlive then
-									if entityLibrary.character.Head.Transparency ~= 0 then
-										store.scythe = tick() + 1
-									end
+								gssv = math.random(5,10)
+							end
+							bticks = bticks + 1
+							if entityLibrary.isAlive then
+								if bticks >= scythebypassspeed.Value then
+									sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", false)
+									bticks = 0
+									Blinking = false
 								else
-									store.scythe = 0
+									sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", true)
+									Blinking = true
 								end
-								if not isnetworkowner(entityLibrary.character.HumanoidRootPart) then
-									store.scythe = 0
+							end
+							store.holdingscythe = true
+							if BypassMethod.Value == "LookVector" then
+                                direction = entityLibrary.character.HumanoidRootPart.CFrame.LookVector
+                            elseif BypassMethod.Value == "MoveDirection" then
+                                direction = entityLibrary.character.Humanoid.MoveDirection
+							elseif BypassMethod.Value == "LookVector + MoveDirection" then
+                                direction = entityLibrary.character.HumanoidRootPart.CFrame.LookVector and entityLibrary.character.Humanoid.MoveDirection / 1
+							end
+							if DivideDirection.Value ~= 0 then
+								bedwars.Client:Get("ScytheDash"):SendToServer({direction = direction / DivideDirection.Value * MultiplyDirection.Value})
+							else
+								bedwars.Client:Get("ScytheDash"):SendToServer({direction = direction * MultiplyDirection.Value})
+							end
+							if entityLibrary.isAlive then
+								if entityLibrary.character.Head.Transparency ~= 0 then
+									store.scythe = tick() + 1
 								end
+							else
+								store.scythe = 0
+							end
+							if not isnetworkowner(entityLibrary.character.HumanoidRootPart) then
+								store.scythe = 0
 							end
 						else
 							store.holdingscythe = false
@@ -9764,7 +9830,7 @@ run(function()
 	scythespeed = Bypass.CreateSlider({
 		Name = "Scythe Speed",
 		Min = 0,
-		Max = 50,
+		Max = 35,
 		Default = 25,
 		Function = void
 	})
@@ -9780,6 +9846,18 @@ run(function()
 		Default = true,
 		Function = void
 	})
+	BypassMethod = Bypass.CreateDropdown({
+        Name = "Scythe Direction Mode",
+        List = {"LookVector", "MoveDirection", "LookVector + MoveDirection"},
+        Function = void
+    })
+	MultiplyDirection = Bypass.CreateSlider({
+        Name = "Scythe Direction Multiplier",
+        Min = 0,
+        Max = 0.01,
+        Default = 0.001,
+        Function = void
+    })
 	zephyr = Bypass.CreateToggle({
 		Name = "Zephyr",
 		Default = true,
