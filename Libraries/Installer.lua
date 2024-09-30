@@ -4,20 +4,28 @@ local baseDirectory = (shared.VapePrivate and "vapeprivate" or shared.catvape an
 local httpservice = cloneref(game.GetService(game, 'HttpService'))
 local API = loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/main/Libraries/API.lua", true))()
 
+local hm = "Waiting"
+local prog = 0
 local function WriteFiles(link) -- main, libraries, games, assets
-    local files = "/"..link
-    local gitfiles = "/"
-    if link ~= "main" then gitfiles = "/"..link.."/" end
-    if link == "games" then gitfiles = "/CustomModules/" end
-    if link == "libraries" then gitfiles = "/Libraries/" end
-    API.New("files"..files,"GET",true)
-    for i,v in API.Get("files") do
-        pcall(function() 
-            writefile(baseDirectory..gitfiles..v, game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/main"..gitfiles..v, true))
-            task.wait(0.01)
-            prog = prog + 1
-        end)
-    end
+	local suc, res = pcall(function()
+	    local files = "/"..link
+	    local gitfiles = "/"
+	    if link ~= "main" then gitfiles = "/"..link.."/" end
+	    if link == "games" then gitfiles = "/CustomModules/" end
+	    if link == "libraries" then gitfiles = "/Libraries/" end
+	    API.New("files"..files,"GET",true)
+	    for i,v in API.Get("files") do
+	        pcall(function() 
+	            writefile(baseDirectory..gitfiles..v, game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/main"..gitfiles..v, true))
+	            task.wait(0.01)
+	            prog = prog + 1
+	        end)
+	    end
+	end)
+	if not suc then
+		hm = "Error Code 0"..math.random(0,999)..": "..res
+		error(res)
+	end
 end
 local Window = lib:MakeWindow({
   Title = "Cat Vape Installer",
@@ -32,9 +40,12 @@ Paragraph:Set("Progress: 0%, Waiting")
 
 local butt
 butt = Tab1:AddButton({"Install", function()
+	makefolder("vape")
+	makefolder("vape/CustomModules")
+	makefolder("vape/assets")
+	makefolder("vape/Libraries")
+	makefolder("vape/Profiles")
     butt:Destroy()
-    local hm = "Waiting"
-    local prog = 0
     task.spawn(function()
         repeat
             task.wait(0.005)
@@ -53,14 +64,14 @@ butt = Tab1:AddButton({"Install", function()
     for i = 0, 10 do prog = prog + 1 task.wait(0.005) end
     hm = "Installing assets"
     local assets = {}
-    for i,v in game:GetService('HttpService'):JSONDecode(game:HttpGet('https://api.github.com/repos/7GrandDadPGN/VapeV4ForRoblox/contents/assets')) do
+    for i,v in game:GetService('HttpService'):JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/assets')) do
         if v.name then
             table.insert(assets, v.name)
         end
     end
     for i,v in assets do
         if not isfile(`vape/assets/{v}`) then
-            writefile('vape/assets/'.. v, game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/assets/'..v))
+            writefile('vape/assets/'.. v, game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/main/assets/'..v))
         end
     end
     WriteFiles("assets")
@@ -70,10 +81,24 @@ butt = Tab1:AddButton({"Install", function()
             task.wait(0.009)
         end
     end
+    local stat = "Finished!"
     task.wait(0.75)
-    hm = "Finished!"
-    local butt2 = Tab1:AddButton({"Launch Cat",function()
-	game.CoreGui["redz Library V5"]:Destroy()
-	loadfile("vape/loader.lua")()
-    end})
+    -- error handler
+    if not isfile("vape/loader.lua") then
+    	stat = "Error Code 0001: Files not downloaded"
+    else
+    	local str1 = readfile("vape/loader.lua")
+    	local str2 = game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/loader.lua")
+    	if str1 ~= str2 then
+    		stat = "Error Code 0002: Files Outdated"
+    	end
+    end
+    -- error handler
+    hm = stat
+    if stat == "Finished!" then
+	    local butt2 = Tab1:AddButton({"Launch Cat",function()
+			game.CoreGui["redz Library V5"]:Destroy()
+			loadfile("vape/loader.lua")()
+	    end})
+	end
 end})
