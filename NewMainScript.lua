@@ -1,4 +1,8 @@
 if getgenv and not getgenv().shared then getgenv().shared = {} end
+if ({identifyexecutor()})[1] == 'Synapse Z' then
+	syn.toast_notification = nil
+	getgenv().syn.toast_notitication = nil
+end
 local directory = shared.vapeprivate and 'vapeprivate/' or shared.catvape and 'catvape/' or 'vape/'
 local errorPopupShown = false
 local setidentity = syn and syn.set_thread_identity or set_thread_identity or setidentity or setthreadidentity or function() end
