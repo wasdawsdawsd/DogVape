@@ -195,8 +195,35 @@ local store = {
     captured = false,
     progress = 0,
     cancrawl = true,
-    caninteract = true
+    caninteract = true,
+    isCaptured = function(plr)
+    	plr = plr or lplr
+    	return plr.TempPlayerStatsModule.Captured.Value
+    end,
+    autowinComps = 0
 }
+
+local function getAllTargets(range, captured)
+	range = range or 9e9
+	captured = captured or false
+	local targets = {}
+	for i,v in players:GetPlayers() do
+		if isAlive(v) and isAlive(lplr) and v ~= lplr then
+			local mag = (lplr.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude
+			if mag <= range then
+				if captured then
+					
+					if not store.isCaptured(v) then
+						table.insert(targets, v)
+					end
+				else
+					table.insert(targets, v)
+				end
+			end
+		end
+	end
+	return targets
+end
 
 local run = runcode
 
@@ -216,16 +243,14 @@ task.spawn(function()
     end
     local survivor = teams.Survivors
     local beast = teams.Beast
-    players.PlayerAdded:Connect(function(p)
+    local connection = players.PlayerAdded:Connect(function(p)
         p.Team = survivor
     end)
     BindToStepped("Update",1,function()
-        if not shared.VapeExecuted then
-            UnbindFromStepped("Update")
-        end
         local status = "spawn"
         if repstorage.GameTimer.Value == 0 or repstorage.GameStatus.Value:lower():find("game over") then
             status = "spawn"
+            store.beast = nil
         end
         if repstorage.GameStatus.Value:lower():find("computers") or repstorage.GameStatus.Value:lower() == "15 sec head start" or repstorage.IsGameActive.Value then
             status = "computers"
@@ -235,6 +260,9 @@ task.spawn(function()
         end
         store.gamebeast = lplr.TempPlayerStatsModule.IsBeast.Value
         store.map = repstorage.CurrentMap.Value
+        if store.map == nil then
+        	store.autowinComps = 0
+        end
         store.computers = repstorage.ComputersLeft.Value
         store.status = status
         store.gamestatus = repstorage.GameStatus.Value
@@ -268,21 +296,77 @@ task.spawn(function()
                 end
             end)
         end
+        if not shared.VapeExecuted then
+        	survivor:Destroy()
+        	beast:Destroy()
+        	connection:Disconnect()
+        	store = nil
+            UnbindFromStepped("Update")
+        end
     end)
+end)
+
+GuiLibrary.RemoveObject("KillauraOptionsButton")
+local Hammeraura = {Enabled = false}
+run(function()
+	local range = {Value = 15}
+	local swing = {Enabled = false}
+	local autorope = {Enabled = true}
+	
+	Hammeraura = vape.windows.blatant.CreateOptionsButton({
+		Name = "Hammeraura",
+		Function = function(callback)
+			if callback then
+				repeat
+					local remote
+					if store.beast == lplr then
+						remote = lplr.Character.Hammer.HammerEvent
+						for i,v in getAllTargets(range.Value) do
+							remote:FireServer("HammerHit", v.Character.Head)
+							if (not swing.Enabled) then
+								remote:FireServer("HammerClick", true)
+							end
+							if autorope.Enabled then
+								remote:FireServer("HammerTieUp", v.Character.Torso, lplr.Character.HumanoidRootPart.Position)
+							end
+						end
+					end
+					task.wait(0.5)
+				until (not Hammeraura.Enabled)
+			end
+		end
+	})
+	range = Hammeraura.CreateSlider({
+		Name = "Range",
+		Max = 30,
+		Min = 1,
+		Default = 30,
+		Function = void
+	})
+	swing = Hammeraura.CreateToggle({
+		Name = "No Swing",
+		Function = void,
+		Default = false,
+		Function = void,
+		HoverText = "Prevent the hammer from swinging"
+	})
 end)
 
 run(function()
     local ZoomUnlocker = {Enabled = false}
 
-    ZoomUnlocker = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+    ZoomUnlocker = vape.windows.render.CreateOptionsButton({
         Name = "ZoomUnlocker",
         Function = function(callback)
             if callback then
                 BindToStepped("zu",1,function()
-                    lplr.CameraMaxZoomDistance = 10
+                    lplr.CameraMaxZoomDistance = 25
+                    lplr.CameraMinZoomDistance = 0.5
                 end)
             else
                 UnbindFromStepped("zu")
+                lplr.CameraMaxZoomDistance = 10
+                lplr.CameraMinZoomDistance = 0.5
             end
         end
     })
@@ -291,7 +375,7 @@ end)
 run(function()
     local AutoHack = {Enabled = false}
 
-    AutoHack = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
+    AutoHack = vape.windows.utility.CreateOptionsButton({
         Name = "AutoMinigame",
         HoverText = "Automatically completes the Hacking Minigame",
         Function = function(callback)
@@ -310,7 +394,7 @@ end)
 local AutoInteract = {Enabled = false}
 run(function()
 
-    AutoInteract = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
+    AutoInteract = vape.windows.utility.CreateOptionsButton({
         Name = "AutoInteract",
         HoverText = "Automatically interact with anything",
         Function = function(callback)
@@ -328,7 +412,7 @@ end)
 run(function()
     local NoSlowdown = {Enabled = false}
 
-    NoSlowdown = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+    NoSlowdown = vape.windows.blatant.CreateOptionsButton({
         Name = "NoSlowdown",
         Function = function(callback)
             if callback then
@@ -353,7 +437,7 @@ run(function()
     local hasNotified = tick()
     notifiedUser = lplr.Name
 
-    BeastNotifier = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
+    BeastNotifier = vape.windows.utility.CreateOptionsButton({
         Name = "BeastNotifier",
         Function = function()
             if callback then
@@ -409,7 +493,7 @@ run(function()
 	end
 
 	local Chams = {Enabled = false}
-	Chams = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Chams = vape.windows.render.CreateOptionsButton({
 		Name = "ComputerESP",
 		Function = function(callback)
 			if callback then
@@ -448,7 +532,7 @@ run(function()
 	end
 
 	local Chams = {Enabled = false}
-	Chams = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Chams = vape.windows.render.CreateOptionsButton({
 		Name = "PodESP",
 		Function = function(callback)
 			if callback then
@@ -486,7 +570,7 @@ run(function()
 	end
 
 	local Chams = {Enabled = false}
-	Chams = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Chams = vape.windows.render.CreateOptionsButton({
 		Name = "ExitESP",
 		Function = function(callback)
 			if callback then
@@ -561,35 +645,46 @@ run(function()
     end
 
     local function getPod()
-        for i,v in pairs(store.map:GetChildren()) do
+        for i,v in pairs(store.map:GetChildren()) do       --print(v)
             if v.Name == "FreezePod" then
                 return v
             end
         end
         return nil
     end
+    
+    local function getAllPods()
+	    local pods = {}
+        for i,v in pairs(store.map:GetChildren()) do       --print(v)
+            if v.Name == "FreezePod" then
+                table.insert(pods, v)
+            end
+        end
+        return pods
+    end
 
-    local function getEmptyPod()
+	local function getEmptyPod()
         for i,v in pairs(store.map:GetChildren()) do
-            if v.Name == "FreezePod" and v.CapturedTorso.Value == nil then
+            if v.Name == "FreezePod" and v.PodTrigger.CapturedTorso.Value == nil then
                 return v
             end
         end
         return nil
     end
 
-    local function isPlayerInPod(pod)
-        local cap = pod.CapturedTorso
+    local function getPlayerInPod(pod)
+        local cap = pod.PodTrigger.CapturedTorso
         if cap.Value ~= nil then
-            return cap
+            return cap.Value
         end
         return nil
     end
-
+    
     local computer = nil
     local exit = nil
     local tweening = false
     local doInteract = false
+    local tween
     local function tweenCF(cf,time,safe)
         safe = safe or false
         local pos = safe and 150 or 0
@@ -598,16 +693,23 @@ run(function()
         time = time or 0
         doInteract = false
         if cf == comp.CFrame then
+        	if store.status == "exits" then
+        		return nil
+        	end
             local mag = (comp.Position - lplr.Character.HumanoidRootPart.Position).magnitude
             if mag <= 12 then
                 time = 0.5
             end
+            if store.autowinComps <= 0 then
+            	time = 0.1
+            end
+            store.autowinComps += 1
         end
         lplr.Character.HumanoidRootPart.CFrame = CFrame.new(lplr.Character.HumanoidRootPart.CFrame.X, cf.Y + pos, lplr.Character.HumanoidRootPart.CFrame.Z)
         lplr.Character.Humanoid.CameraOffset = Vector3.new(0,-pos,0)
         local tweenservice = game:GetService("TweenService")
         local info = TweenInfo.new(time,Enum.EasingStyle.Linear)-- this is cringe i thought linear was the default :sob:
-        local tween = tweenservice:Create(lplr.Character.HumanoidRootPart,info,{CFrame = cf * CFrame.new(0,pos,0)})
+        tween = tweenservice:Create(lplr.Character.HumanoidRootPart,info,{CFrame = cf * CFrame.new(0,pos,0)})
         tween:Play()
         tweening = true
         tween.Completed:Connect(function()
@@ -619,56 +721,57 @@ run(function()
     end
     
     local jumpTick = 0
+    local target
 
-    AutoWin = GuiLibrary.ObjectsThatCanBeSaved.AFKWindow.Api.CreateOptionsButton({
+    AutoWin = vape.windows.afk.CreateOptionsButton({
         Name = "AutoWin",
         Function = function(callback)
             if callback then
                 table.insert(AutoWin.Connections, game:GetService("GuiService").ErrorMessageChanged:Connect(function() -- credits to Infinite Yield
                     if not AutoRejoin.Enabled then return end
-                    shared.Rejoin() -- will there be false rejoins? yes, do i care? no
+                    game:FindService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lplr)
                 end))
-                task.spawn(function()
-                    repeat task.wait(3)
-                        local plrs = players:GetPlayers()
-                        if #plrs <= 2 and AutoServerHop.Enabled and not store.ingame then
-                            shared.ServerHop() -- it works!! (and doesnt crash ur game)
-                            warningNotification("Cat V5", "Server Hopping..",2.85)
-                        end
-                    until (not AutoWin.Enabled)
-                end)
                 BindToStepped("aw",1,function()
                     pcall(function()
                         if AutoInteract.Enabled then AutoInteract.ToggleButton(false) end
                         if not isAlive() then return end
-                        if store.status == "spawn" then
+                        if store.status == "spawn" or store.escaped then
                             lplr.Character.HumanoidRootPart.CFrame = CFrame.new(104,8,-417)
                             jumpTick = 0
                             computer = nil
                             exit = nil
+                            store.autowinComps = 0
                         end
-                        lplr.Character.HumanoidRootPart.Velocity = Vector3.zero
                         local mag = (store.beast.Character.HumanoidRootPart.Position - lplr.Character.HumanoidRootPart.Position).magnitude
-                        if store.gamebeast then
-                            shared.Rejoin()
-                        end
+                        repstorage.RemoteEvent:FireServer("Input", "Action", true)
                         if store.beast ~= lplr then
-                            if store.beast == lplr then mag = 5000 end
-                            if mag <= 25 and not store.escaped and not store.status == "spawn" then
-                                if store.timer == 0 then return end
+                        	lplr.Character.HumanoidRootPart.Velocity = Vector3.zero
+                            --if store.beast == lplr then mag = 5000 end
+                            if mag <= 25 and (not store.escaped and not store.status == "spawn") then
+                                --tween:Cancel()
+                                
                                 lplr.Character.HumanoidRootPart.CFrame *= CFrame.new(0,100,0)
                                 jumpTick = 0
                             else
                                 jumpTick = jumpTick + 1
-                                if doInteract then
-                                    repstorage.RemoteEvent:FireServer("Input", "Action", true)
-                                else
-                                    repstorage.RemoteEvent:FireServer("Input", "Action", false)
+                                local pod = getAllPods()
+                                local cap
+                                for i,v in pod do
+                                	local isThe = getPlayerInPod(v)
+                                	if isThe ~= nil then
+                                		cap = isThe
+                                	end
                                 end
-                                local pod = nil --getPod()
-                                local cap = nil --isPlayerInPod(pod)
-                                if cap ~= nil then
-                                    lplr.Character.HumanoidRootPart.CFrame = cap.Value.CFrame
+                                local mag2 = 500
+                        		if cap ~= nil then
+                               		mag2 = (cap.Position - store.beast.Character.HumanoidRootPart.Position).magnitude
+                               	end
+                                if (cap ~= nil and SaveCaptured.Enabled) and mag2 >= 30 then
+                                    lplr.Character.HumanoidRootPart.CFrame = cap.CFrame * CFrame.new(0,-2,4)
+                                    tween:Cancel()
+                                    tweening = false
+                                    tween = nil
+                                    store.autowinComps = 0
                                 else
                                     if store.status == "computers" then
                                         local pos = lplr.Character.HumanoidRootPart.Position
@@ -697,15 +800,18 @@ run(function()
                                             end
                                         end
                                         if jumpTick > 249 and jumpTick < 256 and FastHack.Enabled then
-                                            lplr.Character.Humanoid.JumpPower = 40
+                                            lplr.Character.Humanoid.JumpPower = 90
                                             lplr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                                         elseif jumpTick > 257 then
                                             jumpTick = 0
                                             lplr.Character.Humanoid.JumpPower = 36
+                                            tweenCF(computer.CFrame, math.random(SpeedValue1.Value,SpeedValue2.Value), false)
                                         end
                                         -- lplr.Character.HumanoidRootPart.CFrame = lplr.Character.HumanoidRootPart.CFrame * CFrame.new(0,computer.ComputerTrigger3.CFrame.Y,0)
                                     elseif store.status == "exits" then
+                                    	local pos = lplr.Character.HumanoidRootPart.Position
                                         jumpTick = 0
+                                        local additionalPos = CFrame.new(0,0,0)
                                         if store.timer == 0 then return end
                                         if store.escaped then return end
                                         if exit == nil or mag <= 15 then
@@ -715,19 +821,28 @@ run(function()
                                             exit = getExit()
                                         end
                                         local partTP = exit.ExitArea
-                                        speed = 5
+                                        additionalPos = CFrame.new(0,10,0)
+                                        speed = 1
                                         if exit.Door.Hinge.Rotation.Y == 0 or exit.Door.Hinge.Rotation.Y == 90 or exit.Door.Hinge.Rotation.Y == 180 or exit.Door.Hinge.Rotation.Y == 270 then
                                             partTP = exit.ExitDoorTrigger
                                             speed = 0.65
+                                            additionalPos = CFrame.new(0,0,0)
                                         end
                                         if exit.Door.Hinge.Rotation.Y == -90 or exit.Door.Hinge.Rotation.Y == -180 or exit.Door.Hinge.Rotation.Y == -270 then
                                             partTP = exit.ExitDoorTrigger
                                             speed = 0.65
+                                            additionalPos = CFrame.new(0,0,0)
                                         end
                                         if mag >= 15 then
-                                            if not tweening then
-                                                tweenCF(partTP.CFrame, speed, false)
-                                            end
+                                        	if not tweening then
+	                                            if pos.X ~= partTP.Position.X or pos.Z ~= partTP.Position.Z then
+	                                            	tweenCF(partTP.CFrame * additionalPos, speed, false)
+	                                            else
+	                                            	if partTP.Name == "ExitArea" then
+	                                            		lplr.Character.HumanoidRootPart.CFrame *= CFrame.new(0,-4,0)
+	                                            	end
+                                            	end
+	                                        end
                                         else
                                             exit = getExit()
                                         end
@@ -735,8 +850,23 @@ run(function()
                                 end
                             end
                         else
-                            if not AutoRejoin.Enabled then return end
-                            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId,lplr)
+                        	lplr.Character.HumanoidRootPart.Velocity = Vector3.zero
+                            if lplr.Character:FindFirstChild("Part") and lplr.Character.Part:FindFirstChild("RopeConstraint") then
+                            	local pod = getEmptyPod()
+                            	lplr.Character.HumanoidRootPart.CFrame = pod.PodTrigger.CFrame
+                            else
+                            	--print("beast")
+                            	target = nil
+                            	for i,v in getAllTargets(300, true) do
+                            		target = v
+                            		--print("targets")
+                            		if target ~= nil then
+                            			--print("go!!!")
+                            			if not Hammeraura.Enabled then Hammeraura.ToggleButton() end
+                            			lplr.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,4)
+                            		end
+                            	end
+                            end
                         end
                     end)
                 end)
@@ -783,13 +913,19 @@ run(function()
         Default = true,
         Function = function()
         end,
-        HoverText = "Automatically rejoin if kicked"
+        HoverText = "Hack Faster"
+    })
+    SaveCaptured = AutoWin.CreateToggle({
+    	Name = "Save captured players",
+    	Default = true,
+    	Function = void,
+    	HoverText = "Save captured players in freeze podd"
     })
 end)
 
 run(function()
 	local Health = {Enabled = false}
-	Health =  GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Health =  vape.windows.render.CreateOptionsButton({
 		Name = "Progress",
 		Function = function(callback)
 			if callback then
@@ -818,121 +954,34 @@ run(function()
 	})
 end)
 
---[[run(function()
-	store.TPString = shared.vapeoverlay or nil
-	local origtpstring = store.TPString
-	local Overlay = GuiLibrary.CreateCustomWindow({
-		Name = "Overlay",
-		Icon = "vape/assets/TargetIcon1.png",
-		IconSize = 16
-	})
-	local overlayframe = Instance.new("Frame")
-	overlayframe.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	overlayframe.Size = UDim2.new(0, 200, 0, 120)
-	overlayframe.Position = UDim2.new(0, 0, 0, 5)
-	overlayframe.Parent = Overlay.GetCustomChildren()
-	local overlayframe2 = Instance.new("Frame")
-	overlayframe2.Size = UDim2.new(1, 0, 0, 10)
-	overlayframe2.Position = UDim2.new(0, 0, 0, -5)
-	overlayframe2.Parent = overlayframe
-	local overlayframe3 = Instance.new("Frame")
-	overlayframe3.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	overlayframe3.Size = UDim2.new(1, 0, 0, 6)
-	overlayframe3.Position = UDim2.new(0, 0, 0, 6)
-	overlayframe3.BorderSizePixel = 0
-	overlayframe3.Parent = overlayframe2
-	local oldguiupdate = GuiLibrary.UpdateUI
-	GuiLibrary.UpdateUI = function(h, s, v, ...)
-		overlayframe2.BackgroundColor3 = Color3.fromHSV(h, s, v)
-		return oldguiupdate(h, s, v, ...)
-	end
-	local framecorner1 = Instance.new("UICorner")
-	framecorner1.CornerRadius = UDim.new(0, 5)
-	framecorner1.Parent = overlayframe
-	local framecorner2 = Instance.new("UICorner")
-	framecorner2.CornerRadius = UDim.new(0, 5)
-	framecorner2.Parent = overlayframe2
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, -7, 1, -5)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.TextYAlignment = Enum.TextYAlignment.Top
-	label.Font = Enum.Font.Arial
-	label.LineHeight = 1.2
-	label.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	label.TextSize = 16
-	label.Text = ""
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.fromRGB(200, 200, 200)
-	label.Position = UDim2.new(0, 7, 0, 5)
-	label.Parent = overlayframe
-	local OverlayFonts = {"Arial"}
-	for i,v in pairs(Enum.Font:GetEnumItems()) do
-		if v.Name ~= "Arial" then
-			table.insert(OverlayFonts, v.Name)
-		end
-	end
-	local OverlayFont = Overlay.CreateDropdown({
-		Name = "Font",
-		List = OverlayFonts,
-		Function = function(val)
-			label.Font = Enum.Font[val]
-		end
-	})
-	OverlayFont.Bypass = true
-	Overlay.Bypass = true
-	local overlayconnections = {}
-	local oldnetworkowner
-	local teleported = {}
-	local teleported2 = {}
-	local teleportedability = {}
-	local teleportconnections = {}
-	local pinglist = {}
-	local fpslist = {}
-	local matchstatechanged = 0
-	local mapname = "Unknown"
-	local overlayenabled = false
-
-	task.spawn(function()
-		pcall(function()
-			mapname = tostring(store.map)
-		end)
-	end)
-
-	local matchstatetick = tick()
-	GuiLibrary.ObjectsThatCanBeSaved.GUIWindow.Api.CreateCustomToggle({
-		Name = "Overlay",
-		Icon = "vape/assets/TargetIcon1.png",
+run(function()
+	local BeastExploit = {Enabled = false}
+	
+	BeastExploit = vape.windows.exploit.CreateOptionsButton({
+		Name = "BeastExploit",
 		Function = function(callback)
-			overlayenabled = callback
-			Overlay.SetVisible(callback)
 			if callback then
-				task.spawn(function()
-					repeat
-						local ping = math.floor(tonumber(game:GetService("Stats"):FindFirstChild("PerformanceStats").Ping:GetValue()))
-						if #pinglist >= 10 then
-							table.remove(pinglist, 1)
+				BindToStepped("beast",1,function()
+					if store.beast == lplr then
+						lplr.CameraMode = "Classic"
+						if not store.cancrawl then
+							lplr.TempPlayerStatsModule.DisableCrawl.Value = false
 						end
-						table.insert(pinglist, ping)
-						task.wait(1)
-						if not store.TPString then
-							store.TPString = tick().."/"..store.statistics.kills.."/"..store.statistics.beds.."/"..(victorysaid and 1 or 0).."/"..(1).."/"..(0).."/"..(0).."/"..(0)
-							origtpstring = store.TPString
+						local t = lplr.Character
+						if t.Hammer.Handle:FindFirstChild("SoundChaseMusic") then
+							t.Hammer.Handle.SoundChaseMusic:Destroy()
 						end
-						local splitted = origtpstring:split("/")
-						label.Text = "Session Info\nTime Played : "..os.date("!%X",math.floor(tick() - splitted[1])).."\nKills : "..(splitted[2] + store.statistics.kills).."\nBeds : "..(splitted[3] + store.statistics.beds).."\nWins : "..(splitted[4] + (victorysaid and 1 or 0)).."\nGames : "..splitted[5].."\nLagbacks : "..(splitted[6] + store.statistics.lagbacks).."\nUniversal Lagbacks : "..(splitted[7] + store.statistics.universalLagbacks).."\nReported : "..(splitted[8] + store.statistics.reported).."\nMap : "..mapname
-						local textsize = textService:GetTextSize(label.Text, label.TextSize, label.Font, Vector2.new(9e9, 9e9))
-						overlayframe.Size = UDim2.new(0, math.max(textsize.X + 19, 200), 0, (textsize.Y * 1.2) + 6)
-						store.TPString = splitted[1].."/"..(splitted[2] + store.statistics.kills).."/"..(splitted[3] + store.statistics.beds).."/"..(splitted[4] + (victorysaid and 1 or 0)).."/"..(splitted[5] + 1).."/"..(splitted[6] + store.statistics.lagbacks).."/"..(splitted[7] + store.statistics.universalLagbacks).."/"..(splitted[8] + store.statistics.reported)
-					until not overlayenabled
+						if t.Hammer.Handle:FindFirstChild("SoundHeartBeat") then
+							t.Hammer.Handle.SoundHeartBeat:Destroy()
+						end
+						if t.Gemstone:FindFirstChild("Handle") then
+							t.Gemstone.Handle:Destroy()
+						end
+					end
 				end)
 			else
-				for i, v in pairs(overlayconnections) do
-					if v.Disconnect then pcall(function() v:Disconnect() end) continue end
-					if v.disconnect then pcall(function() v:disconnect() end) continue end
-				end
-				table.clear(overlayconnections)
+				UnbindFromStepped("beast")
 			end
-		end,
-		Priority = 2
+		end
 	})
-end)]]
+end)
