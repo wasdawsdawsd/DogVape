@@ -1,4 +1,5 @@
 --This watermark is used to delete the file if its cached, remove it to make the file persist after commits.
+-- BALL SUCKER 5000
 repeat task.wait() until game:IsLoaded()
 local GuiLibrary
 local baseDirectory = (shared.VapePrivate and "vapeprivate/" or shared.catvape and 'catvape/' or "vape/")
@@ -91,54 +92,18 @@ local customassetcheck = (getsynasset or getcustomasset) and true
 local queueonteleport = syn and syn.queue_on_teleport or queue_on_teleport or queueonteleport or function() end
 local delfile = delfile or function(file) writefile(file, "") end
 
-local function displayErrorPopup(text, funclist)
-	local oldidentity = getidentity()
-	setidentity(8)
-	local ErrorPrompt = getrenv().require(game:GetService("CoreGui").RobloxGui.Modules.ErrorPrompt)
-	local prompt = ErrorPrompt.new("Default")
-	prompt._hideErrorCode = true
-	local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-	prompt:setErrorTitle("Vape")
-	local funcs
-	if funclist then
-		funcs = {}
-		local num = 0
-		for i,v in pairs(funclist) do
-			num = num + 1
-			table.insert(funcs, {
-				Text = i,
-				Callback = function()
-					prompt:_close()
-					v()
-				end,
-				Primary = num == #funclist
-			})
-		end
-	end
-	prompt:updateButtons(funcs or {{
-		Text = "OK",
-		Callback = function()
-			prompt:_close()
-		end,
-		Primary = true
-	}}, 'Default')
-	prompt:setParent(gui)
-	prompt:_open(text)
-	setidentity(oldidentity)
-end
-
 local function vapeGithubRequest(scripturl)
 	if not isfile("vape/"..scripturl) then
 		local suc, res
 		task.delay(15, function()
 			if not res and not errorPopupShown then
 				errorPopupShown = true
-				displayErrorPopup("The connection to github is taking a while, Please be patient.")
+				print('The connection to github is taking a while, Please be patient.')
 			end
 		end)
 		suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/"..scripturl, true) end)
 		if not suc or res == "404: Not Found" then
-			displayErrorPopup("Failed to connect to github : vape/"..scripturl.." : "..res)
+			error("Failed to connect to github : vape/"..scripturl.." : "..res)
 			error(res)
 		end
 		if scripturl:find(".lua") then res = "--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.\n"..res end
@@ -209,7 +174,7 @@ if not isfile(baseDirectory.. "CustomModules/cachechecked.txt") then
 			end
 		end
 	end
-	if isNotCached and not shared.VapeDeveloper then
+	--[[if isNotCached and not shared.VapeDeveloper then
 		displayErrorPopup("Vape has detected uncached files, If you have CustomModules click no, else click yes.", {No = function() end, Yes = function()
 			for i,v in pairs({baseDirectory.. "/Universal.lua", baseDirectory.. "/MainScript.lua", baseDirectory.. "/GuiLibrary.lua"}) do
 				if isfile(v) and not readfile(v):find("--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.") then
@@ -227,7 +192,7 @@ if not isfile(baseDirectory.. "CustomModules/cachechecked.txt") then
 				end
 			end
 		end})
-	end
+	end]]
 	writefile(baseDirectory.. "CustomModules/cachechecked.txt", "verified")
 end
 
@@ -258,9 +223,7 @@ task.spawn(function()
 		task.wait(15)
 		if image and image.ContentImageSize == Vector2.zero and (not errorPopupShown) and (not redownloadedAssets) and (not isfile("vape/assets/check3.txt")) then
             errorPopupShown = true
-            displayErrorPopup("Assets failed to load, Try another executor (executor : "..(identifyexecutor and identifyexecutor() or "Unknown")..")", {OK = function()
-                writefile(baseDirectory.. "assets/check3.txt", "")
-            end})
+			error("Assets failed to load, Try another executor (executor : "..(identifyexecutor and identifyexecutor() or "Unknown")..")")
         end
 	end)
 end)
@@ -1966,21 +1929,17 @@ GeneralSettings.CreateButton2({
 
 
 local function loadVape()
-	if not shared.VapeIndependent then
-		loadstring(vapeGithubRequest("Universal.lua"))()
-		if isfile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua") then
-			loadstring(readfile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua"))()
-		else
-			if not shared.VapeDeveloper then
-				local suc, publicrepo = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/CustomModules/"..game.PlaceId..".lua") end)
-				if suc and publicrepo and publicrepo ~= "404: Not Found" then
-					writefile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua", "--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.\n"..publicrepo)
-					loadstring(readfile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua"))()
-				end
+	loadstring(vapeGithubRequest("Universal.lua"))()
+	if isfile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua") then
+		loadstring(readfile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua"))()
+	else
+		if not shared.VapeDeveloper then
+			local suc, publicrepo = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/CustomModules/"..game.PlaceId..".lua") end)
+			if suc and publicrepo and publicrepo ~= "404: Not Found" then
+				writefile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua", "--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.\n"..publicrepo)
+				loadstring(readfile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua"))()
 			end
 		end
-	else
-		repeat task.wait() until shared.VapeManualLoad
 	end
 	if #ProfilesTextList.ObjectList == 0 then
 		table.insert(ProfilesTextList.ObjectList, "default")
