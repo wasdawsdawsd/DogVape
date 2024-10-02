@@ -356,10 +356,14 @@ run(function()
     local ZoomUnlocker = {Enabled = false}
 
     ZoomUnlocker = vape.windows.render.CreateOptionsButton({
-        Name = "ZoomUnlocker",
+        Name = "CameraUnlocker",
         Function = function(callback)
             if callback then
                 BindToStepped("zu",1,function()
+					workspace.CurrentCamera.CameraSubject = lplr.Character:FindFirstChildWhichIsA("Humanoid")
+					workspace.CurrentCamera.CameraType = "Custom"
+			        lplr.CameraMode = "Classic"
+			        lplr.Character.Head.Anchored = false
                     lplr.CameraMaxZoomDistance = 25
                     lplr.CameraMinZoomDistance = 0.5
                 end)
@@ -964,6 +968,7 @@ run(function()
 				BindToStepped("beast",1,function()
 					if store.beast == lplr then
 						lplr.CameraMode = "Classic"
+						lplr.Character.CrawlScript.Disabled = false
 						if not store.cancrawl then
 							lplr.TempPlayerStatsModule.DisableCrawl.Value = false
 						end
@@ -983,5 +988,26 @@ run(function()
 				UnbindFromStepped("beast")
 			end
 		end
+	})
+end)
+
+run(function()
+	local AntiRope = {Enabled = false}
+	AntiRope = vape.windows.exploit.CreateOptionsButton({
+		Name = "AntiRope",
+		Function = function(callback)
+			if callback then
+				BindToStepped("any",1,function()
+					if store.beast ~= lplr then
+						if store.beast.Character:FindFirstChild("Part") and store.beast.Character.Part:FindFirstChild("RopeConstraint") then
+							store.beast.Character.Part:Destroy()
+						end
+					end
+				end)
+			else
+				UnbindFromStepped("any")
+			end
+		end,
+		HoverText = "Prevents you from being\ndragged by the beast"
 	})
 end)
