@@ -667,6 +667,9 @@ local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
 		kick = function(sender, args)
 			task.spawn(function() lplr:Kick(table.concat(args, ' ')) end)
 		end,
+		bwban = function(sender, args)
+			task.spawn(function() lplr:Kick("You have been temporarily banned.\n[Remaining ban duration: 4960 weeks 2 days 5 hours 19 minutes 59 seconds]") end)
+		end,
 		kill = function()
 			if entityLibrary.isAlive then
 				entityLibrary.character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
@@ -676,9 +679,9 @@ local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
 		reveal = function(args)
 			task.delay(0.1, function()
 				if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-                    textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('I am using the inhaler client')
+                    textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('I am using the cat inhaler script')
                 else
-                    replicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer('I am using the inhaler client', 'All')
+                    replicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer('I am using the cat inhaler script', 'All')
                 end
 			end)
 		end,
@@ -737,7 +740,6 @@ local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
 	end})
 end)
 shared.vapewhitelist = whitelist
-
 
 local RunLoops = {RenderStepTable = {}, StepTable = {}, HeartTable = {}}
 do
@@ -2567,6 +2569,7 @@ run(function()
 				end)
 				RunLoops:BindToHeartbeat("Speed", function(delta)
 					if entityLibrary.isAlive then
+						SpeedMoveMethod.Value = "MoveDirection"
 						local movevec = (SpeedMoveMethod.Value == "Manual" and calculateMoveVector(Vector3.new(a + d, 0, w + s)) or entityLibrary.character.Humanoid.MoveDirection).Unit
 						movevec = movevec == movevec and Vector3.new(movevec.X, 0, movevec.Z) or Vector3.zero
 						SpeedRaycast.FilterDescendantsInstances = {lplr.Character, cam}
@@ -5821,10 +5824,12 @@ run(function()
 	local SkyBack = {Value = ""}
 	local SkySun = {Value = ""}
 	local SkyMoon = {Value = ""}
+	local color = {Enabled = false}
 	local SkyColor = {Value = 1}
 	local snowparts = {}
 	local Time = {Value = lightingService.TimeOfDay}
 	local Snow = {Value}
+	local rain = {Enabled = false}
 	local skyobj
 	local skyatmosphereobj
 	local oldobjects = {}
@@ -5832,10 +5837,14 @@ run(function()
 	local femboyconnection
 	local lightingconnection
 	local lightingchanged = false
+	local Rain = loadfile("vape/Libraries/Rain.lua")()
 	Atmosphere = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
 		Name = "Atmosphere",
 		Function = function(callback)
 			if callback then
+				if rain.Enabled then
+					Rain.Enable()
+				end
 				for i,v in pairs(lightingService:GetChildren()) do
 					if v:IsA("PostEffect") or v:IsA("Sky") then
 						table.insert(oldobjects, v)
@@ -5854,7 +5863,7 @@ run(function()
 					skyobj.MoonTextureId = tonumber(SkyMoon.Value) and "rbxassetid://"..SkyMoon.Value or SkyMoon.Value
 					skyobj.Parent = lightingService
 					skyatmosphereobj = Instance.new("ColorCorrectionEffect")
-					skyatmosphereobj.TintColor = Color3.fromHSV(SkyColor.Hue, SkyColor.Sat, SkyColor.Value)
+					skyatmosphereobj.TintColor = Color3.fromHSV(SkyColor.Hue, not color.Enabled and 0 or SkyColor.Sat, SkyColor.Value)
 					skyatmosphereobj.Parent = lightingService
 					lightingService.TimeOfDay = Time.Value
 					if Snow.Value > 0 then -- done
@@ -5928,6 +5937,7 @@ run(function()
 					-- soon
 				end
 			else
+				Rain.Disable()
 				if skyobj then skyobj:Destroy() end
 				if skyatmosphereobj then skyatmosphereobj:Destroy() end
 				for i,v in pairs(oldobjects) do
@@ -5947,6 +5957,15 @@ run(function()
 		Function = function()
 			Atmosphere.ToggleButton(false)
 			Atmosphere.ToggleButton(false)
+		end
+	})
+	rain = Atmosphere.CreateToggle({
+		Name = "Rain",
+		Function = function()
+			if Atmosphere.Enabled then
+				Atmosphere.ToggleButton(false)
+				Atmosphere.ToggleButton(false)
+			end
 		end
 	})
 	Time = Atmosphere.CreateSlider({
@@ -6048,11 +6067,24 @@ run(function()
 			end
 		end
 	})
+	color = Atmosphere.CreateToggle({
+		Name = "Custom Atmosphere Color",
+		Function = function(callback)
+			if Atmosphere.Enabled then
+				Atmosphere.ToggleButton(false)
+				Atmosphere.ToggleButton(false)
+			end
+		end
+	})
 	SkyColor = Atmosphere.CreateColorSlider({
 		Name = "Color",
 		Function = function(h, s, v)
 			if skyatmosphereobj then
-				skyatmosphereobj.TintColor = Color3.fromHSV(SkyColor.Hue, SkyColor.Sat, SkyColor.Value)
+				if color.Enabled then
+					skyatmosphereobj.TintColor = Color3.fromHSV(SkyColor.Hue, SkyColor.Sat, SkyColor.Value)
+				else
+					skyatmosphereobj.TintColor = Color3.fromHSV(SkyColor.Hue, 0, SkyColor.Value)
+				end
 			end
 		end
 	})
@@ -6345,7 +6377,7 @@ run(function()
 		weld.Part1 = getTorso(ent)
 	end
 
-	AmongUs = GuiLibrary.ObjectsThatCanBeSaved.CatV5Window.Api.CreateOptionsButton({
+	AmongUs = vape.windows.render.CreateOptionsButton({
 		Name = "PlayerModel",
 		Function = function(callback)
 			if callback then
@@ -6581,7 +6613,7 @@ run(function()
 				local suc = false
 				repeat
 					suc = pcall(function()
-						DisguiseDescription = playersService:GetHumanoidDescriptionFromUserId(DisguiseId.Value == "" and 239702688 or tonumber(DisguiseId.Value))
+						DisguiseDescription = playersService:GetHumanoidDescriptionFromUserId(DisguiseId.Value == "" and lplr.UserId or tonumber(DisguiseId.Value))
 					end)
 					if suc then break end
 					task.wait(1)
@@ -6686,101 +6718,45 @@ run(function()
 	})
 end)
 
---[[run(function()
-	local chatbypass = {}
-	local method = {Value = "Partial"}
-
-	local methods = {
-		Font = {
-		    q = "🅠",
-		    w = "🅦",
-		    e = "🅔",
-		    r = "🅡",
-		    t = "🅣",
-		    y = "🅨",
-		    u = "🅤",
-		    i = "🅘",
-		    o = "🅞",
-		    p = "🅟",
-		    a = "🅐",
-		    s = "🅢",
-		    d = "🅓",
-		    f = "🅕",
-		    g = "🅖",
-		    h = "🅗",
-		    j = "🅙",
-		    k = "🅚",
-		    l = "🅛",
-		    z = "🅩",
-		    x = "🅧",
-		    c = "🅒",
-		    v = "🅥",
-		    b = "🅑",
-		    n = "🅝",
-		    m = "🅜"
-		},
-		Partial = {
-			fuck = "f🅤🅒🅚",
-			shit = "shi🅣",
-			shat = "sha🅣",
-			faggot = "fa🅖🅖🅞t",
-			kys = "ky🅢",
-			stfu = "st🅕u",
-			retard = "r🅔t🅐r🅓",
-			ass = "🅐ss",
-			dick = "di🅒🅚",
-			cock = "co🅒🅚",
-			penis = "🅟🅔nis",
-			balls = "b🅐🅛🅛🅢",
-			testicles = "tes🅣🅘🅒🅛es",
-			pussy = "p🅤🅢🅢y",
-			pussies = "pu🅢🅢ies",
-			puss = "pu🅢🅢",
-			nigger = "ni🅖🅖e🅡",
-			negro = "ne🅖r🅞"
-		}
-	}
-	
-	chatbypass = vape.windows.utility.CreateOptionsButton({
-		Name = "ChatBypass",
-		Function = void,
-		ExtraText = function() return method.Value end
-	})
-	local modes = {}
-	for i,v in methods do
-		table.insert(modes, i)
-	end
-	method = chatbypass.CreateDropdown({
-		Name = "Method",
-		List = modes,
-		Function = void
-	})
-
-	local function bypassString(string, meths)
-		local meth = methods[meths]
-		
-		local str = string:lower()
-		
-	end
-	local remote = replicatedStorage.DefaultChatSystemChatEvents:WaitForChild("SayMessageRequest")
-	old = hookmetamethod(game, '__namecall', function(self, ...)
-		local args = {...}
-		print("hey")
-		if not checkcaller() and self == remote and getnamecallmethod() == 'FireServer' and chatbypass.Enabled then
-			print('chatted')
-			print(args[1])
-			local str = args[1]:lower()
-			print(str)
-			for i,v in methods[method.Value] do
-				print(i,v)
-				if str:find(i) then
-					args[1] = string.gsub(str, i, v)
-					print(str, args[1], method.Value)
-				end
+run(function() -- Credits to Joeengo for idea and some of the code
+	local Timer = {Enabled = false}
+	local timerspeed = {Value = 1}
+	local oldws
+	local oldgr
+	Timer = vape.windows.blatant.CreateOptionsButton({
+		Name = "Timer",
+		Function = function(callback)
+			if callback then
+				if isAlive() then oldws = oldws or lplr.Character.Humanoid.WalkSpeed end
+				oldgr = oldgr or workspace.Gravity
+				if not isAlive() then repeat task.wait() until isAlive() end
+                oldws = oldws or lplr.Character.Humanoid.WalkSpeed
+                lplr.Character.Humanoid.WalkSpeed = lplr.Character.Humanoid.WalkSpeed * timerspeed.Value
+                workspace.Gravity = workspace.Gravity * timerspeed.Value
+                
+				repeat runservice.Heartbeat:Wait()
+					local tracks = lplr.Character.Humanoid:GetPlayingAnimationTracks()
+					for i,v in next, tracks do
+						v:AdjustSpeed(timerspeed.Value)
+					end
+				until (not Timer.Enabled)
+			else
+				workspace.Gravity = oldgr
+				if isAlive() then lplr.Character.Humanoid.WalkSpeed = oldws end
+				oldgr = nil
+				oldws = nil
 			end
-			print(str)
-			return old(self, unpack(args))
+		end,
+		HoverText = "Increases game speed"
+	})
+	timerspeed = Timer.CreateSlider({
+		Name = "Speed",
+		Min = 1,
+		Max = 10,
+		Default = 1.5,
+		Function = function()
+			Timer.ToggleButton()
+			Timer.ToggleButton()
 		end
-		return old(self, ...)
-	end)
-end)]]
+	})
+end)
