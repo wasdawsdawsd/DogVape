@@ -9914,7 +9914,7 @@ run(function()
 	})
 end)
 
-run(function()
+--[[run(function()
 	local multiaura = {}
 	multiaura = vape.windows.exploit.CreateOptionsButton({
 		Name = 'MultiAura',
@@ -9954,3 +9954,4 @@ run(function()
 		end
 	})
 end)
+]]--
