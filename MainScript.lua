@@ -87,6 +87,10 @@ local vapeAssetTable = {
 	["vape/assets/VapeLogo2.png"] = "rbxassetid://13350876307",
 	["vape/assets/VapeLogo4.png"] = "rbxassetid://13350877564"
 }
+if identifyexecutor():find("Wave") or identifyexecutor():find("macsploit") or identifyexecutor():find("Fluxus") then
+	getgenv().getcustomasset = nil
+	getcustomasset = nil
+end
 local getcustomasset = getsynasset or getcustomasset or function(location) return vapeAssetTable[location] or "" end
 local customassetcheck = (getsynasset or getcustomasset) and true
 local queueonteleport = syn and syn.queue_on_teleport or queue_on_teleport or queueonteleport or function() end
@@ -200,7 +204,7 @@ GuiLibrary = loadstring(vapeGithubRequest("GuiLibrary.lua"))()
 shared.GuiLibrary = GuiLibrary
 
 local saveSettingsLoop = coroutine.create(function()
-	if inputService.TouchEnabled then return end
+	--if inputService.TouchEnabled then return end
 	repeat
 		GuiLibrary.SaveSettings()
         task.wait(10)
@@ -1554,6 +1558,7 @@ local windowSortOrder = {
 	UtilityButton = 4,
 	WorldButton = 5,
 	AFKButton = 6,
+	ExploitButton = 7,
 	FriendsButton = 7,
 	TargetsButton = 8,
 	ProfilesButton = 9
