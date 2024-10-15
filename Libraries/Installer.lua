@@ -40,6 +40,9 @@ Paragraph:Set("Progress: 0%, Waiting")
 
 local butt
 butt = Tab1:AddButton({"Install", function()
+ delfolder("vape/CustomModules")
+	delfolder("vape/assets")
+	delfolder("vape/Libraries")
 	makefolder("vape")
 	makefolder("vape/CustomModules")
 	makefolder("vape/assets")
