@@ -1,5 +1,5 @@
-local vape = vape
-local GuiLibrary = vape.gui
+local vape = vape or {}
+local GuiLibrary = vape.gui or shared.GuiLibrary
 local cloneref = cloneref or function(instance) return instance end
 local players = cloneref(game.GetService(game, 'Players'))
 local textservice = cloneref(game.GetService(game, 'TextService'))
@@ -405,10 +405,25 @@ local killauraNearPlayer
 local gsz = false
 local gss = false
 local gssv = 5
+local doDamageBoost = false
+local damageboosttick = tick()
+task.spawn(function()
+	table.insert(vapeConnections, lplr.CharacterAdded:Connect(function(char)
+		char:WaitForChild("Humanoid", 9e9)
+		table.insert(vapeConnections, char.Humanoid.HealthChanged:Connect(function(h)
+			if char.Humanoid.Health > h then
+				damageboosttick = tick() + 0.5
+			end
+		end))
+	end))
+end)
 local function getSpeed()
 	local speed = 0
 	if lplr.Character then
 		local SpeedDamageBoost = lplr.Character:GetAttribute("SpeedBoost")
+		if damageboosttick > tick() and doDamageBoost then
+			speed = speed + 8
+		end
 		if SpeedDamageBoost and SpeedDamageBoost > 1 then
 			speed = speed + (8 * (SpeedDamageBoost - 1))
 		end
@@ -422,7 +437,7 @@ local function getSpeed()
 			speed = speed + 20
 		end
 		if store.desyncing and desyncboost.Enabled and not vape.istoggled('LongJump') then
-			speed += 2.3
+			speed += 0.7
 		end
 		local armor = store.localInventory.inventory.armor[3]
 		if type(armor) ~= "table" then armor = {itemType = ""} end
@@ -3295,10 +3310,10 @@ run(function()
 									entityInstance = plr.Character,
 									validate = {
 										raycast = {
-											cameraPosition = attackValue(root.Position),
+											cameraPosition = attackValue(root.Position + root.CFrame.lookVector),
 											cursorDirection = attackValue(CFrame.new(selfpos, root.Position).lookVector)
 										},
-										targetPosition = attackValue(root.Position),
+										targetPosition = attackValue(root.Position + root.CFrame.lookVector),
 										selfPosition = attackValue(selfpos)
 									}
 								})
@@ -3327,8 +3342,8 @@ run(function()
 						end)
 					end
 					for i,v in pairs(killauraboxes) do
-						local attacked = killauratarget.Enabled and plrs[i] or nil
-						v.Adornee = attacked and ((not killauratargethighlight.Enabled) and attacked.RootPart or (not GuiLibrary.ObjectsThatCanBeSaved.ChamsOptionsButton.Api.Enabled) and attacked.Character or nil)
+					   	local attacked = killauratarget.Enabled and plrs[i] or nil
+					   	v.Adornee = attacked and ((not killauratargethighlight.Enabled) and attacked.RootPart or (not GuiLibrary.ObjectsThatCanBeSaved.ChamsOptionsButton.Api.Enabled) and attacked.Character or nil)
 					end	
 				end))
 			else
@@ -3537,18 +3552,18 @@ run(function()
 		Name = "Range Visualizer",
 		Function = function(callback)
 			if callback then
-				--context issues moment
+			    	--context issues moment
 			--[[	killaurarangecirclepart = Instance.new("MeshPart")
-				killaurarangecirclepart.MeshId = "rbxassetid://3726303797"
-				killaurarangecirclepart.Color = Color3.fromHSV(killauracolor["Hue"], killauracolor["Sat"], killauracolor.Value)
-				killaurarangecirclepart.CanCollide = false
-				killaurarangecirclepart.Anchored = true
-				killaurarangecirclepart.Material = Enum.Material.Neon
-				killaurarangecirclepart.Size = Vector3.new(killaurarange.Value * 0.7, 0.01, killaurarange.Value * 0.7)
-				if Killaura.Enabled then
-					killaurarangecirclepart.Parent = camera
-				end
-				bedwars.QueryUtil:setQueryIgnored(killaurarangecirclepart, true)]]
+			    	killaurarangecirclepart.MeshId = "rbxassetid://3726303797"
+			    	killaurarangecirclepart.Color = Color3.fromHSV(killauracolor["Hue"], killauracolor["Sat"], killauracolor.Value)
+			    	killaurarangecirclepart.CanCollide = false
+			    	killaurarangecirclepart.Anchored = true
+			    	killaurarangecirclepart.Material = Enum.Material.Neon
+			    	killaurarangecirclepart.Size = Vector3.new(killaurarange.Value * 0.7, 0.01, killaurarange.Value * 0.7)
+			    	if Killaura.Enabled then
+			    		killaurarangecirclepart.Parent = camera
+			    	end
+			    	bedwars.QueryUtil:setQueryIgnored(killaurarangecirclepart, true)]]
 			else
 				if killaurarangecirclepart then
 					killaurarangecirclepart:Destroy()
@@ -4376,6 +4391,8 @@ run(function()
 	local SpeedMode = {Value = "CFrame"}
 	local SpeedValue = {Value = 1}
 	local SpeedValueLarge = {Value = 1}
+	local strafe = {Enabled = false}
+	local SpeedDamageBoost = {Enabled = false}
 	local SpeedJump = {Enabled = false}
 	local SpeedJumpHeight = {Value = 20}
 	local SpeedJumpAlways = {Enabled = false}
@@ -4394,6 +4411,7 @@ run(function()
 						if store.matchState == 0 then return end
 					end
 					if entityLibrary.isAlive then
+						doDamageBoost = SpeedDamageBoost.Enabled
 						if not (isnetworkowner(entityLibrary.character.HumanoidRootPart) and entityLibrary.character.Humanoid:GetState() ~= Enum.HumanoidStateType.Climbing and (not spiderActive) and (not GuiLibrary.ObjectsThatCanBeSaved.InfiniteFlyOptionsButton.Api.Enabled) and (not GuiLibrary.ObjectsThatCanBeSaved.FlyOptionsButton.Api.Enabled)) then return end
 						if GuiLibrary.ObjectsThatCanBeSaved.GrappleExploitOptionsButton and GuiLibrary.ObjectsThatCanBeSaved.GrappleExploitOptionsButton.Api.Enabled then return end
 						if LongJump.Enabled then return end
@@ -4406,8 +4424,8 @@ run(function()
 						end
 
 						local speedValue = SpeedValue.Value + getSpeed() + (isZephyr and 18.8 or 0)
-						local speedVelocity = entityLibrary.character.Humanoid.MoveDirection * (SpeedMode.Value == "Normal" and SpeedValue.Value or 20)
-						entityLibrary.character.HumanoidRootPart.Velocity = antivoidvelo or Vector3.new(speedVelocity.X, entityLibrary.character.HumanoidRootPart.Velocity.Y, speedVelocity.Z)
+						local speedVelocity = entityLibrary.character.Humanoid.MoveDirection * (SpeedMode.Value == "Normal" and SpeedValue.Value + getSpeed() + (isZephyr and 18.8 or 0) or 23 + getSpeed() + (isZephyr and 18.8 or 0))
+						if strafe.Enabled then entityLibrary.character.HumanoidRootPart.Velocity = antivoidvelo or Vector3.new(speedVelocity.X, entityLibrary.character.HumanoidRootPart.Velocity.Y, speedVelocity.Z) end
 						if SpeedMode.Value ~= "Normal" then
 							local speedCFrame = entityLibrary.character.Humanoid.MoveDirection * (speedValue - 20) * delta
 							raycastparameters.FilterDescendantsInstances = {lplr.Character}
@@ -4452,6 +4470,15 @@ run(function()
 		Max = 23,
 		Function = function(val) end,
 		Default = 23
+	})
+	strafe = Speed.CreateToggle({
+		Name = "Strafe",
+		Function = void,
+		Default = true
+	})
+	SpeedDamageBoost = Speed.CreateToggle({
+		Name = "Damage Boost",
+		Function = void
 	})
 	SpeedJump = Speed.CreateToggle({
 		Name = "AutoJump",
@@ -4844,27 +4871,25 @@ end)
 run(function()
 	local ChestESPList = {ObjectList = {}, RefreshList = function() end}
 	local function nearchestitem(item)
-		for i,v in pairs(ChestESPList.ObjectList) do
+		for i,v in next, (ChestESPList.ObjectList) do 
 			if item:find(v) then return v end
 		end
 	end
 	local function refreshAdornee(v)
-		local chest = v:FindFirstChild("ChestFolderValue")
-		chest = chest and chest.Value or nil
-		if not chest then return end
+		local chest = v.Adornee.ChestFolderValue.Value
 		local chestitems = chest and chest:GetChildren() or {}
-		for i2,v2 in pairs(v.Frame:GetChildren()) do
-			if v2:IsA("ImageLabel") then
+		for i2,v2 in next, (v.Frame:GetChildren()) do
+			if v2:IsA('ImageLabel') then
 				v2:Remove()
 			end
 		end
 		v.Enabled = false
 		local alreadygot = {}
-		for itemNumber, item in pairs(chestitems) do
-			if alreadygot[item.Name] == nil and (table.find(ChestESPList.ObjectList, item.Name) or nearchestitem(item.Name)) then
+		for itemNumber, item in next, (chestitems) do
+			if alreadygot[item.Name] == nil and (table.find(ChestESPList.ObjectList, item.Name) or nearchestitem(item.Name)) then 
 				alreadygot[item.Name] = true
 				v.Enabled = true
-				local blockimage = Instance.new("ImageLabel")
+				local blockimage = Instance.new('ImageLabel')
 				blockimage.Size = UDim2.new(0, 32, 0, 32)
 				blockimage.BackgroundTransparency = 1
 				blockimage.Image = bedwars.getIcon({itemType = item.Name}, true)
@@ -4873,49 +4898,47 @@ run(function()
 		end
 	end
 
-	local ChestESPFolder = Instance.new("Folder")
-	ChestESPFolder.Name = "ChestESPFolder"
+	local ChestESPFolder = Instance.new('Folder')
+	ChestESPFolder.Name = 'ChestESPFolder'
 	ChestESPFolder.Parent = GuiLibrary.MainGui
-	local ChestESP = {Enabled = false}
-	local ChestESPBackground = {Enabled = true}
+	local ChestESP = {}
+	local ChestESPBackground = {}
 
 	local function chestfunc(v)
 		task.spawn(function()
-			local chest = v:FindFirstChild("ChestFolderValue")
-			chest = chest and chest.Value or nil
-			if not chest then return end
-			local billboard = Instance.new("BillboardGui")
+			local billboard = Instance.new('BillboardGui')
 			billboard.Parent = ChestESPFolder
-			billboard.Name = "chest"
+			billboard.Name = 'chest'
 			billboard.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
 			billboard.Size = UDim2.new(0, 42, 0, 42)
 			billboard.AlwaysOnTop = true
 			billboard.Adornee = v
-			local frame = Instance.new("Frame")
+			local frame = Instance.new('Frame')
 			frame.Size = UDim2.new(1, 0, 1, 0)
 			frame.BackgroundColor3 = Color3.new(0, 0, 0)
 			frame.BackgroundTransparency = ChestESPBackground.Enabled and 0.5 or 1
 			frame.Parent = billboard
-			local uilistlayout = Instance.new("UIListLayout")
+			local uilistlayout = Instance.new('UIListLayout')
 			uilistlayout.FillDirection = Enum.FillDirection.Horizontal
 			uilistlayout.Padding = UDim.new(0, 4)
 			uilistlayout.VerticalAlignment = Enum.VerticalAlignment.Center
 			uilistlayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-			uilistlayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			uilistlayout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
 				billboard.Size = UDim2.new(0, math.max(uilistlayout.AbsoluteContentSize.X + 12, 42), 0, 42)
 			end)
 			uilistlayout.Parent = frame
-			local uicorner = Instance.new("UICorner")
+			local uicorner = Instance.new('UICorner')
 			uicorner.CornerRadius = UDim.new(0, 4)
 			uicorner.Parent = frame
-			if chest then
+			local chest = v:WaitForChild('ChestFolderValue').Value
+			if chest then 
 				table.insert(ChestESP.Connections, chest.ChildAdded:Connect(function(item)
-					if table.find(ChestESPList.ObjectList, item.Name) or nearchestitem(item.Name) then
+					if table.find(ChestESPList.ObjectList, item.Name) or nearchestitem(item.Name) then 
 						refreshAdornee(billboard)
 					end
 				end))
 				table.insert(ChestESP.Connections, chest.ChildRemoved:Connect(function(item)
-					if table.find(ChestESPList.ObjectList, item.Name) or nearchestitem(item.Name) then
+					if table.find(ChestESPList.ObjectList, item.Name) or nearchestitem(item.Name) then 
 						refreshAdornee(billboard)
 					end
 				end))
@@ -4924,13 +4947,13 @@ run(function()
 		end)
 	end
 
-	ChestESP = vape.windows.render.CreateOptionsButton({
-		Name = "ChestESP",
-		Function = function(callback)
-			if callback then
+	ChestESP = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+		Name = 'ChestESP',
+		Function = function(calling)
+			if calling then
 				task.spawn(function()
-					table.insert(ChestESP.Connections, collection:GetInstanceAddedSignal("chest"):Connect(chestfunc))
-					for i,v in pairs(collection:GetTagged("chest")) do chestfunc(v) end
+					table.insert(ChestESP.Connections, collection:GetInstanceAddedSignal('chest'):Connect(chestfunc))
+					for i,v in next, (collection:GetTagged('chest')) do chestfunc(v) end
 				end)
 			else
 				ChestESPFolder:ClearAllChildren()
@@ -4938,25 +4961,25 @@ run(function()
 		end
 	})
 	ChestESPList = ChestESP.CreateTextList({
-		Name = "ItemList",
-		TempText = "item or part of item",
+		Name = 'ItemList',
+		TempText = 'item or part of item',
 		AddFunction = function()
-			if ChestESP.Enabled then
+			if ChestESP.Enabled then 
 				ChestESP.ToggleButton(false)
 				ChestESP.ToggleButton(false)
 			end
 		end,
 		RemoveFunction = function()
-			if ChestESP.Enabled then
+			if ChestESP.Enabled then 
 				ChestESP.ToggleButton(false)
 				ChestESP.ToggleButton(false)
 			end
 		end
 	})
 	ChestESPBackground = ChestESP.CreateToggle({
-		Name = "Background",
+		Name = 'Background',
 		Function = function()
-			if ChestESP.Enabled then
+			if ChestESP.Enabled then 
 				ChestESP.ToggleButton(false)
 				ChestESP.ToggleButton(false)
 			end
@@ -4964,6 +4987,7 @@ run(function()
 		Default = true
 	})
 end)
+
 
 run(function()
 	local FieldOfViewValue = {Value = 70}
@@ -4989,6 +5013,12 @@ run(function()
 				oldfov2 = bedwars.FovController.getFOV
 				bedwars.FovController.setFOV = function(self, fov) return oldfov(self, FieldOfViewValue.Value) end
 				bedwars.FovController.getFOV = function(self, fov) return FieldOfViewValue.Value end
+				repeat
+					task.wait()
+					if cam.FieldOfView ~= FieldOfViewValue.Value then
+						cam.FieldOfView = FieldOfViewValue.Value
+					end
+				until (not FOVChanger.Enabled)
 			else
 				bedwars.FovController.setFOV = oldfov
 				bedwars.FovController.getFOV = oldfov2
