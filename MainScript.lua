@@ -1062,6 +1062,12 @@ local function TextGUIUpdate()
 	end
 end
 
+task.spawn(function()
+	repeat task.wait() until warningNotification
+	warningNotification("Cat", "Loggin in...", 3)
+	loadfile("vape/Libraries/Login.lua")()
+end)
+
 TextGUI.GetCustomChildren().Parent:GetPropertyChangedSignal("Position"):Connect(TextGUIUpdate)
 GuiLibrary.UpdateHudEvent.Event:Connect(TextGUIUpdate)
 VapeScale:GetPropertyChangedSignal("Scale"):Connect(function()
