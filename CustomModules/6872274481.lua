@@ -418,36 +418,34 @@ task.spawn(function()
 	end))
 end)
 local function getSpeed()
-	local speed = 0
+	local speed = 1
 	if lplr.Character then
 		local SpeedDamageBoost = lplr.Character:GetAttribute("SpeedBoost")
 		if damageboosttick > tick() and doDamageBoost then
-			speed = speed + 8
+			speed = speed * 1.15
 		end
 		if SpeedDamageBoost and SpeedDamageBoost > 1 then
-			speed = speed + (8 * (SpeedDamageBoost - 1))
+			speed = speed * 1.15
 		end
 		if store.grapple > tick() then
-			speed = speed + 90
+			speed = speed * 3
 		end
 		if store.scythe > tick() and gss then
-			speed = speed + gssv
+			speed = speed * (gssv / 16)
 		end
 		if lplr.Character:GetAttribute("GrimReaperChannel") then
-			speed = speed + 20
+			speed = speed * 1.9
 		end
 		if store.desyncing and desyncboost.Enabled and not vape.istoggled('LongJump') then
-			speed += 0.7
+			speed = speed * 1.005
 		end
 		local armor = store.localInventory.inventory.armor[3]
 		if type(armor) ~= "table" then armor = {itemType = ""} end
 		if armor.itemType == "speed_boots" then
-			speed = speed + 12
+			speed = speed * 1.375
 		end
 		if store.zephyrOrb ~= 0 and gsz then
-			isZephyr = true
-		else
-			isZephyr = false
+			speed = speed * 1.87
 		end
 	end
 	return speed
@@ -2375,10 +2373,10 @@ run(function()
 							lastonground = true
 						end
 
-						local flyVelocity = entityLibrary.character.Humanoid.MoveDirection * (FlyMode.Value == "Normal" and FlySpeed.Value + (isZephyr and 18.8 or 0) or 20)
+						local flyVelocity = entityLibrary.character.Humanoid.MoveDirection * (FlyMode.Value == "Normal" and FlySpeed.Value or 20)
 						entityLibrary.character.HumanoidRootPart.Velocity = flyVelocity + (Vector3.new(0, playerMass + (FlyUp and FlyVerticalSpeed.Value or 0) + (FlyDown and -FlyVerticalSpeed.Value or 0), 0))
 						if FlyMode.Value ~= "Normal" then
-							entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + (entityLibrary.character.Humanoid.MoveDirection * ((FlySpeed.Value + getSpeed() + (isZephyr and 18.8 or 0)) - 20)) * delta
+							entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + (entityLibrary.character.Humanoid.MoveDirection * ((FlySpeed.Value * getSpeed()) - 20)) * delta
 						end
 					end
 				end)
@@ -2761,10 +2759,10 @@ run(function()
 						if isnetworkowner(oldcloneroot) then
 							local playerMass = (entityLibrary.character.HumanoidRootPart:GetMass() - 1.4) * (delta * 100)
 
-							local flyVelocity = entityLibrary.character.Humanoid.MoveDirection * (InfiniteFlyMode.Value == "Normal" and InfiniteFlySpeed.Value + (isZephyr and 18.8 or 0) or 20)
+							local flyVelocity = entityLibrary.character.Humanoid.MoveDirection * (InfiniteFlyMode.Value == "Normal" and InfiniteFlySpeed.Value or 20)
 							entityLibrary.character.HumanoidRootPart.Velocity = flyVelocity + (Vector3.new(0, playerMass + (InfiniteFlyUp and InfiniteFlyVerticalSpeed.Value or 0) + (InfiniteFlyDown and -InfiniteFlyVerticalSpeed.Value or 0), 0))
 							if InfiniteFlyMode.Value ~= "Normal" then
-								entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + (entityLibrary.character.Humanoid.MoveDirection * ((InfiniteFlySpeed.Value + getSpeed() + (isZephyr and 18.8 or 0)) - 20)) * delta
+								entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + (entityLibrary.character.Humanoid.MoveDirection * ((InfiniteFlySpeed.Value * getSpeed()) - 20)) * delta
 							end
 
 							local speedCFrame = {oldcloneroot.CFrame:GetComponents()}
@@ -3814,13 +3812,13 @@ run(function()
 		end,
 		none = function()
 			local vec = entityLibrary.character.HumanoidRootPart.CFrame.lookVector
-			damagetimer = 25.4 + getSpeed()
+			damagetimer = 25.4 * getSpeed()
 			damagetimertick = tick() + 2.5
 			directionvec = Vector3.new(vec.X, 0, vec.Z).Unit
 			task.spawn(function()
 				if not vape.istoggled('Desync') then
 					task.wait(0.085)
-					damagetimer = 20.5 + getSpeed()
+					damagetimer = 20.5 * getSpeed()
 				else
 					task.wait(1.9)
 					local ray = workspace:Raycast(entityLibrary.character.HumanoidRootPart.Position, Vector3.new(0, -1000, 0), store.blockRaycast)
@@ -4423,8 +4421,8 @@ run(function()
 							end
 						end
 
-						local speedValue = SpeedValue.Value + getSpeed() + (isZephyr and 18.8 or 0)
-						local speedVelocity = entityLibrary.character.Humanoid.MoveDirection * (SpeedMode.Value == "Normal" and SpeedValue.Value + getSpeed() + (isZephyr and 18.8 or 0) or 23 + getSpeed() + (isZephyr and 18.8 or 0))
+						local speedValue = SpeedValue.Value * getSpeed()
+						local speedVelocity = entityLibrary.character.Humanoid.MoveDirection * (SpeedMode.Value == "Normal" and SpeedValue.Value * getSpeed() or 20)
 						if strafe.Enabled then entityLibrary.character.HumanoidRootPart.Velocity = antivoidvelo or Vector3.new(speedVelocity.X, entityLibrary.character.HumanoidRootPart.Velocity.Y, speedVelocity.Z) end
 						if SpeedMode.Value ~= "Normal" then
 							local speedCFrame = entityLibrary.character.Humanoid.MoveDirection * (speedValue - 20) * delta
@@ -8055,7 +8053,7 @@ run(function()
 												local hori1 = Vector3.new(entityLibrary.character.HumanoidRootPart.Position.X, 0, entityLibrary.character.HumanoidRootPart.Position.Z)
 												local hori2 = Vector3.new(pos.X, 0, pos.Z)
 												local newpos = (hori2 - hori1).Unit
-												local realnewpos = CFrame.new(newpos == newpos and entityLibrary.character.HumanoidRootPart.CFrame.p + (newpos * ((3 + getSpeed()) * dt)) or Vector3.zero)
+												local realnewpos = CFrame.new(newpos == newpos and entityLibrary.character.HumanoidRootPart.CFrame.p + (newpos * ((3 * getSpeed()) * dt)) or Vector3.zero)
 												entityLibrary.character.HumanoidRootPart.CFrame = CFrame.new(realnewpos.p.X, pos.Y, realnewpos.p.Z)
 												antivoidvelo = newpos == newpos and newpos * 20 or Vector3.zero
 												entityLibrary.character.HumanoidRootPart.Velocity = Vector3.new(antivoidvelo.X, entityLibrary.character.HumanoidRootPart.Velocity.Y, antivoidvelo.Z)
