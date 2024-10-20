@@ -13,6 +13,7 @@ local replicatedstorage = cloneref(game.GetService(game, 'ReplicatedStorage'))
 local camera = workspace.CurrentCamera or Instance.new('Camera', workspace)
 local lplr = players.LocalPlayer
 local vapeConnections = {}
+--if not getgenv().loggedin then repeat until false end
 local vapeCachedAssets = {}
 local vapeEvents = setmetatable({}, {
 	__index = function(self, index)
@@ -645,6 +646,17 @@ local function EntityNearPosition(distance, ignore, overridepos)
 					end
 				end
 			end
+			for i, v in pairs(collection:GetAllTags()) do
+				if v.PrimaryPart and v.Name:find("halloween_2024") then
+					local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
+					if overridepos and mag > distance then
+						mag = (overridepos - v2.PrimaryPart.Position).magnitude
+					end
+					if mag <= closestMagnitude then
+						closestEntity, closestMagnitude = {Player = {Name = "DiamondGuardian", UserId = 1443379645}, Character = v, RootPart = v.PrimaryPart, JumpTick = tick() + 5, Jumping = false, Humanoid = {HipHeight = 2}}, mag
+					end
+				end
+			end
 			for i, v in pairs(collection:GetTagged("GolemBoss")) do
 				if v.PrimaryPart then
 					local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
@@ -711,6 +723,39 @@ local function AllNearPosition(distance, mob, amount, sortfunction, prediction)
 			end
 		end
 		if mob then
+			for i, v in workspace:GetChildren() do
+				if v.Name:find("Crystal") then
+					print(v, v.Name)
+					if v.PrimaryPart then
+						local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
+						if mag <= distance then
+							table.insert(sortedentities, {Player = {Name = v.Name, UserId = (v.Name == "CrystalOre" and 2020831224 or 1443379645), GetAttribute = function() return "none" end}, Character = v, RootPart = v.PrimaryPart, Humanoid = {Health = 100, MaxHealth = 100}})
+						end
+					end
+				end
+			end
+			for i, v in workspace:GetChildren() do
+				if v.Name:find("Halloween") then
+					print(v, v.Name)
+					if v.PrimaryPart then
+						local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
+						if mag <= distance then
+							table.insert(sortedentities, {Player = {Name = v.Name, UserId = (v.Name == "Halloween2024Guard" and 2020831224 or 1443379645), GetAttribute = function() return "none" end}, Character = v, RootPart = v.PrimaryPart, Humanoid = {Health = 100, MaxHealth = 100}})
+						end
+					end
+				end
+			end
+			for i, v in workspace:GetChildren() do
+				if v.Name == "Spider" then
+					print(v, v.Name)
+					if v.PrimaryPart then
+						local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
+						if mag <= distance then
+							table.insert(sortedentities, {Player = {Name = v.Name, UserId = (v.Name == "Spidee" and 2020831224 or 1443379645), GetAttribute = function() return "none" end}, Character = v, RootPart = v.PrimaryPart, Humanoid = {Health = 100, MaxHealth = 100}})
+						end
+					end
+				end
+			end
 			for i, v in pairs(collection:GetTagged("infected-crate")) do
 				if v.PrimaryPart then
 					local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
@@ -3042,7 +3087,8 @@ run(function()
 		return Vector3.new(math.clamp(speedCFrame.X, x, x2), math.clamp(speedCFrame.Y, y, y2), math.clamp(speedCFrame.Z, z, z2))
 	end
 
-	local function getAttackData()
+	local function getAttackData(thing)
+		local doPickaxe = thing == "CrystalOre" or false
 		if GuiLibrary.ObjectsThatCanBeSaved["Lobby CheckToggle"].Api.Enabled then
 			if store.matchState == 0 then return false end
 		end
@@ -3052,11 +3098,11 @@ run(function()
 		if killauragui.Enabled then
 			if bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then return false end
 		end
-		local sword = killaurahandcheck.Enabled and store.localHand or getSword()
+		local sword = killaurahandcheck.Enabled and store.localHand or (doPickaxe and getItemNear("pickaxe") or getSword())
 		if not sword or not sword.tool then return false end
 		local swordmeta = bedwars.ItemTable[sword.tool.Name]
 		if killaurahandcheck.Enabled then
-			if store.localHand.Type ~= "sword" or bedwars.DaoController.chargingMaid then return false end
+			if (doPickaxe and store.localHand.Type ~= "pickaxe" or store.localHand.Type ~= "sword") or bedwars.DaoController.chargingMaid then return false end
 		end
 		return sword, swordmeta
 	end
@@ -3249,7 +3295,10 @@ run(function()
 					local plrs = AllNearPosition(killaurarange.Value, true, 10, killaurasortmethods[killaurasortmethod.Value], true)
 					local firstPlayerNear
 					if #plrs > 0 then
-						local sword, swordmeta = getAttackData()
+						local sword, swordmeta
+						for i, plr in pairs(plrs) do
+							sword, swordmeta = getAttackData(plr.RootPart.Parent.Name)
+						end
 						if getItemNear('infernal_saber') then
 							bedwars.Client:Get('HellBladeRelease'):SendToServer({
 								chargeTime = 1,
@@ -3308,10 +3357,10 @@ run(function()
 									entityInstance = plr.Character,
 									validate = {
 										raycast = {
-											cameraPosition = attackValue(root.Position + root.CFrame.lookVector),
+											cameraPosition = attackValue(root.Position + plr.Character.Humanoid.MoveDirection),
 											cursorDirection = attackValue(CFrame.new(selfpos, root.Position).lookVector)
 										},
-										targetPosition = attackValue(root.Position + root.CFrame.lookVector),
+										targetPosition = attackValue(root.Position + plr.Character.Humanoid.MoveDirection),
 										selfPosition = attackValue(selfpos)
 									}
 								})
@@ -4947,8 +4996,8 @@ run(function()
 
 	ChestESP = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
 		Name = 'ChestESP',
-		Function = function(calling)
-			if calling then
+		Function = function(callback)
+			if callback then
 				task.spawn(function()
 					table.insert(ChestESP.Connections, collection:GetInstanceAddedSignal('chest'):Connect(chestfunc))
 					for i,v in next, (collection:GetTagged('chest')) do chestfunc(v) end
@@ -9562,8 +9611,8 @@ run(function() -- thank you SystemXVoid for letting me use this
 	invis = vape.windows.exploit.CreateOptionsButton({
 		Name = 'Invisibility',
 		HoverText = 'Plays an animation which makes it harder\nfor targets to see you.',
-		Function = function(calling)
-			if calling then 
+		Function = function(callback)
+			if callback then 
 				invistask = task.spawn(invisFunction);
 				table.insert(invis.Connections, lplr.CharacterAdded:Connect(invisFunction))
 			else 
@@ -9942,44 +9991,3 @@ run(function()
 	})
 end)
 
---[[run(function()
-	local multiaura = {}
-	multiaura = vape.windows.exploit.CreateOptionsButton({
-		Name = 'MultiAura',
-		Function = function(call)
-			if call then
-				RunLoops:BindToStepped("multi", function()
-					bedwars.Client:Get('SwordChargeState'):SendToServer({
-						itemType = 'guards_spear',
-						chargeState = 'CHARGED'
-					})
-					if not getItemNear('guards_spear') then
-						bedwars.Client:Get("BedwarsPurchaseItem"):CallServerAsync({
-							shopItem = {
-								currency = "iron",
-								itemType = "guards_spear",
-								amount = 1,
-								price = 0,
-								category = "Combat"
-							},
-							shopId = "2_item_shop_1"
-						}):andThen(function(p11)
-							if p11 then
-								bedwars.SoundManager:playSound(bedwars.SoundList.BEDWARS_PURCHASE_ITEM)
-								bedwars.ClientStoreHandler:dispatch({
-									type = "BedwarsAddItemPurchased",
-									itemType = "guards_spear"
-								})
-								warningNotification('CatV5', 'Bought Spear!', 6)
-							end
-							res = p11
-						end)
-					end
-				end)
-			else
-				RunLoops:UnbindFromStepped("multi")
-			end
-		end
-	})
-end)
-]]--
