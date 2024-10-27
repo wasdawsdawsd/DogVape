@@ -40,16 +40,11 @@ Paragraph:Set("Progress: 0%, Waiting")
 
 local butt
 butt = Tab1:AddButton({"Install", function()
- pcall(function()
-  delfolder("vape/CustomModules")
-  	delfolder("vape/assets")
-  	delfolder("vape/Libraries")
-  end)
-	makefolder("vape")
-	makefolder("vape/CustomModules")
-	makefolder("vape/assets")
-	makefolder("vape/Libraries")
-	makefolder("vape/Profiles")
+	makefolder("catvape")
+	makefolder("catvape/CustomModules")
+	makefolder("catvape/assets")
+	makefolder("catvape/Libraries")
+	makefolder("catvape/Profiles")
     butt:Destroy()
     task.spawn(function()
         repeat
@@ -75,8 +70,8 @@ butt = Tab1:AddButton({"Install", function()
         end
     end
     for i,v in assets do
-        if not isfile(`vape/assets/{v}`) then
-            writefile('vape/assets/'.. v, game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/main/assets/'..v))
+        if not isfile(`catvape/assets/{v}`) then
+            writefile('catvape/assets/'.. v, game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/main/assets/'..v))
         end
     end
     WriteFiles("assets")
@@ -89,10 +84,10 @@ butt = Tab1:AddButton({"Install", function()
     local stat = "Finished!"
     task.wait(0.75)
     -- error handler
-    if not isfile("vape/loader.lua") then
+    if not isfile("catvape/loader.lua") then
     	stat = "Error Code 0001: Files not downloaded"
     else
-    	local str1 = readfile("vape/loader.lua")
+    	local str1 = readfile("catvape/loader.lua")
     	local str2 = game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/loader.lua")
     	if str1 ~= str2 then
     		stat = "Error Code 0002: Files Outdated"
@@ -103,7 +98,7 @@ butt = Tab1:AddButton({"Install", function()
     if stat == "Finished!" then
 	    local butt2 = Tab1:AddButton({"Launch Cat",function()
 			game.CoreGui["redz Library V5"]:Destroy()
-			loadfile("vape/loader.lua")()
+			loadfile("catvape/loader.lua")()
 	    end})
 	end
 end})
