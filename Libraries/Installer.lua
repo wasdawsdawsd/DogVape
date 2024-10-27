@@ -1,6 +1,6 @@
 local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDzHUB/RedzLibV5/main/Source.Lua"))()
 local cloneref = cloneref or function(instance) return instance end
-local baseDirectory = (shared.VapePrivate and "vapeprivate" or shared.catvape and 'catvape' or "vape")
+local baseDirectory = (shared.VapePrivate and "vapeprivate" or "catvape")
 local httpservice = cloneref(game.GetService(game, 'HttpService'))
 local API = loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/main/Libraries/API.lua", true))()
 
