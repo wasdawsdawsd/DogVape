@@ -1,3 +1,48 @@
+--[[
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+                           .^~!77777!!~^.                                  ^~~~~^.                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^                                                                
+                       :7YG#&@@@@@@@@@&&BPJ!.                            .J#&&&&&5:                :B@&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&G:                                                               
+                    .!5#@@@@@@@@@@@@@@@@@@@@BJ^                          7#@@@@@@&Y.               :#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@B:                                                               
+                   !G&@@@@@@&BG5YJY55G#&@@@@@@#?.                       ~B@@@@@@@@&7               .5BBBBBBBBBBBBB&@@@@@@&BBBBBBBBBBBBB5:                                                               
+                 :Y&@@@@@@G?^.        :~Y&@@@@@@5:                     ^G@@@@@@@@@@#!                ........... :G@@@@@@5: ...........                                                                 
+                :P@@@@@@#?.              7#@@@@@@5:                   :P@@@@@&&@@@@@B^                           .G@@@@@@5.                                                                             
+               .Y&@@@@@B~                 !#@@@@@&7.                 .J&@@@@&J7#@@@@@P:                          .G@@@@@@5.                                                                             
+               ~#@@@@@&7                  .5&@@@@@P:                 ?&@@@@@5. ?&@@@@@Y.                         .G@@@@@@5.                                                                             
+              .5&@@@@@G:                   :!7777!~.                !#@@@@@G^  .5@@@@@&?.                        .G@@@@@@5.                                                                             
+              .G@@@@@&J.                                           ^G@@@@@#~    :G@@@@@#!  :::::::.              :G@@@@@@Y. :::::::::.          ::::::::::::::::.       :::::::::::::::::::             
+              .B@@@@@&?.                                          :P@@@@@&?      ~B@@@@@B~:Y######5^            .7#@@@@@#!.7G#######BY:        :5##############BG5?^.  ~G#################P^            
+              :B@@@@@&?.                                         .Y&@@@@@Y.       7&@@@@@G^~G@@@@@&Y:           !B@@@@@#?:!B@@@@@@@@@&J.       :P@@@@@@@@@@@@@@@@@@#Y^ ~B@@@@@@@@@@@@@@@@@B~            
+              :B@@@@@&?.                                         ?&@@@@@P:        .Y&@@@@@5:~G@@@@@&J.         ~B@@@@@&J:~G@@@@@@@@@@@#?.      :P@@@@@&P55555PB@@@@@@P^~B@@@@@BP5555555555J:            
+              .G@@@@@&Y.                                        !#@@@@@#!..........^G@@@@@&J.!B@@@@@#?.       ^G@@@@@&Y:~G@@@@@&B&@@@@@#7.     :P@@@@@B~      ^5&@@@@&?!B@@@@&Y:                        
+              .P@@@@@@P:                                       ~B@@@@@@&BBBBBBBBBBBB#@@@@@@&7.7#@@@@@#7.     ^P&@@@@&5^^P@@@@@&5~?#@@@@@B!     :P@@@@@B~      :Y&@@@@&?!B@@@@@G?!!!!!!!!~.              
+              .?&@@@@@#~                   7PGGGGGY:          :P@@@@@@@@@@@@@@@@@@@@@@@@@@@@#~.?#@@@@@B!    :5&@@@@@P^:5&@@@@@P^ .J#@@@@@G~    :P@@@@@B~!YYYYPB&@@@@@G~~B@@@@@@@@@@@@@@@G:              
+               :G@@@@@@G^                 ^B@@@@@@Y.         .5@@@@@@&&&&&&&&&&&&&&&&&&@@@@@@G^.J&@@@@@B~  :Y&@@@@@G~:Y&@@@@@G!!JY5#@@@@@@G~   :P@@@@@B!J&@@@@@@@@@&5~ ~B@@@@@@@@@@@@@@@P:              
+                !#@@@@@@5:               :5&@@@@@B~         .J&@@@@@B~::::::::::::::::^P@@@@@@P::Y&@@@@@P~.J&@@@@@B!:J#@@@@@B!!B@@@@@@@@@@@P^  :P@@@@@B!?#&&&&##BPJ~.  ~B@@@@@GJ???????7~.              
+                 7B@@@@@@G!.            ~P@@@@@@#!          7#@@@@@#!                  :G@@@@@&Y.:5&@@@@@PY#@@@@@B7.?#@@@@@B7~P&&&&&&&@@@@@&5: :P@@@@@B~:^^^^^^:.      ~B@@@@&Y.                        
+                  ^P@@@@@@&BY7~^:::^~7JP&@@@@@@G~          ~B@@@@@&?.                   ~#@@@@@&7 ^P@@@@@@@@@@@@#7.7#@@@@@#?.:^~~~~~~7G@@@@@&J::P@@@@@B~               ~B@@@@@GJ??????????!.            
+                   .7G&@@@@@@@@&&&&&@@@@@@@@@BJ:          :G@@@@@@Y.                     ?&@@@@@#! ~G@@@@@@@@@@&?:!B@@@@@#J.          !B@@@@@&J^Y&@@@@B~               ~B@@@@@@@@@@@@@@@@@B^            
+                     .~YG&@@@@@@@@@@@@@@@&B57:           :P@@@@@@G:                      .Y@@@@@@B~ !G&&&&&&&@#J:~P&@&&&#J:            !B&&&&&#?~P&&&&G~               ~B&&&&&&&&&&&&&&&@&G^            
+                        .^!?YPPPPPPPPP5J7~.              :J55555Y^                        .J55555Y!  ^~~~~~~~~~. :~~~~~~~.              ^~~~~~~^.:~~~~~.               .~~~~~~~~~~~~~~~~~~~.            
+                                                                                                                                                                                                        
+                                                                                                                                                                                                        
+				catvape/CustomModules/6872274481.lua
+				by maxlasertech and qwerty real realreal!!!
+]]
+assert(vape, 'Attempted to call a nil value');
 local vape = vape or {}
 local GuiLibrary = vape.gui or shared.GuiLibrary
 local cloneref = cloneref or function(instance) return instance end
@@ -109,14 +154,14 @@ local worldtoviewportpoint = function(pos)
 end
 
 local function vapeGithubRequest(scripturl)
-	if not isfile("vape/"..scripturl) then
-		local suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/"..scripturl, true) end)
+	if not isfile("catvape/"..scripturl) then
+		local suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/"..scripturl, true) end)
 		assert(suc, res)
 		assert(res ~= "404: Not Found", res)
 		if scripturl:find(".lua") then res = "--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.\n"..res end
-		writefile("vape/"..scripturl, res)
+		writefile("catvape/"..scripturl, res)
 	end
-	return readfile("vape/"..scripturl)
+	return readfile("catvape/"..scripturl)
 end
 
 local function downloadVapeAsset(path)
@@ -135,7 +180,7 @@ local function downloadVapeAsset(path)
 			repeat task.wait() until isfile(path)
 			textlabel:Destroy()
 		end)
-		local suc, req = pcall(function() return vapeGithubRequest(path:gsub("vape/assets", "assets")) end)
+		local suc, req = pcall(function() return vapeGithubRequest(path:gsub("catvape/assets", "assets")) end)
 		if suc and req then
 			writefile(path, req)
 		else
@@ -146,7 +191,7 @@ local function downloadVapeAsset(path)
 	return vapeCachedAssets[path]
 end
 
-local isBedShield = function(object)
+local isBedShield = function(obj)
 	if obj:GetAttribute("BedShieldEndTime") then
 		if obj:GetAttribute("BedShieldEndTime") > workspace:GetServerTimeNow() then 
 			return true
@@ -425,7 +470,7 @@ local function getSpeed()
 		if damageboosttick > tick() and doDamageBoost then
 			speed = speed * 1.15
 		end
-		if SpeedDamageBoost and SpeedDamageBoost > 1 then
+		if SpeedDamageBoost and SpeedDamageBoost >= 1 then
 			speed = speed * 1.15
 		end
 		if store.grapple > tick() then
@@ -927,7 +972,7 @@ local function CreateAutoHotbarGUI(children2, argstable)
 	addbutton.Position = UDim2.new(0, 93, 0, 9)
 	addbutton.Size = UDim2.new(0, 12, 0, 12)
 	addbutton.ImageColor3 = Color3.fromRGB(5, 133, 104)
-	addbutton.Image = downloadVapeAsset("vape/assets/AddItem.png")
+	addbutton.Image = downloadVapeAsset("catvape/assets/AddItem.png")
 	addbutton.Parent = toggleframe1
 	local children3 = Instance.new("Frame")
 	children3.Name = argstable["Name"].."Children"
@@ -968,7 +1013,7 @@ local function CreateAutoHotbarGUI(children2, argstable)
 	ItemListExitButton.ImageColor3 = Color3.fromRGB(121, 121, 121)
 	ItemListExitButton.Size = UDim2.new(0, 24, 0, 24)
 	ItemListExitButton.AutoButtonColor = false
-	ItemListExitButton.Image = downloadVapeAsset("vape/assets/ExitIcon1.png")
+	ItemListExitButton.Image = downloadVapeAsset("catvape/assets/ExitIcon1.png")
 	ItemListExitButton.Visible = true
 	ItemListExitButton.Position = UDim2.new(1, -31, 0, 8)
 	ItemListExitButton.BackgroundColor3 = Color3.fromRGB(26, 25, 26)
@@ -989,7 +1034,7 @@ local function CreateAutoHotbarGUI(children2, argstable)
 	local ItemListFrameShadow = Instance.new("ImageLabel")
 	ItemListFrameShadow.AnchorPoint = Vector2.new(0.5, 0.5)
 	ItemListFrameShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-	ItemListFrameShadow.Image = downloadVapeAsset("vape/assets/WindowBlur.png")
+	ItemListFrameShadow.Image = downloadVapeAsset("catvape/assets/WindowBlur.png")
 	ItemListFrameShadow.BackgroundTransparency = 1
 	ItemListFrameShadow.ZIndex = -1
 	ItemListFrameShadow.Size = UDim2.new(1, 6, 1, 6)
@@ -8783,7 +8828,7 @@ run(function()
 	local origtpstring = store.TPString
 	local Overlay = GuiLibrary.CreateCustomWindow({
 		Name = "Overlay",
-		Icon = "vape/assets/TargetIcon1.png",
+		Icon = "catvape/assets/TargetIcon1.png",
 		IconSize = 16
 	})
 	local overlayframe = Instance.new("Frame")
@@ -8883,7 +8928,7 @@ run(function()
 
 	GuiLibrary.ObjectsThatCanBeSaved.GUIWindow.Api.CreateCustomToggle({
 		Name = "Overlay",
-		Icon = "vape/assets/TargetIcon1.png",
+		Icon = "catvape/assets/TargetIcon1.png",
 		Function = function(callback)
 			overlayenabled = callback
 			Overlay.SetVisible(callback)
@@ -9204,18 +9249,15 @@ run(function()
 	})
 end)
 run(function()
-
 	local bedtp = {}
-
 	local bedtpmethod = {}
-
 	local tween
 	bedtp = vape.windows.utility.CreateOptionsButton({
 		Name = 'BedTP',
 		Function = function(call)
 			if call then
 				bedtp.ToggleButton()
-				if not vape.istoggled('Disabler') then
+				if not vape.istoggled('Bypass') then
 					warningNotification('Cat', 'Teleporting to the destination.', 4) 
 					lplr.Character.Humanoid.Health = 0
 					lplr.CharacterAdded:Wait()
@@ -9265,7 +9307,7 @@ run(function()
 		Name = 'PlayerTP',
 		Function = function(call)
 			if call then
-				if not vape.istoggled('Disabler') then
+				if not vape.istoggled('Bypass') then
 					playertp.ToggleButton()
 					warningNotification('Cat', 'Teleporting to the destination.', 4) 
 					lplr.Character.Humanoid.Health = 0
