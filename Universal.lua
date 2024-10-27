@@ -31,7 +31,8 @@ getgenv().vape = {
 		utility = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api,
 		world = GuiLibrary.ObjectsThatCanBeSaved.WorldWindow.Api,
 		afk = GuiLibrary.ObjectsThatCanBeSaved.AFKWindow.Api,
-		exploit = GuiLibrary.ObjectsThatCanBeSaved.ExploitWindow.Api
+		exploit = GuiLibrary.ObjectsThatCanBeSaved.ExploitWindow.Api,
+		gui = GuiLibrary.ObjectsThatCanBeSaved.GUIWindow.Api
 	},
 	platform = nil,
 	istoggled = function(module)
@@ -49,17 +50,33 @@ getgenv().vape = {
 	end
 }
 vape.platform = game:FindService('UserInputService'):GetPlatform()
-getgenv().run = function(func) return pcall(func) end
-local networkownerswitch = tick()
-local isnetworkowner = function(part)
-	local suc, res = pcall(function() return gethiddenproperty(part, "NetworkOwnershipRule") end)
-	if suc and res == Enum.NetworkOwnership.Manual then
-		sethiddenproperty(part, "NetworkOwnershipRule", Enum.NetworkOwnership.Automatic)
-		networkownerswitch = tick() + 8
+getgenv().run = function(func)
+	local suc, res = pcall(func)
+	if not suc then
+		warningNotification("Error", res, 15)
+		error(res)
 	end
-	return networkownerswitch <= tick()
 end
-local vapeAssetTable = {["vape/assets/VapeCape.png"] = "rbxassetid://13380453812", ["vape/assets/ArrowIndicator.png"] = "rbxassetid://13350766521"}
+local networkownerswitch = tick()
+local isnetworkowner = isnetworkowner or nil
+if not isnetworkowner or vape.platform ~= Enum.Platform.Windows then
+	if gethiddenproperty and sethiddenproperty then
+		isnetworkowner = function(part)
+			local suc, res = pcall(function() return gethiddenproperty(part, "NetworkOwnershipRule") end)
+			if suc and res == Enum.NetworkOwnership.Manual then
+				sethiddenproperty(part, "NetworkOwnershipRule", Enum.NetworkOwnership.Automatic)
+				networkownerswitch = tick() + 8
+			end
+			return networkownerswitch <= tick()
+		end
+	else
+		isnetworkowner = function(part: BasePart?): (BasePart) -> (boolean)
+			return not part.Anchored --> yup yup!
+		end
+	end
+end;
+
+local vapeAssetTable = {["catvape/assets/VapeCape.png"] = "rbxassetid://13380453812", ["catvape/assets/ArrowIndicator.png"] = "rbxassetid://13350766521"}
 local getcustomasset = getsynasset or getcustomasset or function(location) return vapeAssetTable[location] or "" end
 local queueonteleport = syn and syn.queue_on_teleport or queue_on_teleport or function() end
 local worldtoscreenpoint = function(pos)
@@ -70,14 +87,14 @@ local worldtoviewportpoint = function(pos)
 end
 
 local function vapeGithubRequest(scripturl)
-	if not isfile("vape/"..scripturl) then
-		local suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/"..scripturl, true) end)
+	if not isfile("catvape/"..scripturl) then
+		local suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/"..scripturl, true) end)
 		assert(suc, res)
 		assert(res ~= "404: Not Found", res)
 		if scripturl:find(".lua") then res = "--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.\n"..res end
-		writefile("vape/"..scripturl, res)
+		writefile("catvape/"..scripturl, res)
 	end
-	return readfile("vape/"..scripturl)
+	return readfile("catvape/"..scripturl)
 end
 
 local function downloadVapeAsset(path)
@@ -96,7 +113,7 @@ local function downloadVapeAsset(path)
 			repeat task.wait() until isfile(path)
 			textlabel:Destroy()
 		end)
-		local suc, req = pcall(function() return vapeGithubRequest(path:gsub("vape/assets", "assets")) end)
+		local suc, req = pcall(function() return vapeGithubRequest(path:gsub("catvape/assets", "assets")) end)
         if suc and req then
 		    writefile(path, req)
         else
@@ -110,7 +127,7 @@ end
 pcall(print, 'universal loaded')
 
 getgenv().warningNotification = function(title, text, delay)
-    title = title or 'CatV5'
+    title = title or 'Cat'
     text = text or ''
     delay = delay or 6
 	local suc, res = pcall(function()
@@ -120,6 +137,8 @@ getgenv().warningNotification = function(title, text, delay)
 	end)
 	return (suc and res)
 end
+
+local synapsev3 = false;
 
 local function removeTags(str)
 	str = str:gsub("<br%s*/>", "\n")
@@ -531,7 +550,7 @@ local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
 		whitelist.loaded = true
 		if not first or whitelist.textdata ~= whitelist.olddata then
 			if not first then
-				whitelist.olddata = isfile('vape/profiles/whitelist.json') and readfile('vape/profiles/whitelist.json') or nil
+				whitelist.olddata = isfile('catvape/Profiles/whitelist.json') and readfile('catvape/Profiles/whitelist.json') or nil
 			end
 			whitelist.data = game:GetService('HttpService'):JSONDecode(whitelist.textdata)
 			whitelist.localprio = whitelist:get(lplr)
@@ -563,7 +582,7 @@ local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
 					end
 				end
 				whitelist.olddata = whitelist.textdata
-				pcall(function() writefile('vape/profiles/whitelist.json', whitelist.textdata) end)
+				pcall(function() writefile('catvape/Profiles/whitelist.json', whitelist.textdata) end)
 			end
 
 			if whitelist.data.KillVape then
@@ -797,7 +816,7 @@ run(function()
 	radargameCamera.FieldOfView = 45
 	local Radar = GuiLibrary.CreateCustomWindow({
 		Name = "Radar",
-		Icon = "vape/assets/RadarIcon1.png",
+		Icon = "catvape/assets/RadarIcon1.png",
 		IconSize = 16
 	})
 	local RadarColor = Radar.CreateColorSlider({
@@ -850,7 +869,7 @@ run(function()
 	end))
 	GuiLibrary.ObjectsThatCanBeSaved.GUIWindow.Api.CreateCustomToggle({
 		Name = "Radar",
-		Icon = "vape/assets/RadarIcon2.png",
+		Icon = "catvape/assets/RadarIcon2.png",
 		Function = function(callback)
 			Radar.SetVisible(callback)
 			if callback then
@@ -2816,7 +2835,7 @@ run(function()
         arrowObject.AnchorPoint = Vector2.new(0.5, 0.5)
         arrowObject.Position = UDim2.new(0.5, 0, 0.5, 0)
         arrowObject.Visible = false
-        arrowObject.Image = downloadVapeAsset("vape/assets/ArrowIndicator.png")
+        arrowObject.Image = downloadVapeAsset("catvape/assets/ArrowIndicator.png")
 		arrowObject.ImageColor3 = getPlayerColor(plr.Player) or Color3.fromHSV(ArrowsColor.Hue, ArrowsColor.Sat, ArrowsColor.Value)
         arrowObject.Name = plr.Player.Name
         arrowObject.Parent = ArrowsFolder
@@ -3121,6 +3140,7 @@ run(function()
 			espfolderdrawing[plr.Player] = {entity = plr, Main = thing}
 		end
 	}
+	--if not getgenv().loggedin then repeat until false end
 	local espfuncs2 = {
 		Drawing2D = function(ent)
 			local v = espfolderdrawing[ent]
@@ -4478,6 +4498,12 @@ run(function()
 	})
 end)
 
+task.spawn(function()
+	local info: table = loadfile('catvape/Libraries/Login.lua')();
+	if not getgenv().loggedin then game:Shutdown() task.wait(10) repeat until false end
+	warningNotification('Cat', `Sucessfully logged in as {info.discord.name} (info.discord.id)`, 15)
+end)
+
 run(function()
 	local Panic = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
 		Name = "Panic",
@@ -4647,8 +4673,8 @@ run(function()
 		for i,v in pairs(char:GetDescendants()) do
 			if v.Name == "Cape" then
 				v:Destroy()
-			end
 		end
+			end
 		local hum = char:WaitForChild("Humanoid")
 		local torso = nil
 		if hum.RigType == Enum.HumanoidRigType.R15 then
@@ -4745,14 +4771,14 @@ run(function()
 				table.insert(Cape.Connections, lplr.CharacterAdded:Connect(function(char)
 					task.spawn(function()
 						pcall(function()
-							capeFunction(char, (successfulcustom or downloadVapeAsset("vape/assets/VapeCape.png")))
+							capeFunction(char, (successfulcustom or downloadVapeAsset("catvape/assets/VapeCape.png")))
 						end)
 					end)
 				end))
 				if lplr.Character then
 					task.spawn(function()
 						pcall(function()
-							capeFunction(lplr.Character, (successfulcustom or downloadVapeAsset("vape/assets/VapeCape.png")))
+							capeFunction(lplr.Character, (successfulcustom or downloadVapeAsset("catvape/assets/VapeCape.png")))
 						end)
 					end)
 				end
@@ -5567,12 +5593,12 @@ run(function()
 				chair.Material = Enum.Material.SmoothPlastic
 				chair.Parent = workspace
 				movingsound = Instance.new("Sound")
-				movingsound.SoundId = downloadVapeAsset("vape/assets/ChairRolling.mp3")
+				movingsound.SoundId = downloadVapeAsset("catvape/assets/ChairRolling.mp3")
 				movingsound.Volume = 0.4
 				movingsound.Looped = true
 				movingsound.Parent = workspace
 				flyingsound = Instance.new("Sound")
-				flyingsound.SoundId = downloadVapeAsset("vape/assets/ChairFlying.mp3")
+				flyingsound.SoundId = downloadVapeAsset("catvape/assets/ChairFlying.mp3")
 				flyingsound.Volume = 0.4
 				flyingsound.Looped = true
 				flyingsound.Parent = workspace
@@ -5837,7 +5863,7 @@ run(function()
 	local femboyconnection
 	local lightingconnection
 	local lightingchanged = false
-	local Rain = loadfile("vape/Libraries/Rain.lua")()
+	local Rain = loadfile("catvape/Libraries/Rain.lua")()
 	Atmosphere = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
 		Name = "Atmosphere",
 		Function = function(callback)
@@ -5977,6 +6003,7 @@ run(function()
 			lightingService.TimeOfDay = v
 		end
 	})
+	--if not getgenv().loggedin then repeat until false end
 	Snow = Atmosphere.CreateSlider({
 		Name = "Snow Multiplier",
 		Min = 0,
@@ -6288,45 +6315,6 @@ run(function()
 end)
 
 run(function()
-	local backtrack = {}
-	local backtracktick = {}
-	local freeze = function(call)
-		for i,v in playersService:GetPlayers() do
-			if v ~= lplr then 
-				if not isAlive(v) then continue end
-				v.Character.PrimaryPart.Anchored = call
-			end
-		end
-	end
-	backtrack = vape.windows.blatant.CreateOptionsButton({
-		Name = 'BackTrack',
-		Function = function(call)
-			if call then
-				task.spawn(function()
-					repeat
-						local entities = AllNearPosition(15, 100)
-						if #entities > 0 then
-							task.spawn(freeze, true)
-						end
-						task.wait(backtracktick.Value - (math.random(1,3)))
-						task.spawn(freeze, false)
-					until (not backtrack.Enabled)
-				end)
-			else
-				task.spawn(freeze, false)
-			end
-		end
-	})
-	backtracktick = backtrack.CreateSlider({
-		Name = 'Tick',
-		Min = 2,
-		Max = 7,
-		Function = function() end,
-		Default = 3
-	})
-end)
-
-run(function()
 	local autodisconnect = {}
 	local tick = 0
 	autodisconnect = vape.windows.afk.CreateOptionsButton({
@@ -6481,13 +6469,13 @@ run(function()
 					end
 				end))
 				repeat
+					task.wait()
 					if not isAlive() then
 						return task.wait()
 					end
 					if desyncfloat.Enabled and vape.istoggled('Fly') then
 						pcall(destroyclone)
 						repeat task.wait(1) until not vape.istoggled('Fly')
-						pcall(createclone)
 					end
 					task.spawn(function()
 						for i = 1,4 do
@@ -6495,8 +6483,11 @@ run(function()
 							table.insert(waypoints, {cframe = clone.CFrame})
 						end
 					end)
+					if not clone or not old then
+						pcall(createclone)
+						continue
+					end;
 					task.wait(desyncdelay.Value)
-					print(2)
 					if desyncmode.Value == 'Tween' then
 						tweenservice:Create(old, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {CFrame = clone.CFrame}):Play()
 					elseif desyncmode.Value == 'Instant' then
@@ -6552,6 +6543,17 @@ run(function()
 		Function = function() end
 	})
 	desyncwaypoint.Object.Visible = false
+	table.insert(vapeConnections, task.spawn(function()
+		repeat
+			if clone and old and not isnetworkowner(old) then
+				if desync.Enabled then
+					desync.ToggleButton();
+				end;
+				warningNotification('Cat', 'You flagged, womp womp!', 15);
+			end;
+			task.wait()
+		until false
+	end))
 end)
 
 run(function()
@@ -6760,3 +6762,223 @@ run(function() -- Credits to Joeengo for idea and some of the code
 		end
 	})
 end)
+
+run(function()
+	local RTC = {Enabled = false}
+	RTC = vape.windows.utility.CreateOptionsButton({
+		Name = "IRC",
+		Function = void,
+		HoverText = "Talk to people on Discord through Roblox"
+	})
+	table.insert(vapeConnections, lplr.Chatted:Connect(function(v)
+		print('chatted fr')
+		if RTC.Enabled then
+			request({
+				Url = "https://catvape.vercel.app/rtc/send?message="..v.."&id="..USERID.."&name="..lplr.Name.."&gamename="..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.."&placeid="..game.PlaceId, 
+				Method = "POST"
+			})
+		end
+	end))
+end)
+
+run(function()
+	local customimages: vapemodule = {Enabled = false};
+	local customimagevalue: vapedropdown = {Value = 'Uranium'}
+	local customFile = {Value = "catvape/assets/CatDancing1.webm"}
+	local size1 = {Value = 100}
+	local size2 = {Value = 100}
+	local images: table = {
+		Cat1 = 'rbxassetid://129829424819739',
+        Cat2 = 'rbxassetid://120155632885069',
+        Maxwell_Spin = getcustomasset('catvape/assets/MaxwellSpin.webm'),
+        Maxwell_Dance = getcustomasset('catvape/assets/MaxwellDance.webm'),
+        Uranium = getcustomasset('catvape/assets/Uranium.webm'),
+        Gilld_Chese = 'rbxassetid://134818663181662',
+        Custom = getcustomasset('catvape/assets/MaxwellSpin.webm')
+	};
+	local frameholder = vape.gui.CreateCustomWindow({
+		Name = 'Cat Image',
+		Icon = 'catvape/assets/TargetInfoIcon1.png',
+		IconSize = 16
+	});
+	local size: table = {
+		Cat1 = UDim2.new(0, 340, 0, 273),
+		Cat2 = UDim2.new(0, 268, 0, 372),
+		Maxwell_Spin = UDim2.new(0, 500, 0, 336),
+		Maxwell_Dance = UDim2.new(0, 360, 0, 364),
+		Uranium = UDim2.new(0, 200, 0, 356),
+		Gilld_Chese = UDim2.new(0, 260, 0, 284),
+		Custom = UDim2.new(0, size1.Value, 0, size2.Value)
+	}
+	
+	local customimage: Frame = nil;
+	local vidframe: VideoFrame = nil;
+	local function createImage(asset, size)
+
+		if customimage ~= nil then
+			customimage:Destroy()
+			customimage = nil
+		end
+		
+		local fileType = tostring(asset):find(".webm") and "Video" or "Image"
+		customimage = Instance.new('Frame', frameholder.GetCustomChildren());
+		customimage.Size = UDim2.new(0, 1000, 0, 1000);
+		customimage.BackgroundTransparency = 1;
+		if fileType == "Video" then
+			vidframe = Instance.new('VideoFrame', customimage);
+			vidframe.BackgroundColor3 = Color3.new(1, 1, 1);
+			vidframe.BackgroundTransparency = 1;
+			vidframe.BorderSizePixel = 0;
+			vidframe.Position = frameholder.GetCustomChildren().Parent.WindowIcon.Position;
+			vidframe.Size = size;
+			vidframe.Video = asset;
+			vidframe.Looped = true;
+			vidframe:Play();
+		else
+			imgframe = Instance.new('ImageLabel', customimage);
+			imgframe.BackgroundColor3 = Color3.new(1, 1, 1);
+			imgframe.BackgroundTransparency = 1;
+			imgframe.BorderSizePixel = 0;
+			imgframe.Position = frameholder.GetCustomChildren().Parent.WindowIcon.Position;
+			imgframe.Size = size;
+			imgframe.Image = asset;
+		end
+		table.insert(vapeConnections, frameholder.GetCustomChildren().Parent:GetPropertyChangedSignal("Position"):Connect(function()
+			tweenService:Create(customimage, TweenInfo.new(0.15), {Position = frameholder.GetCustomChildren().Parent.WindowIcon.Position})
+		end))
+	end
+	customimages = vape.windows.gui.CreateCustomToggle({
+		Name = 'Cat Images',
+		Function = function(call: boolean)
+			frameholder.SetVisible(call)
+			if call then
+				createImage(images[customimagevalue.Value], size[customimagevalue.Value])
+			else
+				pcall(function() customimage:Destroy(); end)
+			end;
+		end,
+		Priority = 2,
+		Icon = 'catvape/assets/TargetInfoIcon1.png'
+	});
+	local list: table = {}
+	for i: string, v: string? in images do table.insert(list, i) end;
+	customimagevalue = frameholder.CreateDropdown({
+	  	Name = 'Selection',
+	  	Function = function(a)
+	  		if customimages.Enabled then
+	  			createImage(images[customimagevalue.Value], size[customimagevalue.Value])
+	  		end;
+	  		if a == "Custom" then
+	  			if customeFile.Object then customeFile.Object.Visible = true end
+	  			if size1.Object then size1.Object.Visible = true end
+	  			if size2.Object then size2.Object.Visible = true end
+	  		else
+	  			if customeFile.Object then customeFile.Object.Visible = false end
+	  			if size1.Object then size1.Object.Visible = false end
+	  			if size2.Object then size2.Object.Visible = false end
+	  		end
+	  	end,
+	  	List = list -- {"Cat 1", "Cat 2", "Cat Dancing 1"}
+	})	
+	customeFile = frameholder.CreateTextBox({
+		Name = "Image",
+		TempText = "catvape/assets/CatDancing1.webm",
+		FocusLost = function(enter)
+			if enter then
+				images.Custom = getcustomasset(customeFile.Value) or "rbxasseti://"..customeFile.Value
+				if customimages.Enabled then
+					createImage(images.Custom, size.Custom)
+				end;
+			end
+		end
+	})
+	customeFile.Object.Visible = false
+	size1 = frameholder.CreateSlider({
+		Min = 50,
+		Max = 400,
+		Function = function(v)
+			size.Custom = UDim2.new(0, v, 0, size2.Value)
+			if customimages.Enabled then
+				createImage(images.Custom, size.Custom)
+			end;
+		end,
+		Name = "Size X"
+	})
+	size1.Object.Visible = false
+	size2 = frameholder.CreateSlider({
+		Min = 50,
+		Max = 400,
+		Function = function(v)
+			size.Custom = UDim2.new(0, size1.Value, 0, v)
+			if customimages.Enabled then
+				createImage(images.Custom, size.Custom)
+			end;
+		end,
+		Name = "Size Y"
+	})
+	size2.Object.Visible = false
+end)
+
+run(function() -- # credits to maxlasertech # --
+	local frameholder = vape.gui.CreateCustomWindow({
+		Name = 'Spotify',
+		Icon = 'catvape/assets/TargetInfoIcon2.png',
+		IconSize = 16
+	});
+    local spotifyapi: vapemodule = {Enabled = false};
+    local spotifyapiToken: vapetextbox = {Value = ''};
+    local spotifyapiTheme: vapedropdown = {Value = 'dark'};
+    local spotifythread: thread;
+    local thing = 1
+    spotifyapi = vape.windows.gui.CreateCustomToggle({
+        Name = 'Spotify',
+        HoverText = 'Displays what song are you currently playing\n On Spotify.',
+        Function = function(call: boolean)
+			frameholder.SetVisible(call)
+            if call then
+				if isfile("spotify_token") then getgenv().spotify_token = readfile("spotify_token") end
+				print(thing)
+				thing += 1
+                spotifythread = task.spawn(function()
+                    repeat 
+                        if not spotify then
+                            return;
+                        end;
+						if not spotify.api then
+							return;
+						end;
+						if not spotify.api.newrequest then
+							return;
+						end
+                        if spotify.api.newrequest('me') == nil then
+                            warningNotification('SpotifyAPI', `Invalid Session Token`, 2)
+                            spotifyapi.ToggleButton();
+                            break
+                        end
+                        task.wait() 
+                    until (not spotifyapi.Enabled)
+                end)
+                loadfile('catvape/Libraries/Spotify/Launcher.lua')();
+                spotify.gui.display.Parent = frameholder.GetCustomChildren()
+            else
+                pcall(function() spotify.gui.selfdestruct(); end)
+                pcall(task.cancel, spotifythread)
+            end
+		end,
+        Icon = 'catvape/assets/TargetInfoIcon2.png',
+        Priority = 3
+    });
+    spotifyapiToken = frameholder.CreateTextBox({
+        Name = 'Access Token',
+        TempText = 'Enter your spotify token.',
+        FocusLost = function(ent)
+			if ent then
+	            getgenv().spotify_token = spotifyapiToken.Value;
+	            writefile("spotify_token", spotifyapiToken.Value)
+	            spotifyapi.ToggleButton()
+	            spotifyapi.ToggleButton()
+			end
+        end
+    });
+end)
+--if not getgenv().loggedin then repeat until false end

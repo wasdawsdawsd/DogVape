@@ -1,5 +1,4 @@
-local cloneref = cloneref or function(instance) return instance end
-local baseDirectory = (shared.VapePrivate and "vapeprivate/" or shared.catvape and 'catvape/' or "vape/")
+local cloneref: () -> () = (identifyexecutor():find('Synapse') or not cloneref) and function(instance: any) return instance end or cloneref;
 local httpservice = cloneref(game.GetService(game, 'HttpService'))
 
 local function run(func)
@@ -8,15 +7,15 @@ end
 
 local latest = false
 
-local API = loadfile(baseDirectory.."Libraries/API.lua")
+local API = loadfile("catvape/Libraries/API.lua")
 
 run(function()
     API.New("version", "GET", true)
-    if not isfile(baseDirectory.."version.txt") then
-        writefile(baseDirectory.."version.txt", API.Get("version"))
+    if not isfile("catvape/version.txt") then
+        writefile("catvape/version.txt", API.Get("version"))
         latest = true
     else
-        local version = readfile(baseDirectory.."version.txt")
+        local version = readfile("catvape/version.txt")
         if API.Get("version") >= version then
             latest = false
             warn("Old version detected!")
