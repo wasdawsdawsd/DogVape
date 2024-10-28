@@ -806,8 +806,19 @@ GuiLibrary.SelfDestructEvent.Event:Connect(function()
 	vapeInjected = false
 	entityLibrary.selfDestruct()
 	for i, v in pairs(vapeConnections) do
-		if v.Disconnect then pcall(function() v:Disconnect() end) continue end
-		if v.disconnect then pcall(function() v:disconnect() end) continue end
+		pcall(function()
+			if v.Disconnect then 
+				pcall(function()
+					v:Disconnect() 
+				end) 
+			end
+			if v.disconnect then 
+				pcall(function() 
+					v:disconnect() 
+				end) 
+			end
+		end)
+		pcall(task.cancel, v)
 	end
 end)
 
@@ -6315,6 +6326,45 @@ run(function()
 end)
 
 run(function()
+	local backtrack = {}
+	local backtracktick = {}
+	local freeze = function(call)
+		for i,v in playersService:GetPlayers() do
+			if v ~= lplr then 
+				if not isAlive(v) then continue end
+				v.Character.PrimaryPart.Anchored = call
+			end
+		end
+	end
+	backtrack = vape.windows.blatant.CreateOptionsButton({
+		Name = 'BackTrack',
+		Function = function(call)
+			if call then
+				task.spawn(function()
+					repeat
+						local entities = AllNearPosition(15, 100)
+						if #entities > 0 then
+							task.spawn(freeze, true)
+						end
+						task.wait(backtracktick.Value - (math.random(1,3)))
+						task.spawn(freeze, false)
+					until (not backtrack.Enabled)
+				end)
+			else
+				task.spawn(freeze, false)
+			end
+		end
+	})
+	backtracktick = backtrack.CreateSlider({
+		Name = 'Tick',
+		Min = 2,
+		Max = 7,
+		Function = function() end,
+		Default = 3
+	})
+end)
+
+run(function()
 	local autodisconnect = {}
 	local tick = 0
 	autodisconnect = vape.windows.afk.CreateOptionsButton({
@@ -6796,7 +6846,7 @@ run(function()
         Gilld_Chese = 'rbxassetid://134818663181662',
         Custom = getcustomasset('catvape/assets/MaxwellSpin.webm')
 	};
-	local frameholder = vape.gui.CreateCustomWindow({
+	local frameholder: () -> () = vape.gui.CreateCustomWindow({
 		Name = 'Cat Image',
 		Icon = 'catvape/assets/TargetInfoIcon1.png',
 		IconSize = 16
@@ -6929,16 +6979,13 @@ run(function() -- # credits to maxlasertech # --
     local spotifyapiToken: vapetextbox = {Value = ''};
     local spotifyapiTheme: vapedropdown = {Value = 'dark'};
     local spotifythread: thread;
-    local thing = 1
-    spotifyapi = vape.windows.gui.CreateCustomToggle({
+    spotifyapi = vape.windows.render.CreateOptionsButton({
         Name = 'Spotify',
         HoverText = 'Displays what song are you currently playing\n On Spotify.',
         Function = function(call: boolean)
 			frameholder.SetVisible(call)
             if call then
 				if isfile("spotify_token") then getgenv().spotify_token = readfile("spotify_token") end
-				print(thing)
-				thing += 1
                 spotifythread = task.spawn(function()
                     repeat 
                         if not spotify then
@@ -6961,23 +7008,21 @@ run(function() -- # credits to maxlasertech # --
                 loadfile('catvape/Libraries/Spotify/Launcher.lua')();
                 spotify.gui.display.Parent = frameholder.GetCustomChildren()
             else
-                pcall(function() spotify.gui.selfdestruct(); end)
+                spotify.gui.selfdestruct();
                 pcall(task.cancel, spotifythread)
             end
 		end,
         Icon = 'catvape/assets/TargetInfoIcon2.png',
         Priority = 3
     });
-    spotifyapiToken = frameholder.CreateTextBox({
+    spotifyapiToken = spotifyapi.CreateTextBox({
         Name = 'Access Token',
         TempText = 'Enter your spotify token.',
-        FocusLost = function(ent)
-			if ent then
-	            getgenv().spotify_token = spotifyapiToken.Value;
-	            writefile("spotify_token", spotifyapiToken.Value)
-	            spotifyapi.ToggleButton()
-	            spotifyapi.ToggleButton()
-			end
+        FocusLost = function()
+            getgenv().spotify_token = spotifyapiToken.Value;
+            writefile("spotify_token", spotifyapiToken.Value)
+            spotifyapi.ToggleButton()
+            spotifyapi.ToggleButton()
         end
     });
 end)
