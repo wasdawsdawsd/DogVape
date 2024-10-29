@@ -512,7 +512,7 @@ if shared.VapeExecuted then
 
 	GuiLibrary.SaveSettings = function()
 		if not loadedsuccessfully then return end
-		writefile(baseDirectory.."Profiles/"..(bedwars and 6872274481 or game.PlaceId)..".vapeprofiles.txt", httpService:JSONEncode(GuiLibrary.Profiles))
+		writefile(baseDirectory.."Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt", httpService:JSONEncode(GuiLibrary.Profiles))
 		local WindowTable = {}
 		for i,v in pairs(GuiLibrary.ObjectsThatCanBeSaved) do
 			if v.Type == "Window" then
@@ -577,7 +577,7 @@ if shared.VapeExecuted then
 		end
 		GuiLibrary.Settings["MobileButtons"] = {["Type"] = "MobileButtons", ["Buttons"] = mobileButtonSaving}
 		WindowTable["GUIKeybind"] = {["Type"] = "GUIKeybind", ["Value"] = GuiLibrary["GUIKeybind"]}
-		writefile(baseDirectory.."Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and 6872274481 or game.PlaceId)..".vapeprofile.txt", httpService:JSONEncode(GuiLibrary.Settings))
+		writefile(baseDirectory.."Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt", httpService:JSONEncode(GuiLibrary.Settings))
 		writefile(baseDirectory.."Profiles/"..(bedwars and 6872274481 or game.GameId).."GUIPositions.vapeprofile.txt", httpService:JSONEncode(WindowTable))
 	end
 
@@ -590,12 +590,12 @@ if shared.VapeExecuted then
 			if isfile("vapeprivate/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt") == false and isfile("catvape/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt") then
 				writefile("vapeprivate/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt", readfile("catvape/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt"))
 			end
-			if isfile("vapeprivate/Profiles/"..(bedwars and 6872274481 or game.PlaceId)..".vapeprofiles.txt") == false and isfile("catvape/Profiles/"..(bedwars and 6872274481 or game.PlaceId)..".vapeprofiles.txt") then
-				writefile("vapeprivate/Profiles/"..(bedwars and 6872274481 or game.PlaceId)..".vapeprofiles.txt", readfile("catvape/Profiles/"..(bedwars and 6872274481 or game.PlaceId)..".vapeprofiles.txt"))
+			if isfile("vapeprivate/Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt") == false and isfile("catvape/Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt") then
+				writefile("vapeprivate/Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt", readfile("catvape/Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt"))
 			end
 		end
 		local success2, result2 = pcall(function()
-			return httpService:JSONDecode(readfile(baseDirectory.."Profiles/"..(bedwars and 6872274481 or game.PlaceId)..".vapeprofiles.txt"))
+			return httpService:JSONDecode(readfile(baseDirectory.."Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt"))
 		end)
 		if success2 and type(result2) == "table" then
 			GuiLibrary.Profiles = result2
@@ -611,8 +611,8 @@ if shared.VapeExecuted then
 			GuiLibrary.CurrentProfile = customprofile
 		end
 		if shared.VapePrivate then
-			if isfile("vapeprivate/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and 6872274481 or game.PlaceId)..".vapeprofile.txt") == false and isfile("catvape/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and 6872274481 or game.PlaceId)..".vapeprofile.txt") then
-				writefile("vapeprivate/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and 6872274481 or game.PlaceId)..".vapeprofile.txt", readfile("catvape/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and 6872274481 or game.PlaceId)..".vapeprofile.txt"))
+			if isfile("vapeprivate/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt") == false and isfile("catvape/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt") then
+				writefile("vapeprivate/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt", readfile("catvape/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt"))
 			end
 		end
 		local success3, result3 = pcall(function()
@@ -686,7 +686,7 @@ if shared.VapeExecuted then
 			end
 		end
 		local success, result = pcall(function()
-			return httpService:JSONDecode(readfile(baseDirectory.."Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and 6872274481 or game.PlaceId)..".vapeprofile.txt"))
+			return httpService:JSONDecode(readfile(baseDirectory.."Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt"))
 		end)
 		print('zzzs')
 		if success and type(result) == "table" then
@@ -836,7 +836,7 @@ if shared.VapeExecuted then
 	GuiLibrary["SwitchProfile"] = function(profilename)
 		GuiLibrary.Profiles[GuiLibrary.CurrentProfile]["Selected"] = false
 		GuiLibrary.Profiles[profilename]["Selected"] = true
-		if (not isfile(baseDirectory.."Profiles/"..(profilename == "default" and "" or profilename)..(bedwars and 6872274481 or game.PlaceId)..".vapeprofile.txt")) then
+		if (not isfile(baseDirectory.."Profiles/"..(profilename == "default" and "" or profilename)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt")) then
 			local realprofile = GuiLibrary.CurrentProfile
 			GuiLibrary.CurrentProfile = profilename
 			GuiLibrary.SaveSettings()
