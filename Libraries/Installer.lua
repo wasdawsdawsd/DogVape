@@ -167,9 +167,9 @@ local initiate: () -> () = function(): () -> ()
         else
             installtext.Text = `Failed to install catvape/{v}`;
             warn(`❌ [ Installer Error ]: Failed to install, file named catvape/{v} doesn't exist on the github.`);
-        end
-    end
-    stage = 7;
+        end;
+    end;
+    stage = 1;
     for i: number, v: table in httpservice:JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/assets')) do
         if v.name then
             installtext.Text = `Installing catvape/assets/{v.name}`;
