@@ -173,12 +173,12 @@ local initiate: () -> () = function(): () -> ()
     for i: number, v: table in httpservice:JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/assets')) do
         if v.name then
             installtext.Text = `Installing catvape/assets/{v.name}`;
-            stage += 1;
             if not isfile(`catvape/assets/{v.name}`) then
                 writefile(`catvape/assets/{v.name}`, game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/assets/'..v.name));
             else
                 task.wait(0.05);
             end;
+            stage += 1;
             installtext.Text = `Installed catvape/assets/{v.name}`;
         end;
     end;
