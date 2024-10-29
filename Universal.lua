@@ -6388,7 +6388,7 @@ run(function()
 		HoverText = 'Automatically rejoins the game\nafter 20 minutes. (doesn\'t work on bedwars)'
 	})
 end)
-if not cheatengine then
+if not badexecutor then
 	warningNotification('Cat', 'Running as non cheat engine mode.', 10)
 else
 	warningNotification('Cat', 'Running as cheat engine mode.', 10)

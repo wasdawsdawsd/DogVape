@@ -138,7 +138,7 @@ local function vapeGithubRequest(scripturl)
 				print('The connection to github is taking a while, Please be patient.')
 			end
 		end)
-		suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/"..scripturl, true) end)
+		suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/"..scripturl, true) end)
 		if not suc or res == "404: Not Found" then
 			error("Failed to connect to github : catvape/"..scripturl.." : "..res)
 			error(res)
@@ -148,6 +148,12 @@ local function vapeGithubRequest(scripturl)
 	end
 	return readfile(baseDirectory..scripturl)
 end
+for i,v in {'Solara', 'Salad', 'Nihon'} do
+	if identifyexecutor():find(v) then
+		getgenv().badexecutor = true;
+		break;
+	end;
+end;
 
 local function downloadVapeAsset(path)
 	if customassetcheck then
@@ -1973,18 +1979,10 @@ GeneralSettings.CreateButton2({
 
 local function loadVape()
 	loadstring(vapeGithubRequest("Universal.lua"))()
-	if isfile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua") then
-		print(game.PlaceId)
-		loadstring(readfile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua"))()
-	else
-		if not shared.VapeDeveloper then
-			local suc, publicrepo = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/"..game.PlaceId..".lua") end)
-			if suc and publicrepo and publicrepo ~= "404: Not Found" then
-				writefile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua", "--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.\n"..publicrepo)
-				loadstring(readfile(baseDirectory.. "CustomModules/"..game.PlaceId..".lua"))()
-			end
-		end
-	end
+	local gamefile: string = vapeGithubRequest(`CustomModules/{game.PlaceId}.lua`);
+	if gamefile then
+		loadstring(gamefile)();
+	end;
 	if #ProfilesTextList.ObjectList == 0 then
 		table.insert(ProfilesTextList.ObjectList, "default")
 		ProfilesTextList.RefreshValues(ProfilesTextList.ObjectList)
