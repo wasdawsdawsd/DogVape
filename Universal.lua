@@ -1,3 +1,4 @@
+getgenv().badexecutor = true
 local GuiLibrary = shared.GuiLibrary
 local playersService = game:GetService("Players")
 local coreGui = game:GetService("CoreGui")
@@ -61,7 +62,7 @@ local networkownerswitch = tick()
 local isnetworkowner = isnetworkowner or nil
 if not isnetworkowner or vape.platform ~= Enum.Platform.Windows then
 	if gethiddenproperty and sethiddenproperty then
-		isnetworkowner = function(part)
+		isnetworkowner = function(part: BasePart): (BasePart) -> (boolean)
 			local suc, res = pcall(function() return gethiddenproperty(part, "NetworkOwnershipRule") end)
 			if suc and res == Enum.NetworkOwnership.Manual then
 				sethiddenproperty(part, "NetworkOwnershipRule", Enum.NetworkOwnership.Automatic)
@@ -70,10 +71,10 @@ if not isnetworkowner or vape.platform ~= Enum.Platform.Windows then
 			return networkownerswitch <= tick()
 		end
 	else
-		isnetworkowner = function(part: BasePart?): (BasePart) -> (boolean)
-			return not part.Anchored --> yup yup!
-		end
-	end
+		isnetworkowner = function(part: BasePart): (BasePart) -> (boolean)
+			return part.ReceiveAge == 0 and not part.Anchored and part.Velocity.Magnitude > 0;
+		end;
+	end;
 end;
 
 local vapeAssetTable = {["catvape/assets/VapeCape.png"] = "rbxassetid://13380453812", ["catvape/assets/ArrowIndicator.png"] = "rbxassetid://13350766521"}
@@ -2204,14 +2205,14 @@ run(function()
 		Name = "Range Visualizer",
 		Function = function(callback)
 			if callback then
-				KillauraRangeCirclePart = Instance.new("MeshPart")
+				--[[KillauraRangeCirclePart = Instance.new("MeshPart")
 				KillauraRangeCirclePart.MeshId = "rbxassetid://3726303797"
 				KillauraRangeCirclePart.Color = Color3.fromHSV(KillauraColor.Hue, KillauraColor.Sat, KillauraColor.Value)
 				KillauraRangeCirclePart.CanCollide = false
 				KillauraRangeCirclePart.Anchored = true
 				KillauraRangeCirclePart.Material = Enum.Material.Neon
 				KillauraRangeCirclePart.Size = Vector3.new(KillauraRange.Value * 0.7, 0.01, KillauraRange.Value * 0.7)
-				KillauraRangeCirclePart.Parent = gameCamera
+				KillauraRangeCirclePart.Parent = gameCamera]]
 			else
 				if KillauraRangeCirclePart then
 					KillauraRangeCirclePart:Destroy()
@@ -6373,9 +6374,9 @@ run(function()
 			if call then
 				task.spawn(function()
 					repeat
-						disconnecttick += 1
+						tick += 1
 						task.wait(1)
-					until (not autodisconnect.Enabled or tick == 1140)
+					until (not autodisconnect.Enabled or tick >= 1140)
 					if autodisconnect.Enabled then
 						game:FindService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lplr)
 					end
@@ -6387,7 +6388,11 @@ run(function()
 		HoverText = 'Automatically rejoins the game\nafter 20 minutes. (doesn\'t work on bedwars)'
 	})
 end)
-
+if not cheatengine then
+	warningNotification('Cat', 'Running as non cheat engine mode.', 10)
+else
+	warningNotification('Cat', 'Running as cheat engine mode.', 10)
+end
 run(function()
 	local AmongUs = {Enabled = false}
 	local Mode = {Value = "Among Us"}
@@ -6735,6 +6740,9 @@ run(function()
 		Name = "AvatarMods",
 		Function = function(callback)
 			if callback then
+				if badexecutor then
+					return;
+				end;
 				RunLoops:BindToHeartbeat("avm", function()
 					pcall(function()
 						if lplr.Character ~= nil then
@@ -6970,7 +6978,7 @@ run(function()
 end)
 
 run(function() -- # credits to maxlasertech # --
-	local frameholder = vape.gui.CreateCustomWindow({
+	local frameholder: () -> () = vape.gui.CreateCustomWindow({
 		Name = 'Spotify',
 		Icon = 'catvape/assets/TargetInfoIcon2.png',
 		IconSize = 16
@@ -7006,7 +7014,7 @@ run(function() -- # credits to maxlasertech # --
                     until (not spotifyapi.Enabled)
                 end)
                 loadfile('catvape/Libraries/Spotify/Launcher.lua')();
-                spotify.gui.display.Parent = frameholder.GetCustomChildren()
+                spotify.gui.display.Parent = frameholder.GetCustomChildren();
             else
                 spotify.gui.selfdestruct();
                 pcall(task.cancel, spotifythread)
@@ -7015,7 +7023,7 @@ run(function() -- # credits to maxlasertech # --
         Icon = 'catvape/assets/TargetInfoIcon2.png',
         Priority = 3
     });
-    spotifyapiToken = spotifyapi.CreateTextBox({
+    spotifyapiToken = frameholder.CreateTextBox({
         Name = 'Access Token',
         TempText = 'Enter your spotify token.',
         FocusLost = function()

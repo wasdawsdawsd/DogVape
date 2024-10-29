@@ -1,3 +1,35 @@
+export type vape = {
+    ObjectsThatCanBeSaved: {
+        ColorSliderColor: {Hue: number, Sat: number, Value: number}
+    }
+}
+export type vapemodule = {
+    Enabled: boolean,
+    ToggleButton: () -> (),
+    CreateToggle: () -> (),
+    CreateSlider: () -> (),
+    CreateTextBox: () -> (),
+    CreateDropdown: () -> (),
+    Object: Instance
+}
+export type vapetoggle = {
+    Enabled: boolean,
+    ToggleButton: () -> (),
+    Object: Instance
+}
+export type vapedropdown = {
+    Value: string?,
+    List: table,
+    Object: Instance
+}
+export type vapeslider = {
+    Object: Instance,
+    Value: number
+}
+export type vapetextbox = {
+    Object: Instance,
+    Value: number
+}
 local vape = vape
 local GuiLibrary = vape.gui
 local cloneref = cloneref or function(...) return (...) end
@@ -20,13 +52,13 @@ table.insert(vapeconnections, workspace:GetPropertyChangedSignal('CurrentCamera'
 end))
 
 run(function() 
-    local vapemodule = {};
-    local vapeslider = {};
-    local vapetextbox = {};
-    local vapetoggle = {};
+    local vapemodule: vapemodule = {};
+    local vapeslider: vapeslider = {};
+    local vapetextbox: vapetextbox = {};
+    local vapetoggle: vapetoggle = {};
     vapemodule = vape.windows.combat.CreateOptionsButton({
         Name = 'vapemodule',
-        Function = function(call)
+        Function = function(call: boolean)
             if call then
                 repeat
                     print('hi')
@@ -45,12 +77,12 @@ run(function()
         Name = 'vapeslider',
         Min = 1,
         Max = 100,
-        Function = function(val) end,
+        Function = function(val: number) end,
         Default = 50
     })
     vapetextbox = vapemodule.CreateTextBox({
         Name = 'vapetextbox',
-        Function = function(enter)
+        Function = function(enter: boolean)
             if not enter then return end
             print('Inserted')
         end

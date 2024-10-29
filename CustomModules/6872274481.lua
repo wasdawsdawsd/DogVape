@@ -1321,13 +1321,6 @@ run(function()
 	local InventoryUtil = require(replicatedstorage.TS.inventory["inventory-util"]).InventoryUtil
 	local OldGet = getmetatable(Client).Get
 	local OldBreak
-	local bowConstants = {RelX = 0, RelY = 0, RelZ = 0}
-	for i, v in debug.getupvalues(KnitClient.Controllers.ProjectileController.enableBeam) do
-		if type(v) == 'table' and rawget(v, 'RelX') then
-			bowConstants = v
-			break
-		end
-	end
 	bedwars = setmetatable({
 		AnimationType = require(replicatedstorage.TS.animation["animation-type"]).AnimationType,
 		AnimationUtil = require(replicatedstorage["rbxts_include"]["node_modules"]["@easy-games"]["game-core"].out["shared"].util["animation-util"]).AnimationUtil,
@@ -1342,7 +1335,7 @@ run(function()
 		BlockPlacer = require(replicatedstorage["rbxts_include"]["node_modules"]["@easy-games"]["block-engine"].out.client.placement["block-placer"]).BlockPlacer,
 		BlockEngine = require(lplr.PlayerScripts.TS.lib["block-engine"]["client-block-engine"]).ClientBlockEngine,
 		BlockEngineClientEvents = require(replicatedstorage["rbxts_include"]["node_modules"]["@easy-games"]["block-engine"].out.client["block-engine-client-events"]).BlockEngineClientEvents,
-		BowConstantsTable = bowConstants,
+		BowConstantsTable = debug.getupvalue(KnitClient.Controllers.ProjectileController.enableBeam, 7),
 		CannonAimRemote = dumpRemote(debug.getconstants(debug.getproto(KnitClient.Controllers.CannonController.startAiming, 5))),
 		CannonLaunchRemote = dumpRemote(debug.getconstants(KnitClient.Controllers.CannonHandController.launchSelf)),
 		ClickHold = require(replicatedstorage["rbxts_include"]["node_modules"]["@easy-games"]["game-core"].out.client.ui.lib.util["click-hold"]).ClickHold,
@@ -1563,15 +1556,23 @@ run(function()
 				local handType = ""
 				if currentHand then
 					local handData = bedwars.ItemTable[currentHand.itemType]
-					handType = handData.sword and "sword" or handData.block and "block" or currentHand.itemType:find("") and "bow"
+					handType = handData.sword and "sword" or handData.block and "block" or currentHand.itemType:find("bow") and "bow"
 				end
 				store.localHand = {tool = currentHand and currentHand.tool, Type = handType, amount = currentHand and currentHand.amount or 0}
 			end
 		end
 	end
 
-	table.insert(vapeConnections, bedwars.ClientStoreHandler.changed:connect(updateStore))
+	if not badexecutor then table.insert(vapeConnections, bedwars.ClientStoreHandler.changed:connect(updateStore)) end
 	updateStore(bedwars.ClientStoreHandler:getState(), {})
+	if badexecutor then
+		table.insert(vapeConnections, task.spawn(function()
+			repeat
+				updateStore(bedwars.ClientStoreHandler:getState(), {})
+				task.wait()
+			until false
+		end))
+	end
 
 	for i, v in pairs({"MatchEndEvent", "EntityDeathEvent", "EntityDamageEvent", "BedwarsBedBreak", "BalloonPopped", "AngelProgress"}) do
 		bedwars.Client:WaitFor(v):andThen(function(connection)
@@ -1620,10 +1621,12 @@ run(function()
 	end))
 
 	local oldZephyrUpdate = bedwars.WindWalkerController.updateJump
-	bedwars.WindWalkerController.updateJump = function(self, orb, ...)
-		store.zephyrOrb = lplr.Character and lplr.Character:GetAttribute("Health") > 0 and orb or 0
-		return oldZephyrUpdate(self, orb, ...)
-	end
+	if not badexecutor then
+		bedwars.WindWalkerController.updateJump = function(self, orb, ...)
+			store.zephyrOrb = lplr.Character and lplr.Character:GetAttribute("Health") > 0 and orb or 0
+			return oldZephyrUpdate(self, orb, ...)
+		end
+	end;
 
 	GuiLibrary.SelfDestructEvent.Event:Connect(function()
 		bedwars.WindWalkerController.updateJump = oldZephyrUpdate
@@ -2127,25 +2130,25 @@ run(function()
 end)
 
 run(function()
-	local ReachValue = {Value = 3.5}
+	local ReachValue = {Value = 14}
 
 	Reach = vape.windows.combat.CreateOptionsButton({
 		Name = "Reach",
 		Function = function(callback)
-			bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = callback and (ReachValue.Value + 2) * 4 or 14.4 
+			bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = callback and ReachValue.Value + 2 or 14.4
 		end,
 		HoverText = "Extends attack reach"
 	})
 	ReachValue = Reach.CreateSlider({
-		Name = "Reach (in blocks)",
+		Name = "Reach",
 		Min = 0,
-		Max = 4.5,
+		Max = 18,
 		Function = function(val)
 			if Reach.Enabled then
-				bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = (val + 2) * 4
+				bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = val + 2
 			end
 		end,
-		Default = 4.5
+		Default = 18
 	})
 end)
 
@@ -2974,7 +2977,7 @@ run(function()
 	local killauramethod = {Value = "Normal"}
 	local killauraothermethod = {Value = "Normal"}
 	local killauraanimmethod = {Value = "Normal"}
-	local killaurarange = {Value = 3.5}
+	local killaurarange = {Value = 14}
 	local killauraangle = {Value = 360}
 	local killauratargets = {Value = 10}
 	local killauraautoblock = {Enabled = false}
@@ -3344,7 +3347,7 @@ run(function()
 				end
 				table.insert(Killaura.Connections, runservice.RenderStepped:Connect(function()
 					vapeTargetInfo.Targets.Killaura = nil
-					local plrs = AllNearPosition(killaurarange.Value * 4, true, 10, killaurasortmethods[killaurasortmethod.Value], true)
+					local plrs = AllNearPosition(killaurarange.Value, true, 10, killaurasortmethods[killaurasortmethod.Value], true)
 					local firstPlayerNear
 					if #plrs > 0 then
 						local sword, swordmeta
@@ -3399,7 +3402,7 @@ run(function()
 								if (workspace:GetServerTimeNow() - bedwars.SwordController.lastAttack) < 0.02 then
 									break
 								end
-								local selfpos = selfrootpos + ((killaurarange.Value * 4) > 14 and (selfrootpos - root.Position).magnitude > 14.4 and (CFrame.lookAt(selfrootpos, root.Position).lookVector * ((selfrootpos - root.Position).magnitude - 14)) or Vector3.zero)
+								local selfpos = selfrootpos + (killaurarange.Value > 14 and (selfrootpos - root.Position).magnitude > 14.4 and (CFrame.lookAt(selfrootpos, root.Position).lookVector * ((selfrootpos - root.Position).magnitude - 14)) or Vector3.zero)
 								bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 								store.attackReach = math.floor((selfrootpos - root.Position).magnitude * 100) / 100
 								store.attackReachUpdate = tick() + 1
@@ -3495,12 +3498,12 @@ run(function()
 		List = sortmethods
 	})
 	killaurarange = Killaura.CreateSlider({
-		Name = "Attack range (in blocks)",
+		Name = "Attack range",
 		Min = 1,
-		Max = 4.5,
+		Max = 18,
 		Function = function(val)
 			if killaurarangecirclepart then
-				killaurarangecirclepart.Size = Vector3.new((val * 4) * 0.7, 0.01, val * 0.7)
+				killaurarangecirclepart.Size = Vector3.new(val * 0.7, 0.01, val * 0.7)
 			end
 		end,
 		Default = 18
@@ -3651,8 +3654,8 @@ run(function()
 		Name = "Range Visualizer",
 		Function = function(callback)
 			if callback then
-			    	--context issues moment
-			--[[	killaurarangecirclepart = Instance.new("MeshPart")
+				pcall(function()
+					setidentity(8)
 			    	killaurarangecirclepart.MeshId = "rbxassetid://3726303797"
 			    	killaurarangecirclepart.Color = Color3.fromHSV(killauracolor["Hue"], killauracolor["Sat"], killauracolor.Value)
 			    	killaurarangecirclepart.CanCollide = false
@@ -3662,7 +3665,8 @@ run(function()
 			    	if Killaura.Enabled then
 			    		killaurarangecirclepart.Parent = camera
 			    	end
-			    	bedwars.QueryUtil:setQueryIgnored(killaurarangecirclepart, true)]]
+			    	bedwars.QueryUtil:setQueryIgnored(killaurarangecirclepart, true)
+				end)
 			else
 				if killaurarangecirclepart then
 					killaurarangecirclepart:Destroy()
@@ -4237,7 +4241,7 @@ run(function()
 							shootvelo = Vector3.zero
 						end
 
-						local newlook = CFrame.new(offsetStartPos, shootpos) * CFrame.new(Vector3.new(-bedwarsBowConstantsTable.RelX, -bedwars.BowConstantsTable.RelY, 0))
+						local newlook = CFrame.new(offsetStartPos, shootpos) * CFrame.new(Vector3.new(-bedwars.BowConstantsTable.RelX, -bedwars.BowConstantsTable.RelY, 0))
 						shootpos = newlook.p + (newlook.lookVector * (offsetStartPos - shootpos).magnitude)
 						local calculated = LaunchDirection(offsetStartPos, shootpos, projectileSpeed, projectileGravity, false)
 						oldmove = plr.Character.Humanoid.MoveDirection
@@ -9073,7 +9077,7 @@ run(function()
 				task.spawn(function()
 					repeat
 						task.wait(0.4)
-						ReachLabel.Text = store.attackReachUpdate > tick() and (math.floor(store.attackReach / 4)).." blocks" or "0.00 blocks"
+						ReachLabel.Text = store.attackReachUpdate > tick() and store.attackReach.." studs" or "0.00 studs"
 					until (not ReachDisplay.Enabled)
 				end)
 			end

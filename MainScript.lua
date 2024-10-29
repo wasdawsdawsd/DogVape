@@ -1096,8 +1096,7 @@ end
 
 task.spawn(function()
 	repeat task.wait() until warningNotification
-	task.wait(1)
-	warningNotification("Cat", "Logging in...", 3)
+	warningNotification("Cat", "Loggin in...", 3)
 	loadfile("catvape/Libraries/Login.lua")()
 end)
 
