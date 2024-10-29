@@ -1321,6 +1321,13 @@ run(function()
 	local InventoryUtil = require(replicatedstorage.TS.inventory["inventory-util"]).InventoryUtil
 	local OldGet = getmetatable(Client).Get
 	local OldBreak
+	local bowConstants = {RelX = 0, RelY = 0, RelZ = 0}
+	for i, v in debug.getupvalues(KnitClient.Controllers.ProjectileController.enableBeam) do
+		if type(v) == 'table' and rawget(v, 'RelX') then
+			bowConstants = v
+			break
+		end
+	end
 	bedwars = setmetatable({
 		AnimationType = require(replicatedstorage.TS.animation["animation-type"]).AnimationType,
 		AnimationUtil = require(replicatedstorage["rbxts_include"]["node_modules"]["@easy-games"]["game-core"].out["shared"].util["animation-util"]).AnimationUtil,
@@ -1335,7 +1342,7 @@ run(function()
 		BlockPlacer = require(replicatedstorage["rbxts_include"]["node_modules"]["@easy-games"]["block-engine"].out.client.placement["block-placer"]).BlockPlacer,
 		BlockEngine = require(lplr.PlayerScripts.TS.lib["block-engine"]["client-block-engine"]).ClientBlockEngine,
 		BlockEngineClientEvents = require(replicatedstorage["rbxts_include"]["node_modules"]["@easy-games"]["block-engine"].out.client["block-engine-client-events"]).BlockEngineClientEvents,
-		BowConstantsTable = debug.getupvalue(KnitClient.Controllers.ProjectileController.enableBeam, 7),
+		BowConstantsTable = bowConstants,
 		CannonAimRemote = dumpRemote(debug.getconstants(debug.getproto(KnitClient.Controllers.CannonController.startAiming, 5))),
 		CannonLaunchRemote = dumpRemote(debug.getconstants(KnitClient.Controllers.CannonHandController.launchSelf)),
 		ClickHold = require(replicatedstorage["rbxts_include"]["node_modules"]["@easy-games"]["game-core"].out.client.ui.lib.util["click-hold"]).ClickHold,
@@ -1440,6 +1447,7 @@ run(function()
 		end
 		return originalRemote
 	end
+	getgenv().bedwars = bedwars
 
 	bedwars.BlockController.isBlockBreakable = function(self, breakTable, plr)
 		local obj = bedwars.BlockController:getStore():getBlockAt(breakTable.blockPosition)
@@ -2130,25 +2138,25 @@ run(function()
 end)
 
 run(function()
-	local ReachValue = {Value = 14}
+	local ReachValue = {Value = 3}
 
 	Reach = vape.windows.combat.CreateOptionsButton({
 		Name = "Reach",
 		Function = function(callback)
-			bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = callback and ReachValue.Value + 2 or 14.4
+			bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = callback and (ReachValue.Value + 2) * 4 or 14.4
 		end,
 		HoverText = "Extends attack reach"
 	})
 	ReachValue = Reach.CreateSlider({
-		Name = "Reach",
+		Name = "Reach (in blocks)",
 		Min = 0,
-		Max = 18,
+		Max = 6,
 		Function = function(val)
 			if Reach.Enabled then
-				bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = val + 2
+				bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = (val + 2) * 4
 			end
 		end,
-		Default = 18
+		Default = 4.5
 	})
 end)
 
@@ -2436,7 +2444,7 @@ run(function()
 
 				RunLoops:BindToHeartbeat("Fly", function(delta)
 					if GuiLibrary.ObjectsThatCanBeSaved["Lobby CheckToggle"].Api.Enabled then
-						if bedwars.matchState == 0 then return end
+						if store.matchState == 0 then return end
 					end
 					if entityLibrary.isAlive then
 						local playerMass = (entityLibrary.character.HumanoidRootPart:GetMass() - 1.4) * (delta * 100)
@@ -2687,7 +2695,7 @@ run(function()
 				local startCFrame = entityLibrary.isAlive and entityLibrary.character.HumanoidRootPart.CFrame
 				RunLoops:BindToHeartbeat("GrappleExploit", function(delta)
 					if GuiLibrary.ObjectsThatCanBeSaved["Lobby CheckToggle"].Api.Enabled then
-						if bedwars.matchState == 0 then return end
+						if store.matchState == 0 then return end
 					end
 					if entityLibrary.isAlive then
 						entityLibrary.character.HumanoidRootPart.Velocity = Vector3.zero
@@ -3347,7 +3355,7 @@ run(function()
 				end
 				table.insert(Killaura.Connections, runservice.RenderStepped:Connect(function()
 					vapeTargetInfo.Targets.Killaura = nil
-					local plrs = AllNearPosition(killaurarange.Value, true, 10, killaurasortmethods[killaurasortmethod.Value], true)
+					local plrs = AllNearPosition(killaurarange.Value * 4, true, 10, killaurasortmethods[killaurasortmethod.Value], true)
 					local firstPlayerNear
 					if #plrs > 0 then
 						local sword, swordmeta
@@ -3402,7 +3410,7 @@ run(function()
 								if (workspace:GetServerTimeNow() - bedwars.SwordController.lastAttack) < 0.02 then
 									break
 								end
-								local selfpos = selfrootpos + (killaurarange.Value > 14 and (selfrootpos - root.Position).magnitude > 14.4 and (CFrame.lookAt(selfrootpos, root.Position).lookVector * ((selfrootpos - root.Position).magnitude - 14)) or Vector3.zero)
+								local selfpos = selfrootpos + ((killaurarange.Value * 4) > 14 and (selfrootpos - root.Position).magnitude > 14.4 and (CFrame.lookAt(selfrootpos, root.Position).lookVector * ((selfrootpos - root.Position).magnitude - 14)) or Vector3.zero)
 								bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 								store.attackReach = math.floor((selfrootpos - root.Position).magnitude * 100) / 100
 								store.attackReachUpdate = tick() + 1
@@ -3498,15 +3506,15 @@ run(function()
 		List = sortmethods
 	})
 	killaurarange = Killaura.CreateSlider({
-		Name = "Attack range",
+		Name = "Attack range (in blocks)",
 		Min = 1,
-		Max = 18,
+		Max = 6,
 		Function = function(val)
 			if killaurarangecirclepart then
 				killaurarangecirclepart.Size = Vector3.new(val * 0.7, 0.01, val * 0.7)
 			end
 		end,
-		Default = 18
+		Default = 6
 	})
 	killauraangle = Killaura.CreateSlider({
 		Name = "Max angle",
@@ -9077,7 +9085,7 @@ run(function()
 				task.spawn(function()
 					repeat
 						task.wait(0.4)
-						ReachLabel.Text = store.attackReachUpdate > tick() and store.attackReach.." studs" or "0.00 studs"
+						ReachLabel.Text = store.attackReachUpdate > tick() and (math.floor(store.attackReach / 4)).. ' blocks' or '0.00 blocks'
 					until (not ReachDisplay.Enabled)
 				end)
 			end
