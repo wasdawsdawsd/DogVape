@@ -578,10 +578,15 @@ if shared.VapeExecuted then
 		GuiLibrary.Settings["MobileButtons"] = {["Type"] = "MobileButtons", ["Buttons"] = mobileButtonSaving}
 		WindowTable["GUIKeybind"] = {["Type"] = "GUIKeybind", ["Value"] = GuiLibrary["GUIKeybind"]}
 		writefile(baseDirectory.."Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt", httpService:JSONEncode(GuiLibrary.Settings))
-		writefile(baseDirectory.."Profiles/"..(bedwars and 6872274481 or game.GameId).."GUIPositions.vapeprofile.txt", httpService:JSONEncode(WindowTable))
+		writefile(baseDirectory.."Profiles/"..(bedwars and '6872274481' or game.GameId).."GUIPositions.vapeprofile.txt", httpService:JSONEncode(WindowTable))
 	end
 
 	GuiLibrary.LoadSettings = function(customprofile)
+		if shared.CustomSaveVape == 6872274481 and not bedwars then
+			repeat
+				task.wait()
+			until bedwars
+		end; 
 		if isfile("catvape/Profiles/GUIPositions.vapeprofile.txt") and game.GameId == 2619619496 then
 			writefile("catvape/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt", readfile("catvape/Profiles/GUIPositions.vapeprofile.txt"))
 			if delfile then delfile("catvape/Profiles/GUIPositions.vapeprofile.txt") end
@@ -1325,10 +1330,7 @@ if shared.VapeExecuted then
 					toggleframe2:TweenPosition(UDim2.new(0, 2, 0, 2), Enum.EasingDirection.InOut, Enum.EasingStyle.Linear, 0.1, true)
 				end
 				
-				if not argstable.Function then
-					argstable.Function = function() end
-				end
-				argstable["Function"](buttonapi["Enabled"] or nil)
+				pcall(function() argstable["Function"](buttonapi["Enabled"] or nil) end)
 			end
 			if argstable["Default"] then
 				buttonapi["ToggleButton"](true)
@@ -1548,7 +1550,8 @@ if shared.VapeExecuted then
 						pcall(function() argstable["Function"](buttonapi["Enabled"]) end)
 					end
 					if argstable["Default"] then
-						buttonapi["ToggleButton"](argstable["Default"], true)
+						pcall(function()
+						buttonapi["ToggleButton"](argstable["Default"], true) end)
 					end
 					buttontext.MouseButton1Click:Connect(function() buttonapi["ToggleButton"](not buttonapi["Enabled"], false) end)
 					buttontext.MouseEnter:Connect(function()
@@ -1664,10 +1667,10 @@ if shared.VapeExecuted then
 					sliderapi["Max"] = argstable["Max"]
 					sliderapi["SetValue"] = function(val)
 					--	val = math.clamp(val, argstable["Min"], argstable["Max"])
+						pcall(function() argstable["Function"](val) end)
 						sliderapi["Value"] = val
 						slider2.Size = UDim2.new(math.clamp((val / argstable["Max"]), 0.02, 0.97), 0, 1, 0)
 						text2.Text = sliderapi["Value"] .. ".0 "..(argstable["Percent"] and "%" or " ").." "
-						argstable["Function"](val)
 					end
 					slider3.MouseButton1Down:Connect(function()
 						local x,y,xscale,yscale,xscale2 = RelativeXY(slider1, inputService:GetMouseLocation())
@@ -1769,7 +1772,7 @@ if shared.VapeExecuted then
 					uicorner2.CornerRadius = UDim.new(0, 3)
 					uicorner2.Parent = toggleframe2
 
-					toggleframe1.MouseButton1Click:Connect(function() argstable["Function"]() end)
+					toggleframe1.MouseButton1Click:Connect(function() pcall(function() argstable["Function"]() end) end)
 					toggleframe1.MouseEnter:Connect(function()
 						tweenService:Create(toggleframe1, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {BackgroundColor3 = Color3.fromRGB(31, 30, 31)}):Play()
 					end)
@@ -2669,10 +2672,10 @@ if shared.VapeExecuted then
 			sliderapi["Max"] = argstable["Max"]
 			sliderapi["SetValue"] = function(val)
 			--	val = math.clamp(val, argstable["Min"], argstable["Max"])
+				pcall(function() argstable["Function"](val) end)
 				sliderapi["Value"] = val
 				slider2.Size = UDim2.new(math.clamp((val / argstable["Max"]), 0.02, 0.97), 0, 1, 0)
 				text2.Text = sliderapi["Value"] .. ".0 "..(argstable["Percent"] and "%" or " ").." "
-				argstable["Function"](val)
 			end
 			slider3.MouseButton1Down:Connect(function()
 				local x,y,xscale,yscale,xscale2 = RelativeXY(slider1, inputService:GetMouseLocation())
@@ -3335,7 +3338,7 @@ if shared.VapeExecuted then
 					dropGuiLibrary["Value"] = list[1]
 					drop1.Text = "         "..(translations[argstable["Name"]] ~= nil and translations[argstable["Name"]] or argstable["Name"]).." - "..list[1]
 					dropframe.Visible = false
-					argstable["Function"](list[1])
+					pcall(function() argstable["Function"](list[1]) end)
 				end
 				for del1, del2 in pairs(dropframe:GetChildren()) do if del2:IsA("TextButton") and del2.Name ~= "MainButton" then del2:Remove() end end
 				for numbe, listobj in pairs(val) do
@@ -3360,10 +3363,10 @@ if shared.VapeExecuted then
 					drop2.MouseButton1Click:Connect(function()
 						hoverbox.TextSize = 15
 						dropGuiLibrary["Value"] = listobj
+						pcall(function() argstable["Function"](listobj) end)
 						drop1.Text = "         "..(translations[argstable["Name"]] ~= nil and translations[argstable["Name"]] or argstable["Name"]).." - "..listobj
 						dropframe.Visible = false
 						--children.CanvasSize = UDim2.new(0, 0, 0, uilistlayout2.AbsoluteContentSize.Y + (dropframe.Visible and #dropframe:GetChildren() * 12 or 0) + 10)
-						argstable["Function"](listobj)
 						dropGuiLibrary["UpdateList"](list)
 						GuiLibrary["UpdateHudEvent"]:Fire()
 					end)
@@ -3378,9 +3381,9 @@ if shared.VapeExecuted then
 			end
 			dropGuiLibrary["SetValue"] = function(listobj)
 				dropGuiLibrary["Value"] = listobj
+				pcall(function() argstable["Function"](listobj) end)
 				drop1.Text = "         "..(translations[argstable["Name"]] ~= nil and translations[argstable["Name"]] or argstable["Name"]).." - "..listobj
 				dropframe.Visible = false
-				argstable["Function"](listobj)
 				dropGuiLibrary["UpdateList"](list)
 			end
 			dropGuiLibrary["UpdateList"](list)
@@ -3445,10 +3448,10 @@ if shared.VapeExecuted then
 			sliderapi["Object"] = frame
 			sliderapi["SetValue"] = function(val)
 				val = math.clamp(val, min, max)
+				pcall(function() argstable["Function"](val) end)
 				text2.BackgroundColor3 = Color3.fromHSV(val, 1, 1)
 				sliderapi["Value"] = val
 				slider3.Position = UDim2.new(math.clamp(val, 0.02, 0.95), -9, 0, -7)
-				argstable["Function"](val)
 			end
 			sliderapi["SetRainbow"] = function(val)
 				sliderapi["RainbowValue"] = val
@@ -5141,7 +5144,7 @@ if shared.VapeExecuted then
 						dropGuiLibrary["Value"] = list[1]
 						drop1.Text = "         "..(translations[argstable["Name"]] ~= nil and translations[argstable["Name"]] or argstable["Name"]).." - "..list[1]
 						dropframe.Visible = false
-						argstable["Function"](list[1])
+						pcall(function() argstable["Function"](list[1]) end)
 					end
 					for del1, del2 in pairs(dropframe:GetChildren()) do if del2:IsA("TextButton") and del2.Name ~= "MainButton" then del2:Remove() end end
 					for numbe, listobj in pairs(val) do
@@ -5165,13 +5168,13 @@ if shared.VapeExecuted then
 						drop2.Parent = dropframe
 						drop2.MouseButton1Click:Connect(function()
 							dropGuiLibrary["Value"] = listobj
+							pcall(function() argstable["Function"](listobj) end)
 							drop1.Text = "         "..(translations[argstable["Name"]] ~= nil and translations[argstable["Name"]] or argstable["Name"]).." - "..listobj
 							dropframe.Visible = false
 							local num = (uilistlayout2.AbsoluteContentSize.Y + (dropframe.Visible and #dropframe:GetChildren() * 9 or 0) + (40 * GuiLibrary["MainRescale"].Scale)) * (1 / GuiLibrary["MainRescale"].Scale)
 							frame.Size = UDim2.new(0, 220, 0, 40)
 							--children.CanvasSize = UDim2.new(0, 0, 0, num)
 							--windowtitle.Size = UDim2.new(0, 220, 0, math.clamp(45 + num, 0, 605))
-							argstable["Function"](listobj)
 							dropGuiLibrary["UpdateList"](list)
 							GuiLibrary["UpdateHudEvent"]:Fire()
 						end)
@@ -5179,10 +5182,10 @@ if shared.VapeExecuted then
 					end
 				end
 				dropGuiLibrary["SetValue"] = function(listobj)
+					pcall(function() argstable["Function"](listobj) end)
 					dropGuiLibrary["Value"] = listobj
 					drop1.Text = "         "..(translations[argstable["Name"]] ~= nil and translations[argstable["Name"]] or argstable["Name"]).." - "..listobj
 					dropframe.Visible = false
-					argstable["Function"](listobj)
 					dropGuiLibrary["UpdateList"](list)
 				end
 				dropGuiLibrary["UpdateList"](list)
@@ -5304,7 +5307,7 @@ if shared.VapeExecuted then
 					sliderapi["Sat"] = sat
 					sliderapi["Value"] = val
 					slider3.Position = UDim2.new(math.clamp(hue, 0.02, 0.95), -9, 0, -7)
-					argstable["Function"](hue, sat, val)
+					pcall(function() argstable["Function"](hue, sat, val) end)
 				end
 				sliderapi["SetRainbow"] = function(val)
 					sliderapi["RainbowValue"] = val
@@ -5468,11 +5471,11 @@ if shared.VapeExecuted then
 				sliderapi["Max"] = argstable["Max"]
 				sliderapi["SetValue"] = function(val)
 				--	val = math.clamp(val, argstable["Min"], argstable["Max"])
+					pcall(function() argstable["Function"](val) end)
 					sliderapi["Value"] = val
 					slider2.Size = UDim2.new(math.clamp((val / argstable["Max"]), 0.02, 0.97), 0, 1, 0)
 					local doublecheck = argstable["Double"] and (sliderapi["Value"] / argstable["Double"]) or sliderapi["Value"]
 					text2.Text = doublecheck .. " "..(argstable["Percent"] and "%  " or " ").." "
-					argstable["Function"](val)
 				end
 				slider3.MouseButton1Down:Connect(function()
 					local x,y,xscale,yscale,xscale2 = RelativeXY(slider1, inputService:GetMouseLocation())
@@ -6186,7 +6189,7 @@ if shared.VapeExecuted then
 				sliderapi["Sat"] = sat
 				sliderapi["Value"] = val
 				slider3.Position = UDim2.new(math.clamp(hue, 0.02, 0.95), -9, 0, -7)
-				argstable["Function"](hue, sat, val)
+				pcall(function() argstable["Function"](hue, sat, val) end)
 			end
 			sliderapi["SetRainbow"] = function(val)
 				sliderapi["RainbowValue"] = val
