@@ -157,7 +157,7 @@ local initiate: () -> () = function(): () -> ()
         makefolder(`catvape/{v}`);
         installtext.Text = `Installed catvape/{v}`;
     end;
-    stage = 49;
+    stage = 31;
     for i: number, v: string in files do
         local file: string = game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/'.. v);
         installtext.Text = `Installing catvape/{v}`;
