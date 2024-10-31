@@ -124,6 +124,7 @@ end;
 
 local files: table = {'GuiLibrary.lua', 'NewMainScript.lua', 'MainScript.lua', 'loader.lua', 'main.lua', 'Universal.lua', 'Libraries/Spotify/API.lua', 'Libraries/Spotify/GuiLibrary.lua', 'Libraries/Spotify/Launcher.lua', 'Libraries/Login.lua', 'Libraries/sha.lua', 'Libraries/Login.lua', 'Libraries/Rain.lua', 'Libraries/Blur.lua', 'Libraries/entityHandler.lua'};
 
+local progress: number = 0;
 local initiate: () -> () = function(): () -> ()
     main.Visible = false;
     installui.Visible = true;
@@ -141,7 +142,6 @@ local initiate: () -> () = function(): () -> ()
         until false;
     end);
     task.spawn(function()
-        local progress: number = 0;
         repeat
             if progresstext.Text == '100%' then
                 break;
@@ -181,6 +181,9 @@ local initiate: () -> () = function(): () -> ()
             stage += 1;
             installtext.Text = `Installed catvape/assets/{v.name}`;
         end;
+    end;
+    if progress <= 75 then
+         progresstext.Text = '100%';
     end;
     repeat task.wait() until progresstext.Text == '100%';
     installing = false;
