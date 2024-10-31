@@ -1978,12 +1978,8 @@ GeneralSettings.CreateButton2({
 
 
 local function loadVape()
-	print('ok')
 	pcall(function() loadstring(vapeGithubRequest("Universal.lua"))() end)
-	print('um')
 	local gamefile: string = vapeGithubRequest(`CustomModules/{game.PlaceId}.lua`);
-	print('real')
-	print(gamefile)
 	if gamefile then
 		loadstring(gamefile)();
 	end;

@@ -510,9 +510,10 @@ if shared.VapeExecuted then
 		table.insert(GuiLibrary.MobileButtons, touchButton)
 	end
 
-	GuiLibrary.SaveSettings = function()
+	GuiLibrary.SaveSettings = function(): () -> () --> same as the old one
 		if not loadedsuccessfully then return end
-		writefile(baseDirectory.."Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt", httpService:JSONEncode(GuiLibrary.Profiles))
+		local bedwars = shared.CustomSaveVape == 6872274481 and true or false
+		writefile(`catvape/Profiles/{bedwars and '6872274481' or game.PlaceId}.equippedProfile.json`, httpService:JSONEncode(GuiLibrary.Profiles));
 		local WindowTable = {}
 		for i,v in pairs(GuiLibrary.ObjectsThatCanBeSaved) do
 			if v.Type == "Window" then
@@ -577,30 +578,258 @@ if shared.VapeExecuted then
 		end
 		GuiLibrary.Settings["MobileButtons"] = {["Type"] = "MobileButtons", ["Buttons"] = mobileButtonSaving}
 		WindowTable["GUIKeybind"] = {["Type"] = "GUIKeybind", ["Value"] = GuiLibrary["GUIKeybind"]}
-		writefile(baseDirectory.."Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt", httpService:JSONEncode(GuiLibrary.Settings))
-		writefile(baseDirectory.."Profiles/"..(bedwars and '6872274481' or game.GameId).."GUIPositions.vapeprofile.txt", httpService:JSONEncode(WindowTable))
-	end
+		writefile(`catvape/Profiles/cat{GuiLibrary.CurrentProfile}{bedwars and '6872274481' or game.PlaceId}.catsettings.json`, httpService:JSONEncode(GuiLibrary.Settings));
+		writefile(`catvape/Profiles/cat{bedwars and '6872274481' or game.PlaceId}guiPosition.json`, httpService:JSONEncode(WindowTable))
+	end;
 
-	GuiLibrary.LoadSettings = function(customprofile)
-		if shared.CustomSaveVape == 6872274481 and not bedwars then
-			repeat
-				task.wait()
-			until bedwars
-		end; 
-		if isfile("catvape/Profiles/GUIPositions.vapeprofile.txt") and game.GameId == 2619619496 then
-			writefile("catvape/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt", readfile("catvape/Profiles/GUIPositions.vapeprofile.txt"))
-			if delfile then delfile("catvape/Profiles/GUIPositions.vapeprofile.txt") end
+	GuiLibrary.LoadSettings = function(customprofile: string): (string) -> ()
+		local bedwars = shared.CustomSaveVape == 6872274481 and true or false
+		local suc, res = pcall(function()
+			return httpService:JSONDecode(readfile(`catvape/Profiles/{bedwars and '6872274481' or game.PlaceId}.equippedProfile.json`));
+		end);
+		print(suc, res)
+		if suc and res and type(res) == 'table' then
+			print('real')
+			GuiLibrary.Profiles = res;
+		end;
+		for i: string, v: table in GuiLibrary.Profiles do
+			if v.Selected then
+				print('omegaed')
+				GuiLibrary.CurrentProfile = i;
+			end;
+		end;
+		local suc2, res2 = pcall(function()
+			return httpService:JSONDecode(readfile(`catvape/Profiles/cat{bedwars and '6872274481' or game.PlaceId}guiPosition.json`));
+		end);
+		if suc2 and res2 and type(res2) == 'table' then
+			for i: string, v: string in res2 do
+				local obj: any = GuiLibrary.ObjectsThatCanBeSaved[i];
+				if obj then
+					if v.Type == "Window" then
+						obj.Object.Position = UDim2.new(v.Position[1], v.Position[2], v.Position[3], v.Position[4])
+						obj.Object.Visible = v.Visible
+						if v.Expanded then
+							pcall(obj.Api.ExpandToggle);
+						end
+					end
+					if v.Type == 'CustomWindow' then
+						obj.Object.Position = UDim2.new(v.Position[1], v.Position[2], v.Position[3], v.Position[4])
+						obj.Object.Visible = v.Visible
+						if v.Pinned then
+							pcall(obj.Api.PinnedToggle);
+						end
+						pcall(obj.Api.CheckVis);
+					end
+					if v.Type == 'ButtonMain' then
+						if obj.Type == "ToggleMain" then
+							pcall(obj.Api.ToggleButton, v.Enabled, true)
+							if v.Keybind ~= '' then
+								obj.Api.Keybind = v.Keybind
+							end
+						else
+							if v.Enabled then
+								pcall(obj.Api.ToggleButton, false, true)
+								if v.Keybind ~= '' then
+									pcall(obj.Api.SetKeybind, v.Keybind)
+								end
+							end
+						end
+					end
+					if v.Type == 'DropdownMain' then
+						pcall(obj.Api.SetValue, v.Value);
+					end
+					if v.Type == 'ColorSliderMain' then
+						local valcheck = v.Hue ~= nil
+						obj.Api.SetValue(valcheck and v.Hue or v.Value or 0.44, valcheck or v.Sat or 1, valcheck and v.Value or 1)
+						if v.RainbowValue then obj.Api.SetRainbow(v.RainbowValue) end
+					end
+					if v.Type == "ColorSliderGUI" then --> bro please help :sob:
+						local valcheck = v.Hue ~= nil
+						obj.Api.Custom = v.Custom
+						if v.Custom then
+							pcall(obj.Api.SetValue, v.Hue, v.Sat, v.Value)
+						else
+							pcall(obj.Api.SetValue, valcheck and v.Hue and (v.Hue / 7) - 0.1 or v.Value or 0.44, valcheck and v.Sat or 1, valcheck and v.Value or 1)
+						end
+						if v.RainbowValue then 
+							pcall(obj.Api.SetRainbow, v.RainbowValue)
+						end
+					end
+					
+					if v.Type == 'SliderMain' then
+						pcall(obj.Api.SetValue, v.Value)
+					end
+					if v.Type == 'TextBoxMain' then
+						pcall(obj.Api.SetValue, v.Value)
+					end
+				end
+				if v.Type == 'GUIKeybind' then
+					GuiLibrary.GUIKeybind = v.Value
+				end;
+			end;
+		else
+			task.spawn(error, '❌ [ CatVape Settings ] --> Failed to load catvape\'s gui position');
+		end;
+		local success, result = pcall(function()
+			return httpService:JSONDecode(readfile(`catvape/Profiles/cat{GuiLibrary.CurrentProfile}{bedwars and '6872274481' or game.PlaceId}.catsettings.json`));
+		end);
+		if success and type(result) == "table" then
+			GuiLibrary["LoadSettingsEvent"]:Fire(result)
+			for i,v in pairs(result) do
+				if v.Type == "Custom" and GuiLibrary.Settings[i] then
+					GuiLibrary.Settings[i] = v
+				end
+				local obj = GuiLibrary.ObjectsThatCanBeSaved[i]
+				if obj then
+					local starttick = tick()
+					if v.Type == "Dropdown" then
+						pcall(obj["Api"]["SetValue"], v.Value)
+					end
+					if v.Type == "CustomWindow" then
+						obj.Object.Position = UDim2.new(v["Position"][1], v["Position"][2], v["Position"][3], v["Position"][4])
+						obj.Object.Visible = v["Visible"]
+						if v["Pinned"] then
+							pcall(obj["Api"]["PinnedToggle"])
+						end
+						pcall(obj["Api"]["CheckVis"])
+					end
+					if v.Type == "ButtonMain" then
+						if obj["Type"] == "ToggleMain" then
+							obj["Api"]["ToggleButton"](v["Enabled"], true)
+							if v["Keybind"] ~= "" then
+								obj["Api"]["Keybind"] = v["Keybind"]
+							end
+						else
+							if v["Enabled"] then
+								obj["Api"]["ToggleButton"](false, true)
+								if v["Keybind"] ~= "" then
+									pcall(obj["Api"]["SetKeybind"], v.Keybind)
+								end
+							end
+						end
+					end
+					if v.Type == "DropdownMain" then
+						pcall(obj["Api"]["SetValue"], v.Value)
+					end
+					if v.Type == "ColorSliderMain" then
+						local valcheck = v["Hue"] ~= nil
+						pcall(obj.Api.SetValue, valcheck and v["Hue"] or v["Value"] or 0.44, valcheck or v["Sat"] or 1, valcheck and v["Value"] or 1)
+						if v["RainbowValue"] then pcall(obj["Api"]["SetRainbow"], v.RainbowValue) end
+					end
+					if v.Type == "Button" then
+						if obj["Type"] == "Toggle" then
+							if obj["Api"]["Default"] then
+								if not v["Enabled"] then
+									pcall(obj.Api.ToggleButton, v["Enabled"], true)
+								end
+							else
+								pcall(obj["Api"]["ToggleButton"], v.Enabled, true)
+							end
+							if v["Keybind"] ~= "" then
+								obj["Api"]["Keybind"] = v["Keybind"]
+							end
+						elseif obj["Type"] == "TargetButton" then
+							pcall(obj["Api"]["ToggleButton"], v.Enabled, false)
+						else
+							if v["Enabled"] then
+								obj["Api"]["ToggleButton"](false)
+								if v["Keybind"] ~= "" then
+									obj["Api"]["SetKeybind"](v["Keybind"])
+								end
+							end
+						end
+					end
+					if v.Type == "NewToggle" then
+						obj["Api"]["ToggleButton"](v["Enabled"], true)
+						if v["Keybind"] ~= "" then
+							obj["Api"]["Keybind"] = v["Keybind"]
+						end
+					end
+					if v.Type == "Slider" then
+						obj["Api"]["SetValue"](v["OldMax"] ~= obj["Api"]["Max"] and v["Value"] > obj["Api"]["Max"] and obj["Api"]["Max"] or (v["OldDefault"] ~= obj["Api"]["Default"] and v["Value"] == v["OldDefault"] and obj["Api"]["Default"] or v["Value"]))
+					end
+					if v.Type == "TextBox" then
+						obj["Api"]["SetValue"](v["Value"])
+					end
+					if v.Type == "TextList" then
+						obj["Api"]["RefreshValues"]((v["ObjectTable"] or {}))
+					end
+					if v.Type == "TextCircleList" then
+						obj["Api"]["RefreshValues"]((v["ObjectTable"] or {}), (v["ObjectTableEnabled"] or {}))
+					end
+					if v.Type == "TwoSlider" then
+						obj["Api"]["SetValue"](v["Value"] == obj["Api"]["Min"] and 0 or v["Value"])
+						obj["Api"]["SetValue2"](v["Value2"])
+						obj.Object.Slider.ButtonSlider.Position = UDim2.new(v["SliderPos1"], -8, 1, -9)
+						obj.Object.Slider.ButtonSlider2.Position = UDim2.new(v["SliderPos2"], -8, 1, -9)
+						obj.Object.Slider.FillSlider.Size = UDim2.new(0, obj.Object.Slider.ButtonSlider2.AbsolutePosition.X - obj.Object.Slider.ButtonSlider.AbsolutePosition.X, 1, 0)
+						obj.Object.Slider.FillSlider.Position = UDim2.new(obj.Object.Slider.ButtonSlider.Position.X.Scale, 0, 0, 0)
+						--obj.Object.Slider.FillSlider.Size = UDim2.new((v["Value"] < obj["Api"]["Max"] and v["Value"] or obj["Api"]["Max"]) / obj["Api"]["Max"], 0, 1, 0)
+					end
+					if v.Type == "ColorSlider" then
+						v["Hue"] = v["Hue"] or 0.44
+						v["Sat"] = v["Sat"] or 1
+						v["Value"] = v["Value"] or 1
+						obj["Api"]["SetValue"](v["Hue"], v["Sat"], v["Value"])
+						if v["RainbowValue"] then obj["Api"]["SetRainbow"](v["RainbowValue"]) end
+						obj.Object.Slider.ButtonSlider.Position = UDim2.new(math.clamp(v["Hue"], 0.02, 0.95), -9, 0, -7)
+						pcall(function()
+							obj["Object2"].Slider.ButtonSlider.Position = UDim2.new(math.clamp(v["Sat"], 0.02, 0.95), -9, 0, -7)
+							obj["Object3"].Slider.ButtonSlider.Position = UDim2.new(math.clamp(v["Value"], 0.02, 0.95), -9, 0, -7)
+						end)
+					end
+					if v.Type == "LegitModule" then
+						obj.Object.Position = UDim2.new(v["Position"][1], v["Position"][2], v["Position"][3], v["Position"][4])
+						if v["Enabled"] then
+							obj["Api"]["ToggleButton"](true)
+						end
+					end
+				end
+			end
+			for i,v in pairs(result) do
+				local obj = GuiLibrary.ObjectsThatCanBeSaved[i]
+				if obj then
+					if v.Type == "OptionsButton" then
+						if v["Enabled"] and not obj["Api"]["Enabled"] then
+							local suc, res = pcall(function() obj["Api"]["ToggleButton"](false) end)
+							if not suc then print(res) end
+						end
+						if v["Keybind"] ~= "" then
+							obj["Api"]["SetKeybind"](v["Keybind"])
+						end
+					end
+				end
+			end
+			for i,v in pairs(result) do
+				if v.Type == "MobileButtons" then
+					for _, mobileButton in pairs(v.Buttons) do
+						local module = GuiLibrary.ObjectsThatCanBeSaved[mobileButton.Module]
+						if module then
+							createMobileButton(module.Api, Vector2.new(mobileButton.Position[1], mobileButton.Position[2]))
+						end
+					end
+				end
+			end
+		end
+		print('finished')
+		loadedsuccessfully = true;
+	end;
+	
+	--[[GuiLibrary.LoadSettings = function(customprofile)
+		if isfile("vape/Profiles/GUIPositions.vapeprofile.txt") and game.GameId == 2619619496 then
+			writefile("vape/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt", readfile("vape/Profiles/GUIPositions.vapeprofile.txt"))
+			if delfile then delfile("vape/Profiles/GUIPositions.vapeprofile.txt") end
 		end
 		if shared.VapePrivate then
-			if isfile("vapeprivate/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt") == false and isfile("catvape/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt") then
-				writefile("vapeprivate/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt", readfile("catvape/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt"))
+			if isfile("vapeprivate/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt") == false and isfile("vape/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt") then
+				writefile("vapeprivate/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt", readfile("vape/Profiles/"..(game.GameId).."GUIPositions.vapeprofile.txt"))
 			end
-			if isfile("vapeprivate/Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt") == false and isfile("catvape/Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt") then
-				writefile("vapeprivate/Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt", readfile("catvape/Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt"))
+			if isfile("vapeprivate/Profiles/"..(shared.CustomSaveVape or game.PlaceId)..".vapeprofiles.txt") == false and isfile("vape/Profiles/"..(shared.CustomSaveVape or game.PlaceId)..".vapeprofiles.txt") then
+				writefile("vapeprivate/Profiles/"..(shared.CustomSaveVape or game.PlaceId)..".vapeprofiles.txt", readfile("vape/Profiles/"..(shared.CustomSaveVape or game.PlaceId)..".vapeprofiles.txt"))
 			end
 		end
 		local success2, result2 = pcall(function()
-			return httpService:JSONDecode(readfile(baseDirectory.."Profiles/"..(bedwars and '6872274481' or game.PlaceId)..".vapeprofiles.txt"))
+			return httpService:JSONDecode(readfile(baseDirectory.."Profiles/"..(shared.CustomSaveVape or game.PlaceId)..".vapeprofiles.txt"))
 		end)
 		if success2 and type(result2) == "table" then
 			GuiLibrary.Profiles = result2
@@ -616,8 +845,8 @@ if shared.VapeExecuted then
 			GuiLibrary.CurrentProfile = customprofile
 		end
 		if shared.VapePrivate then
-			if isfile("vapeprivate/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt") == false and isfile("catvape/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt") then
-				writefile("vapeprivate/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt", readfile("catvape/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt"))
+			if isfile("vapeprivate/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(shared.CustomSaveVape or game.PlaceId)..".vapeprofile.txt") == false and isfile("vape/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(shared.CustomSaveVape or game.PlaceId)..".vapeprofile.txt") then
+				writefile("vapeprivate/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(shared.CustomSaveVape or game.PlaceId)..".vapeprofile.txt", readfile("vape/Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(shared.CustomSaveVape or game.PlaceId)..".vapeprofile.txt"))
 			end
 		end
 		local success3, result3 = pcall(function()
@@ -691,9 +920,8 @@ if shared.VapeExecuted then
 			end
 		end
 		local success, result = pcall(function()
-			return httpService:JSONDecode(readfile(baseDirectory.."Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(bedwars and '6872274481' or game.PlaceId)..".vapeprofile.txt"))
+			return httpService:JSONDecode(readfile(baseDirectory.."Profiles/"..(GuiLibrary.CurrentProfile == "default" and "" or GuiLibrary.CurrentProfile)..(shared.CustomSaveVape or game.PlaceId)..".vapeprofile.txt"))
 		end)
-		print('zzzs')
 		if success and type(result) == "table" then
 			GuiLibrary["LoadSettingsEvent"]:Fire(result)
 			for i,v in pairs(result) do
@@ -831,12 +1059,9 @@ if shared.VapeExecuted then
 					end
 				end
 			end
-		else
-			loadedsuccessfully = true;
-			print('file doesnt exist, ermmmmm make a profile frfr')
 		end
 		loadedsuccessfully = true
-	end
+	end]]
 
 	GuiLibrary["SwitchProfile"] = function(profilename)
 		GuiLibrary.Profiles[GuiLibrary.CurrentProfile]["Selected"] = false
