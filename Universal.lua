@@ -1,4 +1,4 @@
-getgenv().badexecutor = true
+
 local GuiLibrary = shared.GuiLibrary
 local playersService = game:GetService("Players")
 local coreGui = game:GetService("CoreGui")
@@ -7034,4 +7034,13 @@ run(function() -- # credits to maxlasertech # --
         end
     });
 end)
---if not getgenv().loggedin then repeat until false end
+task.spawn(function()
+	repeat
+		local commithash: table = game:GetService('HttpService'):JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/commits'));
+		if readfile('catvape/commithash.txt') ~= commithash[1].sha then
+			break
+		end
+		task.wait(5);
+	until false
+	warningNotification('Cat', 'Cat-Vape has published an update! reinject to get the changes. More in the discord', 60)
+end)
