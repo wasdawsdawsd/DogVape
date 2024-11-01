@@ -1,4 +1,3 @@
-
 local GuiLibrary = shared.GuiLibrary
 local playersService = game:GetService("Players")
 local coreGui = game:GetService("CoreGui")
@@ -55,7 +54,7 @@ getgenv().run = function(func)
 	local suc, res = pcall(func)
 	if not suc then
 		warningNotification("Error", res, 15)
-		error(res)
+		task.spawn(error, res)
 	end
 end
 local networkownerswitch = tick()
@@ -7040,7 +7039,8 @@ task.spawn(function()
 		if readfile('catvape/commithash.txt') ~= commithash[1].sha then
 			break
 		end
-		task.wait(5);
+		task.wait(10);
 	until false
+	print('updated')
 	warningNotification('Cat', 'Cat-Vape has published an update! reinject to get the changes. More in the discord', 60)
 end)
