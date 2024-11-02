@@ -66,10 +66,12 @@ if shared.VapeExecuted then
 		["catvape/assets/WorldIcon.png"] = "rbxassetid://13350796199",
 		["catvape/assets/VapeIcon.png"] = "rbxassetid://13350808582",
 		["catvape/assets/RenderIcon.png"] = "rbxassetid://13350832775",
-		["catvape/assets/VapeLogo1.png"] = "rbxassetid://13350860863",
-		["catvape/assets/VapeLogo3.png"] = "rbxassetid://13350872035",
+		["catvape/assets/VapeLogo1.png"] = "rbxassetid://138119168928202",
+		["catvape/assets/VapeLogo3.png"] = "rbxassetid://90262182361356",
 		["catvape/assets/VapeLogo2.png"] = "rbxassetid://13350876307",
-		["catvape/assets/VapeLogo4.png"] = "rbxassetid://13350877564"
+		["catvape/assets/VapeLogo4.png"] = "rbxassetid://13350877564",
+		["catvape/assets/afkicon.png"] = "rbxassetid://90127558911922",
+		["catvape/assets/exploiticon.png"] = "rbxassetid://88759082990018"
 	}
 	local getcustomasset = getsynasset or getcustomasset or function(location) return vapeAssetTable[location] or "" end
 	local customassetcheck = (getsynasset or getcustomasset) and true
