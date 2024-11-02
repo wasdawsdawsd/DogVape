@@ -54,14 +54,14 @@ getgenv().run = function(func)
 	local suc, res = pcall(func)
 	if not suc then
 		warningNotification("Error", res, 15)
-		task.spawn(error, res)
+		error(res)
 	end
 end
 local networkownerswitch = tick()
 local isnetworkowner = isnetworkowner or nil
 if not isnetworkowner or vape.platform ~= Enum.Platform.Windows then
 	if gethiddenproperty and sethiddenproperty then
-		isnetworkowner = function(part: BasePart): (BasePart) -> (boolean)
+		isnetworkowner = function(part)
 			local suc, res = pcall(function() return gethiddenproperty(part, "NetworkOwnershipRule") end)
 			if suc and res == Enum.NetworkOwnership.Manual then
 				sethiddenproperty(part, "NetworkOwnershipRule", Enum.NetworkOwnership.Automatic)
@@ -70,10 +70,10 @@ if not isnetworkowner or vape.platform ~= Enum.Platform.Windows then
 			return networkownerswitch <= tick()
 		end
 	else
-		isnetworkowner = function(part: BasePart): (BasePart) -> (boolean)
-			return part.ReceiveAge == 0 and not part.Anchored and part.Velocity.Magnitude > 0;
-		end;
-	end;
+		isnetworkowner = function(part: BasePart?): (BasePart) -> (boolean)
+			return not part.Anchored --> yup yup!
+		end
+	end
 end;
 
 local vapeAssetTable = {["catvape/assets/VapeCape.png"] = "rbxassetid://13380453812", ["catvape/assets/ArrowIndicator.png"] = "rbxassetid://13350766521"}
@@ -137,7 +137,9 @@ getgenv().warningNotification = function(title, text, delay)
 	end)
 	return (suc and res)
 end
-
+if failedautoupdate then
+	warningNotification("Cat", "Auto Update failed! "..failreason, 10)
+end
 local synapsev3 = false;
 
 local function removeTags(str)
@@ -806,19 +808,8 @@ GuiLibrary.SelfDestructEvent.Event:Connect(function()
 	vapeInjected = false
 	entityLibrary.selfDestruct()
 	for i, v in pairs(vapeConnections) do
-		pcall(function()
-			if v.Disconnect then 
-				pcall(function()
-					v:Disconnect() 
-				end) 
-			end
-			if v.disconnect then 
-				pcall(function() 
-					v:disconnect() 
-				end) 
-			end
-		end)
-		pcall(task.cancel, v)
+		if v.Disconnect then pcall(function() v:Disconnect() end) continue end
+		if v.disconnect then pcall(function() v:disconnect() end) continue end
 	end
 end)
 
@@ -2204,14 +2195,14 @@ run(function()
 		Name = "Range Visualizer",
 		Function = function(callback)
 			if callback then
-				--[[KillauraRangeCirclePart = Instance.new("MeshPart")
+				KillauraRangeCirclePart = Instance.new("MeshPart")
 				KillauraRangeCirclePart.MeshId = "rbxassetid://3726303797"
 				KillauraRangeCirclePart.Color = Color3.fromHSV(KillauraColor.Hue, KillauraColor.Sat, KillauraColor.Value)
 				KillauraRangeCirclePart.CanCollide = false
 				KillauraRangeCirclePart.Anchored = true
 				KillauraRangeCirclePart.Material = Enum.Material.Neon
 				KillauraRangeCirclePart.Size = Vector3.new(KillauraRange.Value * 0.7, 0.01, KillauraRange.Value * 0.7)
-				KillauraRangeCirclePart.Parent = gameCamera]]
+				KillauraRangeCirclePart.Parent = gameCamera
 			else
 				if KillauraRangeCirclePart then
 					KillauraRangeCirclePart:Destroy()
@@ -6326,45 +6317,6 @@ run(function()
 end)
 
 run(function()
-	local backtrack = {}
-	local backtracktick = {}
-	local freeze = function(call)
-		for i,v in playersService:GetPlayers() do
-			if v ~= lplr then 
-				if not isAlive(v) then continue end
-				v.Character.PrimaryPart.Anchored = call
-			end
-		end
-	end
-	backtrack = vape.windows.blatant.CreateOptionsButton({
-		Name = 'BackTrack',
-		Function = function(call)
-			if call then
-				task.spawn(function()
-					repeat
-						local entities = AllNearPosition(15, 100)
-						if #entities > 0 then
-							task.spawn(freeze, true)
-						end
-						task.wait(backtracktick.Value - (math.random(1,3)))
-						task.spawn(freeze, false)
-					until (not backtrack.Enabled)
-				end)
-			else
-				task.spawn(freeze, false)
-			end
-		end
-	})
-	backtracktick = backtrack.CreateSlider({
-		Name = 'Tick',
-		Min = 2,
-		Max = 7,
-		Function = function() end,
-		Default = 3
-	})
-end)
-
-run(function()
 	local autodisconnect = {}
 	local tick = 0
 	autodisconnect = vape.windows.afk.CreateOptionsButton({
@@ -6373,9 +6325,9 @@ run(function()
 			if call then
 				task.spawn(function()
 					repeat
-						tick += 1
+						disconnecttick += 1
 						task.wait(1)
-					until (not autodisconnect.Enabled or tick >= 1140)
+					until (not autodisconnect.Enabled or tick == 1140)
 					if autodisconnect.Enabled then
 						game:FindService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lplr)
 					end
@@ -6387,11 +6339,7 @@ run(function()
 		HoverText = 'Automatically rejoins the game\nafter 20 minutes. (doesn\'t work on bedwars)'
 	})
 end)
-if not badexecutor then
-	warningNotification('Cat', 'Running as non cheat engine mode.', 10)
-else
-	warningNotification('Cat', 'Running as cheat engine mode.', 10)
-end
+
 run(function()
 	local AmongUs = {Enabled = false}
 	local Mode = {Value = "Among Us"}
@@ -6739,9 +6687,6 @@ run(function()
 		Name = "AvatarMods",
 		Function = function(callback)
 			if callback then
-				if badexecutor then
-					return;
-				end;
 				RunLoops:BindToHeartbeat("avm", function()
 					pcall(function()
 						if lplr.Character ~= nil then
@@ -6853,7 +6798,7 @@ run(function()
         Gilld_Chese = 'rbxassetid://134818663181662',
         Custom = getcustomasset('catvape/assets/MaxwellSpin.webm')
 	};
-	local frameholder: () -> () = vape.gui.CreateCustomWindow({
+	local frameholder = vape.gui.CreateCustomWindow({
 		Name = 'Cat Image',
 		Icon = 'catvape/assets/TargetInfoIcon1.png',
 		IconSize = 16
@@ -6977,7 +6922,7 @@ run(function()
 end)
 
 run(function() -- # credits to maxlasertech # --
-	local frameholder: () -> () = vape.gui.CreateCustomWindow({
+	local frameholder = vape.gui.CreateCustomWindow({
 		Name = 'Spotify',
 		Icon = 'catvape/assets/TargetInfoIcon2.png',
 		IconSize = 16
@@ -6986,13 +6931,16 @@ run(function() -- # credits to maxlasertech # --
     local spotifyapiToken: vapetextbox = {Value = ''};
     local spotifyapiTheme: vapedropdown = {Value = 'dark'};
     local spotifythread: thread;
-    spotifyapi = vape.windows.render.CreateOptionsButton({
+    local thing = 1
+    spotifyapi = vape.windows.gui.CreateCustomToggle({
         Name = 'Spotify',
         HoverText = 'Displays what song are you currently playing\n On Spotify.',
         Function = function(call: boolean)
 			frameholder.SetVisible(call)
             if call then
 				if isfile("spotify_token") then getgenv().spotify_token = readfile("spotify_token") end
+				print(thing)
+				thing += 1
                 spotifythread = task.spawn(function()
                     repeat 
                         if not spotify then
@@ -7013,9 +6961,9 @@ run(function() -- # credits to maxlasertech # --
                     until (not spotifyapi.Enabled)
                 end)
                 loadfile('catvape/Libraries/Spotify/Launcher.lua')();
-                spotify.gui.display.Parent = frameholder.GetCustomChildren();
+                spotify.gui.display.Parent = frameholder.GetCustomChildren()
             else
-                spotify.gui.selfdestruct();
+                pcall(function() spotify.gui.selfdestruct(); end)
                 pcall(task.cancel, spotifythread)
             end
 		end,
@@ -7025,22 +6973,14 @@ run(function() -- # credits to maxlasertech # --
     spotifyapiToken = frameholder.CreateTextBox({
         Name = 'Access Token',
         TempText = 'Enter your spotify token.',
-        FocusLost = function()
-            getgenv().spotify_token = spotifyapiToken.Value;
-            writefile("spotify_token", spotifyapiToken.Value)
-            spotifyapi.ToggleButton()
-            spotifyapi.ToggleButton()
+        FocusLost = function(ent)
+			if ent then
+	            getgenv().spotify_token = spotifyapiToken.Value;
+	            writefile("spotify_token", spotifyapiToken.Value)
+	            spotifyapi.ToggleButton()
+	            spotifyapi.ToggleButton()
+			end
         end
     });
 end)
-task.spawn(function()
-	repeat
-		local commithash: table = game:GetService('HttpService'):JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/commits'));
-		if readfile('catvape/commithash.txt') ~= commithash[1].sha then
-			break
-		end
-		task.wait(10);
-	until false
-	print('updated')
-	warningNotification('Cat', 'Cat-Vape has published an update! reinject to get the changes. More in the discord', 60)
-end)
+--if not getgenv().loggedin then repeat until false end
