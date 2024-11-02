@@ -1447,7 +1447,6 @@ run(function()
 		end
 		return originalRemote
 	end
-	getgenv().bedwars = bedwars
 
 	bedwars.BlockController.isBlockBreakable = function(self, breakTable, plr)
 		local obj = bedwars.BlockController:getStore():getBlockAt(breakTable.blockPosition)
@@ -1564,23 +1563,15 @@ run(function()
 				local handType = ""
 				if currentHand then
 					local handData = bedwars.ItemTable[currentHand.itemType]
-					handType = handData.sword and "sword" or handData.block and "block" or currentHand.itemType:find("bow") and "bow"
+					handType = handData.sword and "sword" or handData.block and "block" or currentHand.itemType:find("") and "bow"
 				end
 				store.localHand = {tool = currentHand and currentHand.tool, Type = handType, amount = currentHand and currentHand.amount or 0}
 			end
 		end
 	end
 
-	if not badexecutor then table.insert(vapeConnections, bedwars.ClientStoreHandler.changed:connect(updateStore)) end
+	table.insert(vapeConnections, bedwars.ClientStoreHandler.changed:connect(updateStore))
 	updateStore(bedwars.ClientStoreHandler:getState(), {})
-	if badexecutor then
-		table.insert(vapeConnections, task.spawn(function()
-			repeat
-				updateStore(bedwars.ClientStoreHandler:getState(), {})
-				task.wait()
-			until false
-		end))
-	end
 
 	for i, v in pairs({"MatchEndEvent", "EntityDeathEvent", "EntityDamageEvent", "BedwarsBedBreak", "BalloonPopped", "AngelProgress"}) do
 		bedwars.Client:WaitFor(v):andThen(function(connection)
@@ -1629,12 +1620,10 @@ run(function()
 	end))
 
 	local oldZephyrUpdate = bedwars.WindWalkerController.updateJump
-	if not badexecutor then
-		bedwars.WindWalkerController.updateJump = function(self, orb, ...)
-			store.zephyrOrb = lplr.Character and lplr.Character:GetAttribute("Health") > 0 and orb or 0
-			return oldZephyrUpdate(self, orb, ...)
-		end
-	end;
+	bedwars.WindWalkerController.updateJump = function(self, orb, ...)
+		store.zephyrOrb = lplr.Character and lplr.Character:GetAttribute("Health") > 0 and orb or 0
+		return oldZephyrUpdate(self, orb, ...)
+	end
 
 	GuiLibrary.SelfDestructEvent.Event:Connect(function()
 		bedwars.WindWalkerController.updateJump = oldZephyrUpdate
@@ -2138,19 +2127,19 @@ run(function()
 end)
 
 run(function()
-	local ReachValue = {Value = 3}
+	local ReachValue = {Value = 3.5}
 
 	Reach = vape.windows.combat.CreateOptionsButton({
 		Name = "Reach",
 		Function = function(callback)
-			bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = callback and (ReachValue.Value + 2) * 4 or 14.4
+			bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = callback and (ReachValue.Value + 2) * 4 or 14.4 
 		end,
 		HoverText = "Extends attack reach"
 	})
 	ReachValue = Reach.CreateSlider({
 		Name = "Reach (in blocks)",
 		Min = 0,
-		Max = 6,
+		Max = 4.5,
 		Function = function(val)
 			if Reach.Enabled then
 				bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = (val + 2) * 4
@@ -2444,7 +2433,7 @@ run(function()
 
 				RunLoops:BindToHeartbeat("Fly", function(delta)
 					if GuiLibrary.ObjectsThatCanBeSaved["Lobby CheckToggle"].Api.Enabled then
-						if store.matchState == 0 then return end
+						if bedwars.matchState == 0 then return end
 					end
 					if entityLibrary.isAlive then
 						local playerMass = (entityLibrary.character.HumanoidRootPart:GetMass() - 1.4) * (delta * 100)
@@ -2695,7 +2684,7 @@ run(function()
 				local startCFrame = entityLibrary.isAlive and entityLibrary.character.HumanoidRootPart.CFrame
 				RunLoops:BindToHeartbeat("GrappleExploit", function(delta)
 					if GuiLibrary.ObjectsThatCanBeSaved["Lobby CheckToggle"].Api.Enabled then
-						if store.matchState == 0 then return end
+						if bedwars.matchState == 0 then return end
 					end
 					if entityLibrary.isAlive then
 						entityLibrary.character.HumanoidRootPart.Velocity = Vector3.zero
@@ -2985,7 +2974,7 @@ run(function()
 	local killauramethod = {Value = "Normal"}
 	local killauraothermethod = {Value = "Normal"}
 	local killauraanimmethod = {Value = "Normal"}
-	local killaurarange = {Value = 14}
+	local killaurarange = {Value = 3.5}
 	local killauraangle = {Value = 360}
 	local killauratargets = {Value = 10}
 	local killauraautoblock = {Enabled = false}
@@ -3508,13 +3497,13 @@ run(function()
 	killaurarange = Killaura.CreateSlider({
 		Name = "Attack range (in blocks)",
 		Min = 1,
-		Max = 6,
+		Max = 4.5,
 		Function = function(val)
 			if killaurarangecirclepart then
-				killaurarangecirclepart.Size = Vector3.new(val * 0.7, 0.01, val * 0.7)
+				killaurarangecirclepart.Size = Vector3.new((val * 4) * 0.7, 0.01, val * 0.7)
 			end
 		end,
-		Default = 6
+		Default = 18
 	})
 	killauraangle = Killaura.CreateSlider({
 		Name = "Max angle",
@@ -3662,8 +3651,8 @@ run(function()
 		Name = "Range Visualizer",
 		Function = function(callback)
 			if callback then
-				pcall(function()
-					setidentity(8)
+			    	--context issues moment
+			--[[	killaurarangecirclepart = Instance.new("MeshPart")
 			    	killaurarangecirclepart.MeshId = "rbxassetid://3726303797"
 			    	killaurarangecirclepart.Color = Color3.fromHSV(killauracolor["Hue"], killauracolor["Sat"], killauracolor.Value)
 			    	killaurarangecirclepart.CanCollide = false
@@ -3673,8 +3662,7 @@ run(function()
 			    	if Killaura.Enabled then
 			    		killaurarangecirclepart.Parent = camera
 			    	end
-			    	bedwars.QueryUtil:setQueryIgnored(killaurarangecirclepart, true)
-				end)
+			    	bedwars.QueryUtil:setQueryIgnored(killaurarangecirclepart, true)]]
 			else
 				if killaurarangecirclepart then
 					killaurarangecirclepart:Destroy()
@@ -4249,7 +4237,7 @@ run(function()
 							shootvelo = Vector3.zero
 						end
 
-						local newlook = CFrame.new(offsetStartPos, shootpos) * CFrame.new(Vector3.new(-bedwars.BowConstantsTable.RelX, -bedwars.BowConstantsTable.RelY, 0))
+						local newlook = CFrame.new(offsetStartPos, shootpos) * CFrame.new(Vector3.new(-bedwarsBowConstantsTable.RelX, -bedwars.BowConstantsTable.RelY, 0))
 						shootpos = newlook.p + (newlook.lookVector * (offsetStartPos - shootpos).magnitude)
 						local calculated = LaunchDirection(offsetStartPos, shootpos, projectileSpeed, projectileGravity, false)
 						oldmove = plr.Character.Humanoid.MoveDirection
@@ -9085,7 +9073,7 @@ run(function()
 				task.spawn(function()
 					repeat
 						task.wait(0.4)
-						ReachLabel.Text = store.attackReachUpdate > tick() and (math.floor(store.attackReach / 4)).. ' blocks' or '0.00 blocks'
+						ReachLabel.Text = store.attackReachUpdate > tick() and (math.floor(store.attackReach / 4)).." blocks" or "0.00 blocks"
 					until (not ReachDisplay.Enabled)
 				end)
 			end
@@ -10098,4 +10086,20 @@ run(function()
             end
         end
     })
+end)
+
+run(function()
+	local multiaura = {}
+	multiaura = vape.windows.exploit.CreateOptionsButton({
+		Name = 'BashExploit',
+		Function = function(call)
+			if call then
+				RunLoops:BindToStepped("multi", function()
+					replicatedstorage["events-@easy-games/game-core:shared/game-core-networking@getEvents.Events"].useAbility:FireServer("enter_knight_shield_defensive_stance")
+				end)
+			else
+				RunLoops:UnbindFromStepped("multi")
+			end
+		end
+	})
 end)
