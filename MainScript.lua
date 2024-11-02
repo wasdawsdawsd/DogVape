@@ -1975,11 +1975,6 @@ GeneralSettings.CreateButton2({
 		return loadfile('catvape/loader.lua')()
 	end
 })
-if isfile('result.txt') == 'fail' then
-	GuiLibrary.CreateNotification('Cat', 'Failed to update to the latest version due to crashing, Please reexecute cat.', 50, 'assets/WarningNotification.png')
-	writefile('catvape/commithash.txt', '')
-	return task.wait(9e9)
-end
 
 local function loadVape()
 	pcall(function() loadstring(vapeGithubRequest("Universal.lua"))() end)
