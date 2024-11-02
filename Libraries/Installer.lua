@@ -123,7 +123,7 @@ local selfdestruct: () -> () = function()
 end;
 
 local files: table = {'GuiLibrary.lua', 'NewMainScript.lua', 'MainScript.lua', 'loader.lua', 'main.lua', 'Universal.lua', 'Libraries/Spotify/API.lua', 'Libraries/Spotify/GuiLibrary.lua', 'Libraries/Spotify/Launcher.lua', 'Libraries/Login.lua', 'Libraries/sha.lua', 'Libraries/Login.lua', 'Libraries/Rain.lua', 'Libraries/Blur.lua', 'Libraries/entityHandler.lua'};
-
+delfolder('catvape')
 local progress: number = 0;
 local initiate: () -> () = function(): () -> ()
     main.Visible = false;
