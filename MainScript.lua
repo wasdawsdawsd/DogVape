@@ -1978,9 +1978,10 @@ GeneralSettings.CreateButton2({
 
 local function loadVape()
 	pcall(function() loadstring(vapeGithubRequest("Universal.lua"))() end)
-	local gamefile: string = vapeGithubRequest(`CustomModules/{game.PlaceId}.lua`);
+	local gamefile = nil
+	pcall(function() gamefile = vapeGithubRequest(`CustomModules/{game.PlaceId}.lua`); end)
 	if gamefile then
-		loadstring(gamefile)();
+		pcall(function() loadstring(gamefile)(); end)
 	end;
 	if #ProfilesTextList.ObjectList == 0 then
 		table.insert(ProfilesTextList.ObjectList, "default")
