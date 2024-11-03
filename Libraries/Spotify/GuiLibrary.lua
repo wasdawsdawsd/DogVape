@@ -145,10 +145,12 @@ spotifygui.update = function(tab)
     songartist.Text = "by "..tab.song.artist
     tweenservice:Create(updatedbar, TweenInfo.new(0.2), {Size = UDim2.new(0, progressBackground.Size.X.Offset / (tab.playback.total / tab.playback.current), 0, progressBackground.Size.Y.Offset)}):Play()
     if songtitle.Text ~= currentsong then
-		local randname = "song"..math.random(0,10)
-        writefile(randname..'.png', game.HttpGet(game, tab.song.cover))
+		local pathie = "catvape/TEMP_FILES"
+		local pathToWrite = pathie.."/"..songtitle.Text, songartist.Text
+        if not isfolder(pathie) then makefolder(pathie) end
+        writefile(pathToWrite, game.HttpGet(game, tab.song.cover))
 
-        songcover.Image = getcustomasset(randname..'.png')
+        songcover.Image = getcustomasset(pathToWrite)
         currentsong = songtitle.Text
     end
 end

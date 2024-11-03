@@ -42,15 +42,26 @@
 				catvape/Libraries/Spotify/Launcher.lua
 				by maxlasertech and qwerty real realreal!!!
 ]]
+print("launcher")
 local spotifyapi: (table) = loadfile('catvape/Libraries/Spotify/API.lua')();
+print("api")
 local gui: (table) = loadfile('catvape/Libraries/Spotify/GuiLibrary.lua')()
+print("gui")
 getgenv().spotify = {
     gui = gui,
     api = spotifyapi
 };
-task.spawn(function()
+task.spawn(function() -- Token update: qwertyui
+	repeat
+		spotifyapi.updatetoken(account_token)
+		task.wait(1200)
+	until spotify == nil;
+end)
+task.spawn(function() -- Data update: maxlasertech
     repeat
-        gui.update(spotifyapi.getdata());
-        task.wait(0);
+		pcall(function()
+	        gui.update(spotifyapi.getdata());
+		end)
+		task.wait(0);
     until spotify == nil;
 end)

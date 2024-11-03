@@ -44,11 +44,15 @@
 ]]
 print("Spotify API begin")
 
+local b64 = loadfile("catvape/Libraries/Base64.lua")
+-- ^^^ Credits to metatablecat for this code! ^^^ --
+
+
 local spotifyapi = {}
 local cloneref = (identifyexecutor():find('Synapse') or not cloneref) and function(...)
     return (...)
 end or cloneref
-
+local httpservice = cloneref(game.GetService(game, "HttpService"))
 
 spotifyapi.newrequest = function(url, method)
 
@@ -65,6 +69,21 @@ spotifyapi.newrequest = function(url, method)
         return warn('❌ [ Spotify Api ] --> Failed to send a new request, error: ' .. body.error.message .. '.')
     end
     return (data and body) or ''
+end
+
+spotifyapi.updatetoken = function(token)
+	local req = http.request({
+		Url = "https://catvape.vercel.app/auth/spotify/updateToken?token="..token,
+		Method = "GET"
+	})
+	
+	local response = httpservice:JSONDecode(req.Body)
+
+	getgenv().spotify_token = response.access_token;
+	writefile("spotify_token", response.access_token)
+	if spotify_debug then
+		warningNotification("Cat", "Updated spotify token!", 3)
+	end
 end
 
 spotifyapi.getdata = function()
