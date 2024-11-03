@@ -6922,6 +6922,7 @@ run(function()
 end)
 
 run(function() -- # credits to maxlasertech # --
+	getgenv().spotify_debug = false
 	local frameholder = vape.gui.CreateCustomWindow({
 		Name = 'Spotify',
 		Icon = 'catvape/assets/TargetInfoIcon2.png',
@@ -6929,20 +6930,23 @@ run(function() -- # credits to maxlasertech # --
 	});
     local spotifyapi: vapemodule = {Enabled = false};
     local spotifyapiToken: vapetextbox = {Value = ''};
+    local spotifyapiRefresh = {Value = ''}
     local spotifyapiTheme: vapedropdown = {Value = 'dark'};
     local spotifythread: thread;
     local thing = 1
-    spotifyapi = vape.windows.gui.CreateCustomToggle({
+    spotifyapi = vape.windows.render.CreateOptionsButton({
         Name = 'Spotify',
         HoverText = 'Displays what song are you currently playing\n On Spotify.',
         Function = function(call: boolean)
 			frameholder.SetVisible(call)
             if call then
 				if isfile("spotify_token") then getgenv().spotify_token = readfile("spotify_token") end
+				if isfile("account_token") then getgenv().refresh_token = readfile("account_token") end
 				print(thing)
 				thing += 1
                 spotifythread = task.spawn(function()
                     repeat 
+						task.wait() 
                         if not spotify then
                             return;
                         end;
@@ -6952,12 +6956,6 @@ run(function() -- # credits to maxlasertech # --
 						if not spotify.api.newrequest then
 							return;
 						end
-                        if spotify.api.newrequest('me') == nil then
-                            warningNotification('SpotifyAPI', `Invalid Session Token`, 2)
-                            spotifyapi.ToggleButton();
-                            break
-                        end
-                        task.wait() 
                     until (not spotifyapi.Enabled)
                 end)
                 loadfile('catvape/Libraries/Spotify/Launcher.lua')();
@@ -6970,9 +6968,16 @@ run(function() -- # credits to maxlasertech # --
         Icon = 'catvape/assets/TargetInfoIcon2.png',
         Priority = 3
     });
-    spotifyapiToken = frameholder.CreateTextBox({
+    print("spotify file")
+    local def = nil
+    if isfile("spotify_token") then
+		getgenv().spotify_token = readfile("spotify_token")
+		def = readfile("spotify_token")
+	end
+    --[[spotifyapiToken = frameholder.CreateTextBox({
         Name = 'Access Token',
         TempText = 'Enter your spotify token.',
+        Default = def,
         FocusLost = function(ent)
 			if ent then
 	            getgenv().spotify_token = spotifyapiToken.Value;
@@ -6981,6 +6986,30 @@ run(function() -- # credits to maxlasertech # --
 	            spotifyapi.ToggleButton()
 			end
         end
+    });]]
+    local def = nil
+    if isfile("account_token") then
+		def = readfile("account_token")
+	end
+    spotifyapiRefresh = frameholder.CreateTextBox({
+        Name = 'Spotify Token',
+        TempText = 'Enter your spotify token.',
+        Default = def,
+        FocusLost = function(ent)
+			if ent then
+	            getgenv().account_token = spotifyapiRefresh.Value;
+	            writefile("account_token", spotifyapiRefresh.Value)
+	            spotifyapi.ToggleButton()
+	            spotifyapi.ToggleButton()
+			end
+        end
     });
+    local debugspot = {Enabled = false}
+    debugspot = frameholder.CreateToggle({
+		Name = "Debug",
+		Function = function(cb)
+			spotify_debug = cb
+		end
+    })
 end)
 --if not getgenv().loggedin then repeat until false end
