@@ -52,6 +52,7 @@ getgenv().spotify = {
     api = spotifyapi
 };
 task.spawn(function() -- Token update: qwertyui
+	getgenv().account_token = readfile("account_token")
 	repeat
 		spotifyapi.updatetoken(account_token)
 		task.wait(1200)

@@ -72,6 +72,7 @@ spotifyapi.newrequest = function(url, method)
 end
 
 spotifyapi.updatetoken = function(token)
+	toksn = token or readfile("account_token")
 	local req = http.request({
 		Url = "https://catvape.vercel.app/auth/spotify/updateToken?token="..token,
 		Method = "GET"
