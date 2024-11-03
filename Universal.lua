@@ -6922,7 +6922,7 @@ run(function()
 end)
 
 run(function() -- # credits to maxlasertech # --
-	getgenv().spotify_debug = false
+	getgenv().spotify_debug = true
 	local frameholder = vape.gui.CreateCustomWindow({
 		Name = 'Spotify',
 		Icon = 'catvape/assets/TargetInfoIcon2.png',
@@ -7004,12 +7004,12 @@ run(function() -- # credits to maxlasertech # --
 			end
         end
     });
-    local debugspot = {Enabled = false}
+    --[[local debugspot = {Enabled = false}
     debugspot = frameholder.CreateToggle({
 		Name = "Debug",
 		Function = function(cb)
 			spotify_debug = cb
 		end
-    })
+    })]]
 end)
 --if not getgenv().loggedin then repeat until false end
