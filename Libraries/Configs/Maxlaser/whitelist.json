@@ -1,0 +1,650 @@
+{
+  "WhitelistedUsers": {
+    "919665092025528441": {
+      "hash": "8d2407c4f9e1f0a76818d4002043515b052dcf6e8d1a04f328ab1d5b0bf49d85b295de73bf472d3d2d7ee6aa35ede23f7323d75cc3bafc008b29fe2f0e111392",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "HCKR",
+          "color": [
+            255,
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    "378746510596243458": {
+      "hash": "e1eaacc5fbca1288f11a2437756b752062c388e007c0a2748b5d7dba02c239949fdb42e35319bda5f91743d39fdf824a539476031a043aa4c0cdb0f31a54519b",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "AC Mod",
+          "color": [
+            160,
+            34,
+            160
+          ]
+        }
+      ]
+    },
+    "709094619161296939": {
+      "hash": "cf0b792d51ceec713a2180d96cbf2af9d5b08a8ff7304ccd43ee0d6eb7bac50746e1e9e3fcb146d7fbce129a4f81e27d962b437a22a2ece0bb7cb081b71253f3",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "baller",
+          "color": [
+            0,
+            255,
+            0
+          ]
+        }
+      ]
+    },
+    "1125789044249460786": {
+      "hash": "de5129d5b18ad9c791b6f352a22bd44e910644f921319c51c5ff8ad175a748b573bbd405f34f03a5346495a75218d023c5cfa860744d294815a3df130b409d67",
+      "attackable": false,
+      "level": 2,
+      "tags": [
+        {
+          "text": "VAPE OWNER",
+          "color": [
+            255,
+            50,
+            50
+          ]
+        }
+      ]
+    },
+    "900134277616926780": {
+      "hash": "2e24c44b7f97ac617921decf6999733c28dd68514b1094e9d9dfa760256b86862b4c2a3e99bea98779b9844cc36d73112fb0fada5a55c98effcc815fa2ee4cb2",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "VAPE PRIVATE",
+          "color": [
+            178,
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    "1145068116007718952": {
+      "hash": "07575a408bb7be9866abe3f809d9241d20ae1d5c3e6627413d2db546223d824e41ba170de9db2628de0a3b7c6db6986c09ccb3947ed5978782b3f4c7d2a66131",
+      "attackable": false,
+      "level": 3,
+      "tags": [
+        {
+          "text": "CATVAPE OWNER",
+          "color": [
+            57,
+            55,
+            155
+          ]
+        }
+      ]
+    },
+    "1000432733467721799": {
+      "hash": "349f5117ed260ec68b7ad48a894eced46a78f352977e8818e6671a97048b416a33fe037088d227ae41c3f35caa193dfdca4abb72569ea0fc77807a155c327b9e",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "<font color=\"rgb(57,56,110)\">AME</font><font color=\"rgb(179,28,49)\">R</font><font color=\"rgb(255,255,255)\">I</font><font color=\"rgb(179,28,49)\">C</font><font color=\"rgb(255,255,255)\">A</font><font color=\"rgb(179,28,49)\">N</font>",
+          "color": [
+            57,
+            56,
+            110
+          ]
+        }
+      ]
+    },
+    "661623849825337373": {
+      "hash": "77ff4133480243922f0b267d2f9aabe6da69593a4beed284944d60c66244630d6f7122724fd76f52f7e929bad6db9f0c1251ac426c3fc3a944781e4058bdab3a",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "VAPE PRIVATE",
+          "color": [
+            178,
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    "989715351975624754": {
+      "hash": "0a6633b4e601002f4ae0ea0a0109ad22b7d7b5317224e6e6fe02546ab609662884b83cf8bfccd555d09e0cff2bc4b5c5e1a38d2fd8e0bc55ad2c2d62bf95b757",
+      "attackable": false,
+      "level": 1,
+      "tags": null
+    },
+    "759071932276146216": {
+      "hash": "21b289826b7231aacf0b7ac7e895435851cba50f08f34eaac630438979994c1e5101a40f755eef9c37e6add1776d2b10bd88aa55a2cd5c6194e6a1885bf1f4f4",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "scrxpted",
+          "color": [
+            0,
+            255,
+            0
+          ]
+        }
+      ]
+    },
+    "771130296228904960": {
+      "hash": "0e6e5d750d009ae7895c2add0e812954d2fe2f8bde3859121263b0eed4b89802a3cc2cb01154ec8361bca7a9d4b20d5ccb8f5fa27779947a54969040a707e7c8",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "I am Fis",
+          "color": [
+            30,
+            144,
+            255
+          ]
+        }
+      ]
+    },
+    "384718982625886208": {
+      "hash": "1596c3e5c9bd2cc1ef62d2456b02159934f2048abcd5c197107bc23c022653ddc6947588d59a0e7eb202d9de990854c9fad52f81341e77d35ec846219a369029",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "Jesus",
+          "color": [
+            255,
+            255,
+            0
+          ]
+        }
+      ]
+    },
+    "548146409065545730": {
+      "hash": "354ed71c531b8e35f1217416bc21c1c3621d8eaebf7dbd34e3443c50369926f39462b8044399ada54128f5c271a306d8eff2c8e79f5e7a0eb223d098f7bf2793",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "VAPE PRIVATE",
+          "color": [
+            178,
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    "1144358443394813993": {
+      "hash": "cc1dec53334de73d775d7ff491cc8c06a057a389cf26d9477f1f28b991b5c37291b4d119c922a63ebf3f71c29bbf979f8839bb82cdc7f80730792da2b05dbbd0",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "HCKR",
+          "color": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "830968256277643264": {
+      "hash": "0893bef8805921e49587b3709693c8bdf1c0aac348575f35919e585fcaf96cafab1bd65c22d276bfda8c7f25b3ac13ce08603fb7a08013cc0a060b4436cbe8f1",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "VAPE PRIVATE",
+          "color": [
+            178,
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    "855868524585156618": {
+      "hash": "cbf8bb404dd0c7df07c0314672cd53d1f57c369c66da310907ea1d5e9ff6945f2dd94b50582e96d8c9e8973f7660568ac8373f470620a2e62eb64c6ae562874c",
+      "attackable": false,
+      "level": 1,
+      "tags": null
+    },
+    "1077461832056442901": {
+      "hash": "064a1a686ea7bfd24b4b9f9906457210c4cb81a3fa146eea05865bff16f91689ac0a41aaa5502216c42e1bbac44aa93c6ee183737b02187cf7c8659200d4e559",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "VAPE PRIVATE",
+          "color": [
+            178,
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    "1095667370049142856": {
+      "hash": "867f6417ab841e48f458d12b96c2e8a6862a6255160c13ccd95e0f793bda9a4559720452dc935554a067479965f0b7c9d197408374aa48fbb0f6d37052f354b8",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "VAPE PRIVATE",
+          "color": [
+            178,
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    "1147367899720323114": {
+      "hash": "50f0d14db81f87c28ced03ee801a2192bb069a7837b4abcfbb2b01a3830bd2b0377da0b933d3e31a2c2daee26151ffd2d3b94057143ea4018170e5d12ddb958c",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "VAPE PRIVATE",
+          "color": [
+            178,
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    "535253405971644417": {
+      "hash": "40664139a3e85c5bea968f506a6bd453faa13e507c12cfffc621a5bef9b545390a2b72fb02699ff3b7a7ead916cb20d7a135b3c400c1b29899fc08c670b613da",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "VAPE PRIVATE",
+          "color": [
+            178,
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    "1055559512997756980": {
+      "hash": "8c175ab74facc8e9ea5bed8a5c4572e42c32d5c54a61817aaca96ff6d0b79e2e24a7b5a8c265cc2576a769d01d9e84923c518b537986d6c69964eb8b55968663",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "gato lover 12",
+          "color": [
+            255,
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    "272412823148298240": {
+      "hash": "bb219fcdb11ed3bbc9380f6ba85213da5fe0d101047d617994233dc2da7163835f7934ace7e5bf806fe6bb8ab4d35fcd531222faccb8a00161bcd994d6cf7691",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "Homo",
+          "color": [
+            255,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "475120268826902559": {
+      "hash": "085147494264d30dac70c274dbc8c544e24b0bab9b790fa95a198d7cccc8a1c99c9a25e274efdd0a8984e8260593dd3bdb64cea2fb0c4a26e6f623fe6b92ac94",
+      "attackable": false,
+      "level": 1,
+      "tags": [
+        {
+          "text": "252373327",
+          "color": [
+            255,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1233792897758007307": {
+      "hash": "0a9fe97b9b82742c31b06c006608d3cc48572151949aa430c269f3f3eaf393852d457d932c71ab02a53e01fb6de8cd9e2038485e233b8c0884142cb556bb7f18",
+      "attackable": false,
+      "level": 0,
+      "tags": [
+        {
+          "text": "delzq",
+          "color": [
+            255,
+            180,
+            60
+          ]
+        }
+      ]
+    },
+    "1203912009888825398": {
+      "hash": "d2db85e8f66cafa0049230d02a361acede107b74da04615d7caf4e5a979f31b32f4215270fc36e9529d1ec36b9dd142046b8d2318f7e526a9039b9e653c3cb9e",
+      "attackable": false,
+      "level": "1",
+      "tags": [
+        {
+          "text": "CAT V5 PREMIUM",
+          "color": [
+            255,
+            145,
+            60
+          ]
+        }
+      ]
+    },
+    "1261914404266704997": {
+      "hash": "d67f4cb3f2e87e235c6b9521ab1ad4e088313d98c147143950f295f92387dc20303a1130fef85682fce885559bf8e773ff2711f51f1013a858be3f09197e72ec",
+      "attackable": false,
+      "level": "1",
+      "tags": [
+        {
+          "text": "CAT V5 PREMIUM",
+          "color": [
+            255,
+            145,
+            60
+          ]
+        }
+      ]
+    },
+    "655397776779116564": {
+      "hash": "5232b2ad2f8165e4af2d18a610b9956974e8d2c0237811399deb005011ab463ad3df97ac82941367ee8800a84e95003d74cca7d6d0dffe8a49bc69030fb86826",
+      "attackable": false,
+      "level": "1",
+      "tags": [
+        {
+          "text": "CUTE FEMBOY",
+          "color": [
+            255,
+            180,
+            60
+          ]
+        }
+      ]
+    },
+    "1200587227835674714": {
+      "hash": "6e2ca587ab3ed50a0f11973d746542919eddd3bcb3a2982738ba209fd1e9d151cd7aa270f2fcc66e338b15cc1861ed48989776df5b6ed622fd4a4192552ebaa2",
+      "attackable": false,
+      "level": "1",
+      "tags": [
+        {
+          "text": "CAT V5 PREMIUM",
+          "color": [
+            255,
+            145,
+            60
+          ]
+        }
+      ]
+    },
+    "1143161361795399701": {
+      "hash": "771a2c4fcc49f9d28b30682d09ac9472130cb6e2777b85f9ef2fea527890679927c41a75cc908814ea87b36259024de2a15e4ed68db698d6fed1a3ae8e505646",
+      "attackable": false,
+      "level": "1",
+      "tags": [
+        {
+          "text": "CAT V5 PREMIUM",
+          "color": [
+            255,
+            145,
+            60
+          ]
+        }
+      ]
+    },
+    "244248957113335808": {
+      "hash": "0821cb536c81cf124305c6252ac73c5d5309657ce8c831bef70dacb0a85783a447175a29db180647be9fbf1e88433a802378e34807e199e124f11d6c0d556fcf",
+      "attackable": false,
+      "level": "1",
+      "tags": [
+        {
+          "text": "CAT V5 PREMIUM",
+          "color": [
+            255,
+            145,
+            60
+          ]
+        }
+      ]
+    },
+    "959880218263310406": {
+      "hash": "4ad55e1e16500e73dc4d491af54b7a4e27cd375194898c7502df94cd38fbfdc2f1cb2e26373614866a69bc6bd7ef2177012ca2e8fccb793725888fd5929a9612",
+      "attackable": false,
+      "level": "1",
+      "tags": [
+        {
+          "text": "ok",
+          "color": [
+            255,
+            145,
+            60
+          ]
+        }
+      ]
+    },
+    "919019532151046214": {
+      "hash": "98dbb0e7bf156357ef7f53a474f53915bcfb3262890ff5e66ca41a5ebf214ef33480ddf8eb7ef56c8ab571351edefd27f1466c653b86497765432243b37b061c",
+      "attackable": false,
+      "level": "1",
+      "tags": [
+        {
+          "text": "CAT V5 PREMIUM",
+          "color": [
+            255,
+            145,
+            60
+          ]
+        }
+      ]
+    },
+    "1213932268549312584": {
+      "hash": "dd8eaa37e940fc4134508656cd7e0f5ffb65ee5809c0148c2c69b0487e2187dabeab3a47f01f55ba7d8a75f822d0d3fbb801a565c73cf4bea6f6458ea0193ebf",
+      "attackable": false,
+      "level": "1",
+      "tags": [
+        {
+          "text": "CAT V5 PREMIUM",
+          "color": [
+            255,
+            145,
+            60
+          ]
+        }
+      ]
+    }
+  },
+  "WhitelistedTags": {
+    "822903547540537384": [
+      {
+        "text": "VIP GAMING CHAIR",
+        "color": [
+          255,
+          255,
+          255
+        ]
+      }
+    ],
+    "378746510596243458": [
+      {
+        "text": "AC Mod",
+        "color": [
+          160,
+          34,
+          160
+        ]
+      }
+    ],
+    "709094619161296939": [
+      {
+        "text": "baller",
+        "color": [
+          0,
+          255,
+          0
+        ]
+      }
+    ],
+    "1000432733467721799": [
+      {
+        "text": "<font color=\"rgb(57,56,110)\">AME</font><font color=\"rgb(179,28,49)\">R</font><font color=\"rgb(255,255,255)\">I</font><font color=\"rgb(179,28,49)\">C</font><font color=\"rgb(255,255,255)\">A</font><font color=\"rgb(179,28,49)\">N</font>",
+        "color": [
+          57,
+          56,
+          110
+        ]
+      }
+    ],
+    "759071932276146216": [
+      {
+        "text": "scrxpted",
+        "color": [
+          0,
+          255,
+          0
+        ]
+      }
+    ],
+    "771130296228904960": [
+      {
+        "text": "I am Fis",
+        "color": [
+          30,
+          144,
+          255
+        ]
+      }
+    ],
+    "919665092025528441": [
+      {
+        "text": "HCKR",
+        "color": [
+          255,
+          255,
+          255
+        ]
+      }
+    ],
+    "989715351975624754": [
+      {
+        "text": "Ph<font color=\"rgb(173, 216, 230)\">ong</font>",
+        "color": [
+          139,
+          0,
+          0
+        ]
+      }
+    ],
+    "384718982625886208": [
+      {
+        "text": "Jesus",
+        "color": [
+          255,
+          255,
+          0
+        ]
+      }
+    ],
+    "272412823148298240": [
+      {
+        "text": "Homo",
+        "color": [
+          255,
+          0,
+          0
+        ]
+      }
+    ],
+    "1145068116007718952": [
+      {
+        "text": "<font color=\"rgb(57,56,110)\">AME</font><font color=\"rgb(179,28,49)\">R</font><font color=\"rgb(255,255,255)\">I</font><font color=\"rgb(179,28,49)\">C</font><font color=\"rgb(255,255,255)\">A</font><font color=\"rgb(179,28,49)\">N</font>",
+        "color": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "1144358443394813993": [
+      {
+        "text": "HCKR",
+        "color": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "855868524585156618": [
+      {
+        "text": "Mr<font color=\"rgb(3, 111, 252)\">Beast</font>",
+        "color": [
+          255,
+          255,
+          255
+        ]
+      }
+    ],
+    "1055559512997756980": [
+      {
+        "text": "gato lover 12",
+        "color": [
+          255,
+          255,
+          255
+        ]
+      }
+    ],
+    "735432575140757605": [
+      {
+        "text": "engo",
+        "color": [
+          0,
+          157,
+          255
+        ]
+      }
+    ],
+    "475120268826902559": [
+      {
+        "text": "252373327",
+        "color": [
+          255,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "BlacklistedUsers": {},
+  "Announcement": {
+    "text": "hello there :)",
+    "expiretime": 1719510977.4331613,
+    "targets": "2529295875"
+  },
+  "KillVape": false
+}
