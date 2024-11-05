@@ -142,6 +142,6 @@ run(function()
                 until (not autogamble.Enabled)
             end
         end,
-        HoverText = 'Automatically opens crate for you \n(inspired by vape rewrite)'
+        HoverText = 'Automatically opens crate for you \n(inspired by piss-ton)'
     })
 end)
