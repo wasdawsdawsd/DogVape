@@ -780,7 +780,7 @@ local function AllNearPosition(distance, mob, amount, sortfunction, prediction)
 				end
 			end
 			for i, v in workspace:GetChildren() do
-				if v.Name:find("Halloween") then
+				if v.Name:find("Halloween2024") then
 					print(v, v.Name)
 					if v.PrimaryPart then
 						local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
