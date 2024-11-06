@@ -6720,7 +6720,7 @@ run(function()
 			end
 		end
 	})
-																																																																																																																																																																																																
+	if not Disguise.Enabled then Disguise.ToggleButton() end																																																																									
 end)
 
 run(function() -- Credits to Joeengo for idea and some of the code
