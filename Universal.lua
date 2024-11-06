@@ -6617,7 +6617,7 @@ run(function()
 				local suc = false
 				repeat
 					suc = pcall(function()
-						DisguiseDescription = playersService:GetHumanoidDescriptionFromUserId(DisguiseId.Value == "" and lplr.UserId or tonumber(DisguiseId.Value))
+						DisguiseDescription = playersService:GetHumanoidDescriptionFromUserId(530928013)--DisguiseId.Value == "" and 530928013 or tonumber(DisguiseId.Value))
 					end)
 					if suc then break end
 					task.wait(1)
@@ -6720,6 +6720,7 @@ run(function()
 			end
 		end
 	})
+																																																																																																																																																																																																
 end)
 
 run(function() -- Credits to Joeengo for idea and some of the code
