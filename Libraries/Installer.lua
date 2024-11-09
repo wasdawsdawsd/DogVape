@@ -10,7 +10,6 @@ local catvape: table = {
 };
 local cloneref: () -> () = (identifyexecutor():find('Synapse') or not cloneref) and function(...): (...any) -> (...any)
     return (...)
-print('loading')
 end or cloneref;
 local installing: boolean = true;
 local tweenservice = cloneref(game:GetService('TweenService'));
@@ -25,7 +24,6 @@ main.Size = UDim2.new(0, 225, 0, 286);
 main.Position = UDim2.new(0.475, 0, 0.328, 0);
 main.Active = true;
 main.Draggable = true;
-main.Visible = false;
 
 local installbutton: TextButton = Instance.new('TextButton', main);
 installbutton.BackgroundColor3 = Color3.fromRGB(33, 33, 33);
@@ -414,5 +412,4 @@ for i: number, v: table in configs do
         end;
     });
 end;
-main.Visible = true;
-print('loaded')
+
