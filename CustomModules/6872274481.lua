@@ -1,3 +1,4 @@
+--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.
 --[[
                                                                                                                                                                                                         
                                                                                                                                                                                                         
@@ -70,7 +71,7 @@ local vapeTargetInfo = shared.VapeTargetInfo
 local vapeInjected = true
 
 local bedwars = {}
-local store = {
+getgenv().store = {
 	holdingscythe = false,
 	scythexp = false,
 	attackReach = 0,
@@ -80,8 +81,8 @@ local store = {
 	blockPlace = tick(),
 	blockRaycast = RaycastParams.new(),
 	equippedKit = 'none',
-	forgeMasteryPoints = 0,
-	forgeUpgrades = {},
+	--forgeMasteryPoints = 0,
+	--forgeUpgrades = {},
 	grapple = tick(),
 	inventories = {},
 	localInventory = {
@@ -451,27 +452,31 @@ local killauraNearPlayer
 local gsz = false
 local gss = false
 local gssv = 5
-local doDamageBoost = false
-local damageboosttick = tick()
-task.spawn(function()
-	table.insert(vapeConnections, lplr.CharacterAdded:Connect(function(char)
-		char:WaitForChild("Humanoid", 9e9)
-		table.insert(vapeConnections, char.Humanoid.HealthChanged:Connect(function(h)
-			if char.Humanoid.Health > h then
-				damageboosttick = tick() + 0.5
-			end
-		end))
-	end))
-end)
+local doDamageBoost = falselocal lastdamagetick = tick()
+local lastdamagefunc = function() 
+	if not isAlive() then
+		repeat task.wait() until isAlive()
+		task.wait(1.25);
+	end
+	local oldhealth = lplr.Character.Humanoid.Health
+	lplr.Character.Humanoid.HealthChanged:Connect(function(new)
+		if math.ceil(oldhealth) > math.ceil(new) then
+			lastdamagetick = tick() + 0.5
+		end
+	end)
+end
+if isAlive() then lastdamagefunc() end
+lplr.CharacterAdded:Connect(lastdamagefunc)
+local speedPotion = false
 local function getSpeed()
 	local speed = 1
+	speedPotion = false
 	if lplr.Character then
 		local SpeedDamageBoost = lplr.Character:GetAttribute("SpeedBoost")
-		if damageboosttick > tick() and doDamageBoost then
-			speed = speed * 1.15
-		end
-		if SpeedDamageBoost and SpeedDamageBoost >= 1 then
-			speed = speed * 1.15
+		if SpeedDamageBoost then
+			spd = (entityLibrary.character.Humanoid.FloorMaterial ~= Enum.Material.Air) and 1.1 or 1.25
+			speed = speed * spd
+			speedPotion = true
 		end
 		if store.grapple > tick() then
 			speed = speed * 3
@@ -485,13 +490,16 @@ local function getSpeed()
 		if store.desyncing and desyncboost.Enabled and not vape.istoggled('LongJump') then
 			speed = speed * 1.005
 		end
+		if lastdamagetick > tick() and doDamageBoost then
+			speed = speed * 1.8
+		end;
 		local armor = store.localInventory.inventory.armor[3]
 		if type(armor) ~= "table" then armor = {itemType = ""} end
 		if armor.itemType == "speed_boots" then
 			speed = speed * 1.375
 		end
 		if store.zephyrOrb ~= 0 and gsz then
-			speed = speed * 1.87
+			speed = speed * (store.holdingscythe and 1.385 or 1.87)
 		end
 	end
 	return speed
@@ -1362,8 +1370,6 @@ run(function()
 		EatRemote = dumpRemote(debug.getconstants(debug.getproto(KnitClient.Controllers.ConsumeController.onEnable, 1))),
 		EquipItemRemote = dumpRemote(debug.getconstants(debug.getproto(require(replicatedstorage.TS.entity.entities["inventory-entity"]).InventoryEntity.equipItem, 3))),
 		EmoteMeta = require(replicatedstorage.TS.locker.emote["emote-meta"]).EmoteMeta,
-		ForgeConstants = debug.getupvalue(KnitClient.Controllers.ForgeController.getPurchaseableForgeUpgrades, 2),
-		ForgeUtil = debug.getupvalue(KnitClient.Controllers.ForgeController.getPurchaseableForgeUpgrades, 5),
 		GameAnimationUtil = require(replicatedstorage.TS.animation["animation-util"]).GameAnimationUtil,
 		EntityUtil = require(replicatedstorage.TS.entity["entity-util"]).EntityUtil,
 		getIcon = function(item, showinv)
@@ -1542,8 +1548,8 @@ run(function()
 		if newStore.Game ~= oldStore.Game then
 			store.matchState = newStore.Game.matchState
 			store.queueType = newStore.Game.queueType or "bedwars_test"
-			store.forgeMasteryPoints = newStore.Game.forgeMasteryPoints
-			store.forgeUpgrades = newStore.Game.forgeUpgrades
+			--store.forgeMasteryPoints = newStore.Game.forgeMasteryPoints
+			--store.forgeUpgrades = newStore.Game.forgeUpgrades
 		end
 		if newStore.Bedwars ~= oldStore.Bedwars then
 			store.equippedKit = newStore.Bedwars.kit ~= "none" and newStore.Bedwars.kit or ""
@@ -2469,8 +2475,9 @@ run(function()
 							onground = true
 							lastonground = true
 						end
-
-						local flyVelocity = entityLibrary.character.Humanoid.MoveDirection * (FlyMode.Value == "Normal" and FlySpeed.Value or 20)
+						
+						local veloSpeed = speedPotion and (23 * getSpeed()) or 20
+						local flyVelocity = entityLibrary.character.Humanoid.MoveDirection * (FlyMode.Value == "Normal" and FlySpeed.Value or veloSpeed)
 						entityLibrary.character.HumanoidRootPart.Velocity = flyVelocity + (Vector3.new(0, playerMass + (FlyUp and FlyVerticalSpeed.Value or 0) + (FlyDown and -FlyVerticalSpeed.Value or 0), 0))
 						if FlyMode.Value ~= "Normal" then
 							entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + (entityLibrary.character.Humanoid.MoveDirection * ((FlySpeed.Value * getSpeed()) - 20)) * delta
@@ -3911,6 +3918,29 @@ run(function()
 				end
 			end)
 		end,
+		elektra = function()
+			local vec = entityLibrary.character.HumanoidRootPart.CFrame.lookVector
+			task.spawn(function()
+				repeat
+					directionvec = Vector3.new(vec.X, 0, vec.Z).Unit
+					if bedwars.AbilityController:canUseAbility("ELECTRIC_DASH") then
+						bedwars.AbilityController:useAbility("ELECTRIC_DASH")
+						task.wait(0.1)
+						task.spawn(function()
+							for i = 0, 12 do
+								if not LongJump.Enabled then break end
+								lplr.Character.HumanoidRootPart.CFrame *= CFrame.new(0,0,-9)
+								task.wait(0.025)
+							end
+						end)
+						damagetimer = 1
+						damagetimertick = tick() + 2.5
+						task.wait(0.6)
+					end
+					task.wait()
+				until (not LongJump.Enabled)
+			end)
+		end,
 		none = function()
 			local vec = entityLibrary.character.HumanoidRootPart.CFrame.lookVector
 			damagetimer = 25.4 * getSpeed()
@@ -4011,6 +4041,9 @@ run(function()
 								v(item, LongJumpOrigin)
 							end
 							break
+						elseif store.equippedKit == i then
+							v(i)
+							break
 						elseif i == 'none' then
 							v()
 							break
@@ -4045,7 +4078,7 @@ run(function()
 									directionvec = entityLibrary.character.HumanoidRootPart.CFrame.lookVector
 								end
 								local longJumpCFrame = Vector3.new(directionvec.X, 0, directionvec.Z)
-								local newvelo = longJumpCFrame.Unit == longJumpCFrame.Unit and longJumpCFrame.Unit * (newnum > 1 and damagetimer or 20) or Vector3.zero
+								local newvelo = longJumpCFrame.Unit == longJumpCFrame.Unit and longJumpCFrame.Unit * (newnum > 1 and damagetimer * getSpeed() or 20 * getSpeed()) or Vector3.zero
 								newvelo = Vector3.new(newvelo.X, 0, newvelo.Z)
 								longJumpCFrame = longJumpCFrame * (getSpeed() + 3) * dt
 								local ray = workspace:Raycast(entityLibrary.character.HumanoidRootPart.Position, longJumpCFrame, store.blockRaycast)
@@ -4520,10 +4553,17 @@ run(function()
 									v:AdjustSpeed(entityLibrary.character.Humanoid.WalkSpeed / 16)
 								end
 							end
+						else
+							for i, v in pairs(entityLibrary.character.Humanoid:GetPlayingAnimationTracks()) do
+								if v.Name == "WalkAnim" or v.Name == "RunAnim" then
+									v:AdjustSpeed((SpeedValue.Value * getSpeed()) / 14.35)
+								end
+							end
 						end
 
 						local speedValue = SpeedValue.Value * getSpeed()
-						local speedVelocity = entityLibrary.character.Humanoid.MoveDirection * (SpeedMode.Value == "Normal" and SpeedValue.Value * getSpeed() or 20)
+						local veloSpeed = speedPotion and (23 * getSpeed()) or 20
+						local speedVelocity = entityLibrary.character.Humanoid.MoveDirection * (SpeedMode.Value == "Normal" and SpeedValue.Value * getSpeed() or veloSpeed)
 						if strafe.Enabled then entityLibrary.character.HumanoidRootPart.Velocity = antivoidvelo or Vector3.new(speedVelocity.X, entityLibrary.character.HumanoidRootPart.Velocity.Y, speedVelocity.Z) end
 						if SpeedMode.Value ~= "Normal" then
 							local speedCFrame = entityLibrary.character.Humanoid.MoveDirection * (speedValue - 20) * delta
@@ -5110,13 +5150,11 @@ run(function()
 				end
 				oldfov = bedwars.FovController.setFOV
 				oldfov2 = bedwars.FovController.getFOV
-				bedwars.FovController.setFOV = function(self, fov) return oldfov(self, FieldOfViewValue.Value) end
-				bedwars.FovController.getFOV = function(self, fov) return FieldOfViewValue.Value end
+				bedwars.FovController.setFOV = function(self, fov) return oldfov(self, FieldOfViewValue.Value + (speedPotion and 0 or 0)) end
+				bedwars.FovController.getFOV = function(self, fov) return FieldOfViewValue.Value + (speedPotion and 0 or 0) end
 				repeat
 					task.wait()
-					if cam.FieldOfView ~= FieldOfViewValue.Value then
-						cam.FieldOfView = FieldOfViewValue.Value
-					end
+					cam.FieldOfView = FieldOfViewValue.Value
 				until (not FOVChanger.Enabled)
 			else
 				bedwars.FovController.setFOV = oldfov
@@ -6641,14 +6679,6 @@ run(function()
 		[5] = "emerald_sword"
 	}
 
-	local scythes = {
-		[1] = "wood_scythe",
-		[2] = "stone_scythe",
-		[3] = "iron_scythe",
-		[4] = "diamond_scythe",
-		[5] = "mythic_scythe"
-	}
-
 	local axes = {
 		[1] = "wood_axe",
 		[2] = "stone_axe",
@@ -6665,10 +6695,10 @@ run(function()
 
 	task.spawn(function()
 		repeat task.wait() until store.matchState ~= 0 or not vapeInjected
-		for i,v in pairs(collection:GetTagged("BedwarsItemShop")) do
+		for i,v in pairs(collectionService:GetTagged("BedwarsItemShop")) do
 			table.insert(bedwarsshopnpcs, {Position = v.Position, TeamUpgradeNPC = true, Id = v.Name})
 		end
-		for i,v in pairs(collection:GetTagged("TeamUpgradeShopkeeper")) do
+		for i,v in pairs(collectionService:GetTagged("TeamUpgradeShopkeeper")) do
 			table.insert(bedwarsshopnpcs, {Position = v.Position, TeamUpgradeNPC = false, Id = v.Name})
 		end
 	end)
@@ -6677,10 +6707,10 @@ run(function()
 		local npc, npccheck, enchant, newid = nil, false, false, nil
 		if entityLibrary.isAlive then
 			local enchanttab = {}
-			for i,v in pairs(collection:GetTagged("broken-enchant-table")) do
+			for i,v in pairs(collectionService:GetTagged("broken-enchant-table")) do
 				table.insert(enchanttab, v)
 			end
-			for i,v in pairs(collection:GetTagged("enchant-table")) do
+			for i,v in pairs(collectionService:GetTagged("enchant-table")) do
 				table.insert(enchanttab, v)
 			end
 			for i,v in pairs(enchanttab) do
@@ -6787,25 +6817,16 @@ run(function()
 		end,
 		Sword = function(inv, upgrades, shoptype)
 			if AutoBuySword.Enabled == false or shoptype ~= "item" then return end
-			local currentsword = store.scythexp and getItemNear("scythe", inv.items) or getItemNear("sword", inv.items)
+			local currentsword = getItemNear("sword", inv.items)
 			local swordindex = (currentsword and table.find(swords, currentsword.itemType) or 0) + 1
-			if store.scythexp then
-				swordindex = (currentsword and table.find(scythes, currentsword.itemType) or 0) + 1
-			end
-			if getItemNear("scythe", inv.items) then 
-				if currentsword ~= nil and table.find(scythes, currentsword.itemType) == nil then return end
-			else
-				if currentsword ~= nil and table.find(swords, currentsword.itemType) == nil then return end
-			end
+			if currentsword ~= nil and table.find(swords, currentsword.itemType) == nil then return end
 			local highestbuyable = nil
-			local tableToDo = store.scythexp and scythes or swords
-			for i = swordindex, #tableToDo, 1 do
-				local shopitem = store.scythexp and getShopItem(scythes[i]) or getShopItem(swords[i])
+			for i = swordindex, #swords, 1 do
+				local shopitem = getShopItem(swords[i])
 				if shopitem and i == swordindex then
 					local currency = getItem(shopitem.currency, inv.items)
 					if currency and currency.amount >= shopitem.price and (shopitem.category ~= "Armory" or upgrades.armory) then
 						highestbuyable = shopitem
-						if getItemNear("sword", inv.items) and store.scythexp then shopitem = getShopItem("wood_scythe") end
 						bedwars.ClientStoreHandler:dispatch({
 							type = "BedwarsAddItemPurchased",
 							itemType = shopitem.itemType
@@ -7370,7 +7391,8 @@ run(function()
 	})
 end)
 
-run(function()
+-- Forge functions got removed
+--[[run(function()
 	local AutoForge = {Enabled = false}
 	local AutoForgeWeapon = {Value = "Sword"}
 	local AutoForgeBow = {Enabled = false}
@@ -7450,7 +7472,7 @@ run(function()
 		Function = function() end,
 		Default = true
 	})
-end)
+end)]]
 
 run(function()
 	local alreadyreportedlist = {}
@@ -9277,10 +9299,10 @@ run(function()
 					local bed = getEnemyBed()
 					local speed = 1
 					local mag = (lplr.Character.HumanoidRootPart.Position - bed.Bed.Position).magnitude
-					if mag >= 20 then speed = 2 end
-					if mag >= 40 then speed = 3 end
-					if mag >= 60 then speed = 4 end
-					if mag >= 80 then speed = 7 end
+					if mag >= 20 then speed = 1.5 end
+					if mag >= 40 then speed = 1.85 end
+					if mag >= 60 then speed = 2.5 end
+					if mag >= 80 then speed = 5 end
 					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(speed, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 10, 0))})
 					tween:Play()
 				end
@@ -9333,10 +9355,10 @@ run(function()
 					local speed = 1
 					if player then
 						local mag = (lplr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).magnitude
-						if mag >= 20 then speed = 3 end
-						if mag >= 40 then speed = 5 end
-						if mag >= 60 then speed = 7 end
-						if mag >= 80 then speed = 10 end
+						if mag >= 20 then speed = 1.5 end
+						if mag >= 40 then speed = 1.85 end
+						if mag >= 60 then speed = 2.5 end
+						if mag >= 80 then speed = 5 end
 						print('yes')
 						tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(speed, Enum.EasingStyle.Linear), {CFrame = (player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0))})
 						tween:Play()
@@ -9888,18 +9910,8 @@ run(function() -- Credits to stav for letting me use his scythe disabler
 								end
 							end
 							store.holdingscythe = true
-							if BypassMethod.Value == "LookVector" then
-                                direction = entityLibrary.character.HumanoidRootPart.CFrame.LookVector
-                            elseif BypassMethod.Value == "MoveDirection" then
-                                direction = entityLibrary.character.Humanoid.MoveDirection
-							elseif BypassMethod.Value == "LookVector + MoveDirection" then
-                                direction = entityLibrary.character.HumanoidRootPart.CFrame.LookVector and entityLibrary.character.Humanoid.MoveDirection / 1
-							end
-							if DivideDirection.Value ~= 0 then
-								bedwars.Client:Get("ScytheDash"):SendToServer({direction = direction / DivideDirection.Value * MultiplyDirection.Value})
-							else
-								bedwars.Client:Get("ScytheDash"):SendToServer({direction = direction * MultiplyDirection.Value})
-							end
+							dir = entityLibrary.character.HumanoidRootPart.CFrame.LookVector * MultiplyDirection.Value
+							bedwars.Client:Get("ScytheDash"):SendToServer({direction = dir})
 							if entityLibrary.isAlive then
 								if entityLibrary.character.Head.Transparency ~= 0 then
 									store.scythe = tick() + 1
@@ -9972,11 +9984,6 @@ run(function() -- Credits to stav for letting me use his scythe disabler
 		Default = true,
 		Function = void
 	})
-	BypassMethod = Bypass.CreateDropdown({
-        Name = "Scythe Direction Mode",
-        List = {"LookVector", "MoveDirection", "LookVector + MoveDirection"},
-        Function = void
-    })
 	MultiplyDirection = Bypass.CreateSlider({
         Name = "Scythe Direction Multiplier",
         Min = 0,
