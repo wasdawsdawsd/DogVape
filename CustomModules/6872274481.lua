@@ -452,7 +452,8 @@ local killauraNearPlayer
 local gsz = false
 local gss = false
 local gssv = 5
-local doDamageBoost = falselocal lastdamagetick = tick()
+local doDamageBoost = false
+local lastdamagetick = tick()
 local lastdamagefunc = function() 
 	if not isAlive() then
 		repeat task.wait() until isAlive()
