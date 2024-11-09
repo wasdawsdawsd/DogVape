@@ -73,7 +73,6 @@ local vapeInjected = true
 local bedwars = {}
 getgenv().store = {
 	holdingscythe = false,
-	scythexp = false,
 	attackReach = 0,
 	attackReachUpdate = tick(),
 	blocks = {},
@@ -10036,16 +10035,6 @@ run(function()
 		return old(self, ...)
 	end)
 	--warn('executed')
-end)
-
-run(function()
-	local ScytheExploit = {Enabled = false}
-	ScytheExploit = vape.windows.exploit.CreateOptionsButton({
-		Name = "ScytheExploit",
-		Function = function(callback)
-			store.scythexp = callback
-		end
-	})
 end)
 
 run(function()
