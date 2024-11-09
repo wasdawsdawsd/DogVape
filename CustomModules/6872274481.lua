@@ -6695,10 +6695,10 @@ run(function()
 
 	task.spawn(function()
 		repeat task.wait() until store.matchState ~= 0 or not vapeInjected
-		for i,v in pairs(collectionService:GetTagged("BedwarsItemShop")) do
+		for i,v in pairs(collection:GetTagged("BedwarsItemShop")) do
 			table.insert(bedwarsshopnpcs, {Position = v.Position, TeamUpgradeNPC = true, Id = v.Name})
 		end
-		for i,v in pairs(collectionService:GetTagged("TeamUpgradeShopkeeper")) do
+		for i,v in pairs(collection:GetTagged("TeamUpgradeShopkeeper")) do
 			table.insert(bedwarsshopnpcs, {Position = v.Position, TeamUpgradeNPC = false, Id = v.Name})
 		end
 	end)
@@ -6707,10 +6707,10 @@ run(function()
 		local npc, npccheck, enchant, newid = nil, false, false, nil
 		if entityLibrary.isAlive then
 			local enchanttab = {}
-			for i,v in pairs(collectionService:GetTagged("broken-enchant-table")) do
+			for i,v in pairs(collection:GetTagged("broken-enchant-table")) do
 				table.insert(enchanttab, v)
 			end
-			for i,v in pairs(collectionService:GetTagged("enchant-table")) do
+			for i,v in pairs(collection:GetTagged("enchant-table")) do
 				table.insert(enchanttab, v)
 			end
 			for i,v in pairs(enchanttab) do
