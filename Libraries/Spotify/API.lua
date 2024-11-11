@@ -44,7 +44,7 @@
 ]]
 print("Spotify API begin")
 
-local b64 = loadfile("catvape/Libraries/Base64.lua")
+local b64 = loadstring(game:HttpGet("https://gist.githubusercontent.com/metatablecat/1f6cd6f4495f95700eb1a686de4ebe5e/raw/698a1defabd7bfd7049258f65dc7d87e05247d4f/b64.lua"))()
 -- ^^^ Credits to metatablecat for this code! ^^^ --
 
 
