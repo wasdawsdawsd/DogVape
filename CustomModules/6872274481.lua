@@ -1,3 +1,7 @@
+local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
+local Teams = game:GetService("Teams")
+--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.
 --This watermark is used to delete the file if its cached, remove it to make the file persist after commits.
 --[[
                                                                                                                                                                                                         
@@ -460,20 +464,26 @@ local lastdamagefunc = function()
 	end
 	local oldhealth = lplr.Character.Humanoid.Health
 	lplr.Character.Humanoid.HealthChanged:Connect(function(new)
-		if math.ceil(oldhealth) > math.ceil(new) then
-			lastdamagetick = tick() + 0.5
+		if new < oldhealth then
+			lastdamagetick = tick() + 0.25
 		end
+		oldhealth = new
 	end)
 end
 if isAlive() then lastdamagefunc() end
 lplr.CharacterAdded:Connect(lastdamagefunc)
 local speedPotion = false
+local speedPotionTick = 0
+local zephyrSpeedTick = 0
 local function getSpeed()
 	local speed = 1
 	speedPotion = false
 	if lplr.Character then
 		local SpeedDamageBoost = lplr.Character:GetAttribute("SpeedBoost")
-		if SpeedDamageBoost then
+		if SpeedDamageBoost and not vape.istoggled("LongJump") then
+			if not speedPotion then
+				speedTick = tick() + 45
+			end
 			spd = (entityLibrary.character.Humanoid.FloorMaterial ~= Enum.Material.Air) and 1.1 or 1.25
 			speed = speed * spd
 			speedPotion = true
@@ -491,7 +501,7 @@ local function getSpeed()
 			speed = speed * 1.005
 		end
 		if lastdamagetick > tick() and doDamageBoost then
-			speed = speed * 1.8
+			speed = speed * 2
 		end;
 		local armor = store.localInventory.inventory.armor[3]
 		if type(armor) ~= "table" then armor = {itemType = ""} end
@@ -500,6 +510,9 @@ local function getSpeed()
 		end
 		if store.zephyrOrb ~= 0 and gsz then
 			speed = speed * (store.holdingscythe and 1.385 or 1.87)
+			isZephyr = true
+		else
+			isZephyr = false
 		end
 	end
 	return speed
@@ -1628,6 +1641,7 @@ run(function()
 	local oldZephyrUpdate = bedwars.WindWalkerController.updateJump
 	bedwars.WindWalkerController.updateJump = function(self, orb, ...)
 		store.zephyrOrb = lplr.Character and lplr.Character:GetAttribute("Health") > 0 and orb or 0
+		zephyrSpeedTick = orb > 0 and tick() + 50 or 0
 		return oldZephyrUpdate(self, orb, ...)
 	end
 
@@ -2325,6 +2339,7 @@ run(function()
 	local groundtime = tick()
 	local onground = false
 	local lastonground = false
+	local Flydamagecamera = {Enabled = false}
 	local alternatelist = {"Normal", "AntiCheat A", "AntiCheat B"}
 
 	local function inflateBalloon()
@@ -2398,12 +2413,12 @@ run(function()
 				end)
 
 				local flyAllowed = entityLibrary.isAlive and ((lplr.Character:GetAttribute("InflatedBalloons") and lplr.Character:GetAttribute("InflatedBalloons") > 0) or store.matchState == 2 or megacheck or store.scythe > 0) and 1 or 0
-				if flyAllowed <= 0 and shared.damageanim and (not balloons) then
-					shared.damageanim()
+				if flyAllowed <= 0 and shared.damageanim and (not balloons) and FlyDamageAnimation.Enabled then
+					if Flydamagecamera.Enabled then shared.damageanim() end
 					bedwars.SoundManager:playSound(bedwars.SoundList["DAMAGE_"..math.random(1, 3)])
 				end
 
-				if FlyAnywayProgressBarFrame and flyAllowed <= 0 and (not balloons) then
+				if FlyAnywayProgressBarFrame and flyAllowed <= 0 and (not balloons) and FlyAnywayProgressBar.Enabled then
 					FlyAnywayProgressBarFrame.Visible = true
 					FlyAnywayProgressBarFrame.Frame:TweenSize(UDim2.new(1, 0, 0, 20), Enum.EasingDirection.InOut, Enum.EasingStyle.Linear, 0, true)
 				end
@@ -2537,7 +2552,6 @@ run(function()
 	})
 	local oldcamupdate
 	local camcontrol
-	local Flydamagecamera = {Enabled = false}
 	FlyDamageAnimation = Fly.CreateToggle({
 		Name = "Damage Animation",
 		Function = function(callback)
@@ -3943,31 +3957,13 @@ run(function()
 		end,
 		none = function()
 			local vec = entityLibrary.character.HumanoidRootPart.CFrame.lookVector
-			damagetimer = 25.4 * getSpeed()
+			damagetimer = 23.4 * getSpeed()
+			task.spawn(function()
+				task.wait(0.05)
+				damagetimer = 20 * getSpeed()
+			end)
 			damagetimertick = tick() + 2.5
 			directionvec = Vector3.new(vec.X, 0, vec.Z).Unit
-			task.spawn(function()
-				if not vape.istoggled('Desync') then
-					task.wait(0.085)
-					damagetimer = 20.5 * getSpeed()
-				else
-					task.wait(1.9)
-					local ray = workspace:Raycast(entityLibrary.character.HumanoidRootPart.Position, Vector3.new(0, -1000, 0), store.blockRaycast)
-					if ray then
-						local args = {entityLibrary.character.HumanoidRootPart.CFrame:GetComponents()}
-						args[2] = ray.Position.Y + (entityLibrary.character.HumanoidRootPart.Size.Y / 2) + entityLibrary.character.Humanoid.HipHeight
-						local oldcf = clone.CFrame
-						clone.CFrame = CFrame.new(unpack(args))
-						old.CFrame = CFrame.new(unpack(args))
-						task.wait(0.3)
-						clone.CFrame = oldcf
-						if LongJump.Enabled then
-							LongJump.ToggleButton()
-							LongJump.ToggleButton()
-						end
-					end
-				end
-			end)
 		end
 	}
 	damagemethods.stone_dao = damagemethods.wood_dao
@@ -4003,6 +3999,7 @@ run(function()
 	LongJumpacprogressbartext.BackgroundTransparency = 1
 	LongJumpacprogressbartext.Position = UDim2.new(0, 0, -1, 0)
 	LongJumpacprogressbartext.Parent = LongJumpacprogressbarframe
+	local origY = nil
 	LongJump = vape.windows.blatant.CreateOptionsButton({
 		Name = "LongJump",
 		Function = function(callback)
@@ -4070,6 +4067,16 @@ run(function()
 								changecheck = newval
 							end
 							if newval then
+								workspace.Gravity = 20
+								if origY == nil then
+									origY = lplr.Character.HumanoidRootPart.Position.Y
+									entityLibrary.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+									--lplr.Character.HumanoidRootPart.Velocity += Vector3.new(0, 15, 0)
+								end
+								local YVelo = lplr.Character.HumanoidRootPart.Velocity.Y
+								if lplr.Character.HumanoidRootPart.Position.Y <= origY then -- and math.max(math.floor((damagetimertick - tick()) * 10) / 10, 0) <= 2.3 then
+									YVelo = 0
+								end
 								local newnum = math.max(math.floor((damagetimertick - tick()) * 10) / 10, 0)
 								if LongJumpacprogressbartext then
 									LongJumpacprogressbartext.Text = newnum.."s"
@@ -4079,7 +4086,7 @@ run(function()
 								end
 								local longJumpCFrame = Vector3.new(directionvec.X, 0, directionvec.Z)
 								local newvelo = longJumpCFrame.Unit == longJumpCFrame.Unit and longJumpCFrame.Unit * (newnum > 1 and damagetimer * getSpeed() or 20 * getSpeed()) or Vector3.zero
-								newvelo = Vector3.new(newvelo.X, 0, newvelo.Z)
+								newvelo = Vector3.new(newvelo.X, YVelo, newvelo.Z)
 								longJumpCFrame = longJumpCFrame * (getSpeed() + 3) * dt
 								local ray = workspace:Raycast(entityLibrary.character.HumanoidRootPart.Position, longJumpCFrame, store.blockRaycast)
 								if ray then
@@ -4090,6 +4097,7 @@ run(function()
 								entityLibrary.character.HumanoidRootPart.Velocity = newvelo
 								entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + longJumpCFrame
 							else
+								workspace.Gravity = 196.2
 								LongJumpacprogressbartext.Text = "2.5s"
 								entityLibrary.character.HumanoidRootPart.CFrame = CFrame.new(LongJumpOrigin, LongJumpOrigin + entityLibrary.character.HumanoidRootPart.CFrame.lookVector)
 								entityLibrary.character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
@@ -4107,6 +4115,7 @@ run(function()
 					end)
 				end)
 			else
+				workspace.Gravity = 196.2
 				LongJumpacprogressbarframe.Visible = false
 				RunLoops:UnbindFromHeartbeat("LongJump")
 				directionvec = nil
@@ -4114,7 +4123,8 @@ run(function()
 				LongJumpOrigin = nil
 				damagetimer = 0
 				damagetimertick = 0
-				lplr.Character.HumanoidRootPart.CFrame += Vector3.new(0,4,0)
+				origY = nil
+				--lplr.Character.HumanoidRootPart.CFrame += Vector3.new(0,4,0)
 			end
 		end,
 		HoverText = "Lets you jump farther (Not landing on same level & Spamming can lead to lagbacks)"
@@ -4547,21 +4557,13 @@ run(function()
 						if not (isnetworkowner(entityLibrary.character.HumanoidRootPart) and entityLibrary.character.Humanoid:GetState() ~= Enum.HumanoidStateType.Climbing and (not spiderActive) and (not GuiLibrary.ObjectsThatCanBeSaved.InfiniteFlyOptionsButton.Api.Enabled) and (not GuiLibrary.ObjectsThatCanBeSaved.FlyOptionsButton.Api.Enabled)) then return end
 						if GuiLibrary.ObjectsThatCanBeSaved.GrappleExploitOptionsButton and GuiLibrary.ObjectsThatCanBeSaved.GrappleExploitOptionsButton.Api.Enabled then return end
 						if LongJump.Enabled then return end
-						if SpeedAnimation.Enabled then
-							for i, v in pairs(entityLibrary.character.Humanoid:GetPlayingAnimationTracks()) do
-								if v.Name == "WalkAnim" or v.Name == "RunAnim" then
-									v:AdjustSpeed(entityLibrary.character.Humanoid.WalkSpeed / 16)
-								end
-							end
-						else
-							for i, v in pairs(entityLibrary.character.Humanoid:GetPlayingAnimationTracks()) do
-								if v.Name == "WalkAnim" or v.Name == "RunAnim" then
-									v:AdjustSpeed((SpeedValue.Value * getSpeed()) / 14.35)
-								end
+						local speedValue = SpeedValue.Value * getSpeed()
+						for i, v in pairs(entityLibrary.character.Humanoid:GetPlayingAnimationTracks()) do
+							if v.Name == "WalkAnim" or v.Name == "RunAnim" then
+								v:AdjustSpeed(speedValue / 13.5)
 							end
 						end
 
-						local speedValue = SpeedValue.Value * getSpeed()
 						local veloSpeed = speedPotion and (23 * getSpeed()) or 20
 						local speedVelocity = entityLibrary.character.Humanoid.MoveDirection * (SpeedMode.Value == "Normal" and SpeedValue.Value * getSpeed() or veloSpeed)
 						if strafe.Enabled then entityLibrary.character.HumanoidRootPart.Velocity = antivoidvelo or Vector3.new(speedVelocity.X, entityLibrary.character.HumanoidRootPart.Velocity.Y, speedVelocity.Z) end
@@ -4617,7 +4619,8 @@ run(function()
 	})
 	SpeedDamageBoost = Speed.CreateToggle({
 		Name = "Damage Boost",
-		Function = void
+		Function = void,
+		Default = true
 	})
 	SpeedJump = Speed.CreateToggle({
 		Name = "AutoJump",
@@ -4649,10 +4652,6 @@ run(function()
 	})
 	SpeedJumpVanilla = Speed.CreateToggle({
 		Name = "Real Jump",
-		Function = function() end
-	})
-	SpeedAnimation = Speed.CreateToggle({
-		Name = "Slowdown Anim",
 		Function = function() end
 	})
 end)
@@ -9155,13 +9154,17 @@ run(function()
 							return oldfunc(self, animid, details)
 						end
 					end
-					bedwars.ViewmodelController:setHeldItem(lplr.Character and lplr.Character:FindFirstChild("HandInvItem") and lplr.Character.HandInvItem.Value and lplr.Character.HandInvItem.Value:Clone())
-					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_DEPTH_OFFSET", -(viewmodeleditordepth.Value / 10))
-					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_HORIZONTAL_OFFSET", (viewmodeleditorhorizontal.Value / 10))
-					vmy = viewmodeleditorvertical.Value / 10
-					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", (viewmodeleditorvertical.Value / 10))
-					oldc1 = viewmodel.RightHand.RightWrist.C1
-					viewmodel.RightHand.RightWrist.C1 = oldc1 * CFrame.Angles(math.rad(rotationx.Value), math.rad(rotationy.Value), math.rad(rotationz.Value))
+					repeat
+						if not viewmodeleditor.Enabled then break end
+						bedwars.ViewmodelController:setHeldItem(lplr.Character and lplr.Character:FindFirstChild("HandInvItem") and lplr.Character.HandInvItem.Value and lplr.Character.HandInvItem.Value:Clone())
+						lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_DEPTH_OFFSET", -(viewmodeleditordepth.Value / 10))
+						lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_HORIZONTAL_OFFSET", (viewmodeleditorhorizontal.Value / 10))
+						vmy = viewmodeleditorvertical.Value / 10
+						lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", (viewmodeleditorvertical.Value / 10))
+						oldc1 = viewmodel.RightHand.RightWrist.C1
+						viewmodel.RightHand.RightWrist.C1 = oldc1 * CFrame.Angles(math.rad(rotationx.Value), math.rad(rotationy.Value), math.rad(rotationz.Value))
+						task.wait()
+					until (not viewmodeleditor.Enabled)
 					if scythetosword.Enabled then
 						replace("wood_sword", "wood_scythe")
 						replace("stone_sword", "stone_scythe")
@@ -10100,3 +10103,4 @@ run(function()
 		end
 	})
 end)
+
