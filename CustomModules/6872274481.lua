@@ -9147,24 +9147,20 @@ run(function()
 				if callback then
 					oldfunc = bedwars.ViewmodelController.playAnimation
 					if viewmodelnobob.Enabled then
-						bedwars.ViewmodelController.playAnimation = function(self, animid, details)
-							if animid == bedwars.AnimationType.FP_WALK then
-								return
-							end
-							return oldfunc(self, animid, details)
-						end
-					end
-					repeat
-						if not viewmodeleditor.Enabled then break end
-						bedwars.ViewmodelController:setHeldItem(lplr.Character and lplr.Character:FindFirstChild("HandInvItem") and lplr.Character.HandInvItem.Value and lplr.Character.HandInvItem.Value:Clone())
-						lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_DEPTH_OFFSET", -(viewmodeleditordepth.Value / 10))
-						lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_HORIZONTAL_OFFSET", (viewmodeleditorhorizontal.Value / 10))
-						vmy = viewmodeleditorvertical.Value / 10
-						lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", (viewmodeleditorvertical.Value / 10))
-						oldc1 = viewmodel.RightHand.RightWrist.C1
-						viewmodel.RightHand.RightWrist.C1 = oldc1 * CFrame.Angles(math.rad(rotationx.Value), math.rad(rotationy.Value), math.rad(rotationz.Value))
-						task.wait()
-					until (not viewmodeleditor.Enabled)
+					   	bedwars.ViewmodelController.playAnimation = function(self, animid, details)
+					   		if animid == bedwars.AnimationType.FP_WALK then
+					   			return
+					   		end
+					   		return oldfunc(self, animid, details)
+					   	end
+					end	
+					bedwars.ViewmodelController:setHeldItem(lplr.Character and lplr.Character:FindFirstChild("HandInvItem") and lplr.Character.HandInvItem.Value and lplr.Character.HandInvItem.Value:Clone())
+					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_DEPTH_OFFSET", -(viewmodeleditordepth.Value / 10))
+					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_HORIZONTAL_OFFSET", (viewmodeleditorhorizontal.Value / 10))
+					vmy = viewmodeleditorvertical.Value / 10
+					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", (viewmodeleditorvertical.Value / 10))
+					oldc1 = viewmodel.RightHand.RightWrist.C1
+					viewmodel.RightHand.RightWrist.C1 = oldc1 * CFrame.Angles(math.rad(rotationx.Value), math.rad(rotationy.Value), math.rad(rotationz.Value))
 					if scythetosword.Enabled then
 						replace("wood_sword", "wood_scythe")
 						replace("stone_sword", "stone_scythe")
