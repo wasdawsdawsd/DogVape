@@ -791,7 +791,7 @@ local function AllNearPosition(distance, mob, amount, sortfunction, prediction)
 		if mob then
 			for i, v in workspace:GetChildren() do
 				if v.Name:find("Crystal") then
-					print(v, v.Name)
+					--print(v, v.Name)
 					if v.PrimaryPart then
 						local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
 						if mag <= distance then
@@ -802,7 +802,7 @@ local function AllNearPosition(distance, mob, amount, sortfunction, prediction)
 			end
 			for i, v in workspace:GetChildren() do
 				if v.Name:find("Halloween2024") then
-					print(v, v.Name)
+					--print(v, v.Name)
 					if v.PrimaryPart then
 						local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
 						if mag <= distance then
@@ -813,7 +813,7 @@ local function AllNearPosition(distance, mob, amount, sortfunction, prediction)
 			end
 			for i, v in workspace:GetChildren() do
 				if v.Name == "Spider" then
-					print(v, v.Name)
+					--print(v, v.Name)
 					if v.PrimaryPart then
 						local mag = (entityLibrary.character.HumanoidRootPart.Position - v.PrimaryPart.Position).magnitude
 						if mag <= distance then
@@ -1932,6 +1932,7 @@ run(function()
 	end
 end)
 
+GuiLibrary.RemoveObject("FOVChangerOptionsButton")
 GuiLibrary.RemoveObject("SilentAimOptionsButton")
 GuiLibrary.RemoveObject('HighJumpOptionsButton')
 GuiLibrary.RemoveObject("ReachOptionsButton")
@@ -1951,7 +1952,6 @@ GuiLibrary.RemoveObject("ClientKickDisablerOptionsButton")
 GuiLibrary.RemoveObject("NameTagsOptionsButton")
 GuiLibrary.RemoveObject("SafeWalkOptionsButton")
 GuiLibrary.RemoveObject("BlinkOptionsButton")
-GuiLibrary.RemoveObject("FOVChangerOptionsButton")
 GuiLibrary.RemoveObject("AntiVoidOptionsButton")
 GuiLibrary.RemoveObject("SongBeatsOptionsButton")
 GuiLibrary.RemoveObject("TargetStrafeOptionsButton")
@@ -2728,8 +2728,8 @@ run(function()
 	})
 end)
 
+local InfiniteFly = {Enabled = false}
 run(function()
-	local InfiniteFly = {Enabled = false}
 	local InfiniteFlyMode = {Value = "CFrame"}
 	local InfiniteFlySpeed = {Value = 23}
 	local InfiniteFlyVerticalSpeed = {Value = 40}
@@ -3026,6 +3026,7 @@ run(function()
 	local originalArmC0 = nil
 	local killauracurrentanim
 	local animationdelay = tick()
+	local swordoffset = {Value = 0}
 
 	local function getStrength(plr)
 		local inv = store.inventories[plr.Player]
@@ -3221,7 +3222,7 @@ run(function()
 		Function = function(callback)
 			if callback then
 				if killauraaimcirclepart then killauraaimcirclepart.Parent = camera end
-				if killaurarangecirclepart then killaurarangecirclepart.Parent = camera end
+				if killaurarangecirclepart then killaurarangecirclepart.Parent = camera killaurarangecirclepart.Size = Vector3.new((killaurarange.Value*4) * 0.7, 0.01, (killaurarange.Value*4) * 0.7) end
 				if killauraparticlepart then killauraparticlepart.Parent = camera end
 
 				task.spawn(function()
@@ -3258,11 +3259,15 @@ run(function()
 				task.spawn(function()
 					while Killaura.Enabled do
 						task.wait()
+						if not killauraNearPlayer then
+							lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", vmy)
+						end
 						if (killauraanimation.Enabled and killaurasworddown.Enabled and not killauraswing.Enabled) then
 							if killauraNearPlayer then
 								--pcall(function()
-								task.wait(0.1)
-								local tween = tweenNum(vmy, vmy - 2, 0.06, function(value)
+								lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value + swordoffset.Value)
+								task.wait(math.random(0.5, 1))
+								local tween = tweenNum(vmy + swordoffset.Value, (vmy - 2) + swordoffset.Value, 0.06, function(value)
 							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
 							    end)
 									    
@@ -3274,9 +3279,9 @@ run(function()
 							    end
 									
 									    
-							    local tween2 = tweenNum(vmy - 2, vmy, 0.06, function(value)
+							    local tween2 = tweenNum((vmy - 2) + swordoffset.Value, vmy + swordoffset.Value, 0.06, function(value)
 							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
-						    	end)
+								end)
 									    
 							    while true do
 							        task.wait(0.01)
@@ -3284,10 +3289,8 @@ run(function()
 							            break
 							        end
 							    end
+							    task.wait(0.1)
 								--end)
-								task.wait(math.random(0.5, 1))
-							else
-								lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", vmy)
 							end
 						end
 					end
@@ -3324,12 +3327,12 @@ run(function()
 						if killauraaimcirclepart then
 							killauraaimcirclepart.Position = targetedPlayer and closestpos(targetedPlayer.RootPart, entityLibrary.character.HumanoidRootPart.Position) or Vector3.new(99999, 99999, 99999)
 						end
-						if killauraparticlepart then
+						if killauraparticlepart and killauraparticle.Enabled then
 							killauraparticlepart.Position = targetedPlayer and targetedPlayer.RootPart.Position or Vector3.new(99999, 99999, 99999)
 						end
 						local Root = entityLibrary.character.HumanoidRootPart
 						if Root then
-							if killaurarangecirclepart then
+							if killaurarangecirclepart and killaurarangecircle.Enabled then
 								killaurarangecirclepart.Position = Root.Position - Vector3.new(0, entityLibrary.character.Humanoid.HipHeight, 0)
 							end
 							local Neck = entityLibrary.character.Head:FindFirstChild("Neck")
@@ -3364,6 +3367,10 @@ run(function()
 					task.spawn(autoBlockLoop)
 				end
 				table.insert(Killaura.Connections, runservice.RenderStepped:Connect(function()
+					if killaurarangecirclepart and (not killaurarangecircle.Enabled) then
+						killaurarangecirclepart:Destroy()
+						killaurarangecirclepart = nil
+					end
 					vapeTargetInfo.Targets.Killaura = nil
 					local plrs = AllNearPosition(killaurarange.Value * 4, true, 10, killaurasortmethods[killaurasortmethod.Value], true)
 					local firstPlayerNear
@@ -3472,7 +3479,7 @@ run(function()
 				killauraNearPlayer = false
 				for i,v in pairs(killauraboxes) do v.Adornee = nil end
 				if killauraaimcirclepart then killauraaimcirclepart.Parent = nil end
-				if killaurarangecirclepart then killaurarangecirclepart.Parent = nil end
+				if killaurarangecirclepart then killaurarangecirclepart.Parent = nil killaurarangecirclepart.Size = Vector3.new(0, 0, 0) end
 				if killauraparticlepart then killauraparticlepart.Parent = nil end
 				bedwars.ViewmodelController.playAnimation = oldViewmodelAnimation
 				bedwars.SoundManager.playSound = oldPlaySound
@@ -3520,11 +3527,11 @@ run(function()
 		Min = 1,
 		Max = 4.5,
 		Function = function(val)
-			if killaurarangecirclepart then
-				killaurarangecirclepart.Size = Vector3.new((val * 4) * 0.7, 0.01, val * 0.7)
+			if killaurarangecirclepart and killaurarangecircle.Enabled then
+				killaurarangecirclepart.Size = Vector3.new((val * 4) * 0.7, 0.01, (val*4) * 0.7)
 			end
 		end,
-		Default = 18
+		Default = 6
 	})
 	killauraangle = Killaura.CreateSlider({
 		Name = "Max angle",
@@ -3671,6 +3678,8 @@ run(function()
 	killaurarangecircle = Killaura.CreateToggle({
 		Name = "Range Visualizer",
 		Function = function(callback)
+			Killaura.ToggleButton()
+			Killaura.ToggleButton()
 			if callback then
 				killaurarangecirclepart = Instance.new("MeshPart")
 				killaurarangecirclepart.MeshId = "rbxassetid://3726303797"
@@ -3681,12 +3690,14 @@ run(function()
 				killaurarangecirclepart.Size = Vector3.new((killaurarange.Value*4) * 0.7, 0.01, (killaurarange.Value*4) * 0.7)
 				killaurarangecirclepart.Parent = gameCamera
 			else
-				if killaurarangecirclepart then
+				pcall(function()
+					killaurarangecirclepart.Size = Vector3.new(0, 0, 0)
 					killaurarangecirclepart:Destroy()
 					killaurarangecirclepart = nil
-				end
+				end)
 			end
-		end
+		end,
+		Default = false
 	})
 	killauraaimcircle = Killaura.CreateToggle({
 		Name = "Aim Visualizer",
@@ -3759,6 +3770,7 @@ run(function()
 		Function = function(callback)
 			if killauraanimationtween.Object then killauraanimationtween.Object.Visible = callback end
 			if killaurasworddown.Object then killaurasworddown.Object.Visible = callback end
+			if swordoffset.Object then swordoffset.Object.Visible = callback end
 		end,
 		HoverText = "Uses a custom animation for swinging"
 	})
@@ -3774,6 +3786,14 @@ run(function()
 		HoverText = "Makes the sword move down and back up\nLiie in Minecraft"
 	})
 	killaurasworddown.Object.Visible = false
+	swordoffset = Killaura.CreateSlider({
+		Name = "Sword Offset",
+		Min = -10,
+		Max = 10,
+		Default = 0,
+		Function = void
+	})
+	swordoffset.Object.Visible = false
 	killaurasync = Killaura.CreateToggle({
 		Name = "Synced Animation",
 		Function = function() end,
@@ -5122,59 +5142,6 @@ run(function()
 	})
 end)
 
-
-run(function()
-	local FieldOfViewValue = {Value = 70}
-	local oldfov
-	local oldfov2
-	local FieldOfView = {Enabled = false}
-	local FieldOfViewZoom = {Enabled = false}
-	FieldOfView = vape.windows.render.CreateOptionsButton({
-		Name = "FOVChanger",
-		Function = function(callback)
-			if callback then
-				if FieldOfViewZoom.Enabled then
-					task.spawn(function()
-						repeat
-							task.wait()
-						until not inputservice:IsKeyDown(Enum.KeyCode[FieldOfView.Keybind ~= "" and FieldOfView.Keybind or "C"])
-						if FieldOfView.Enabled then
-							FieldOfView.ToggleButton(false)
-						end
-					end)
-				end
-				oldfov = bedwars.FovController.setFOV
-				oldfov2 = bedwars.FovController.getFOV
-				bedwars.FovController.setFOV = function(self, fov) return oldfov(self, FieldOfViewValue.Value + (speedPotion and 0 or 0)) end
-				bedwars.FovController.getFOV = function(self, fov) return FieldOfViewValue.Value + (speedPotion and 0 or 0) end
-				repeat
-					task.wait()
-					cam.FieldOfView = FieldOfViewValue.Value
-				until (not FOVChanger.Enabled)
-			else
-				bedwars.FovController.setFOV = oldfov
-				bedwars.FovController.getFOV = oldfov2
-			end
-			bedwars.FovController:setFOV(bedwars.ClientStoreHandler:getState().Settings.fov)
-		end
-	})
-	FieldOfViewValue = FieldOfView.CreateSlider({
-		Name = "FOV",
-		Min = 30,
-		Max = 120,
-		Function = function(val)
-			if FieldOfView.Enabled then
-				bedwars.FovController:setFOV(bedwars.ClientStoreHandler:getState().Settings.fov)
-			end
-		end
-	})
-	FieldOfViewZoom = FieldOfView.CreateToggle({
-		Name = "Zoom",
-		Function = function() end,
-		HoverText = "optifine zoom lol"
-	})
-end)
-
 run(function()
 	local old
 	local old2
@@ -6375,6 +6342,54 @@ run(function()
 	NameTagsDrawing = NameTags.CreateToggle({
 		Name = "Drawing",
 		Function = function() if NameTags.Enabled then NameTags.ToggleButton(false) NameTags.ToggleButton(false) end end,
+	})
+end)
+
+run(function()
+	local FieldOfView = {Enabled = false}
+	local FieldOfViewZoom = {Enabled = false}
+	local FieldOfViewValue = {Value = 70}
+	local oldfov
+	FieldOfView = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+		Name = "FOVChanger",
+		Function = function(callback)
+			if callback then
+				oldfov = gameCamera.FieldOfView
+				if FieldOfViewZoom.Enabled then
+					task.spawn(function()
+						repeat
+							task.wait()
+						until inputService:IsKeyDown(Enum.KeyCode[FieldOfView.Keybind ~= "" and FieldOfView.Keybind or "C"]) == false
+						if FieldOfView.Enabled then
+							FieldOfView.ToggleButton(false)
+						end
+					end)
+				end
+				table.insert(FieldOfView.Connections, gameCamera:GetPropertyChangedSignal('FieldOfView'):Connect(function()
+					gameCamera.FieldOfView = FieldOfViewValue.Value + 10
+				end))
+				task.spawn(function()
+					repeat
+						gameCamera.FieldOfView = FieldOfViewValue.Value + 10
+						task.wait()
+					until (not FieldOfView.Enabled)
+				end)
+			else
+				gameCamera.FieldOfView = oldfov
+			end
+		end
+	})
+	FieldOfViewValue = FieldOfView.CreateSlider({
+		Name = "FOV",
+		Min = 30,
+		Max = 120,
+		Default = 70,
+		Function = function(val) end
+	})
+	FieldOfViewZoom = FieldOfView.CreateToggle({
+		Name = "Zoom",
+		Function = function() end,
+		HoverText = "optifine zoom lol"
 	})
 end)
 
@@ -9157,13 +9172,14 @@ run(function()
 					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", (viewmodeleditorvertical.Value / 10))
 					oldc1 = viewmodel.RightHand.RightWrist.C1
 					viewmodel.RightHand.RightWrist.C1 = oldc1 * CFrame.Angles(math.rad(rotationx.Value), math.rad(rotationy.Value), math.rad(rotationz.Value))
-					if scythetosword.Enabled then
-						replace("wood_sword", "wood_scythe")
-						replace("stone_sword", "stone_scythe")
-						replace("iron_sword", "iron_scythe")
-						replace("diamond_sword", "diamond_scythe")
-						replace("emerald_sword", "mythic_scythe")
-					end
+					repeat
+						for i, v in lplr.Character:GetDescendants() do
+							if v.Name:find("Sword") then
+								pcall(function() v.CanCollide = false end)
+							end
+						end
+						task.wait()
+					until (not viewmodeleditor.Enabled)
 				else
 					bedwars.ViewmodelController.playAnimation = oldfunc
 					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_DEPTH_OFFSET", 0)
@@ -9176,21 +9192,8 @@ run(function()
 		end,
 		HoverText = 'changes your sword position by using attributes.'
 	})
-	scythetosword = viewmodeleditor.CreateToggle({
-		Name = 'Scythes to Swords',
-		Function = function(call) 
-			if viewmodeleditor.Enabled then
-				replace("wood_sword", "wood_scythe")
-				replace("stone_sword", "stone_scythe")
-				replace("iron_sword", "iron_scythe")
-				replace("diamond_sword", "diamond_scythe")
-				replace("emerald_sword", "mythic_scythe")
-			end
-		end,
-		HoverText = 'Converts scythes to swords.'
-	})
 	viewmodelnobob = viewmodeleditor.CreateToggle({
-		Name = 'RemoveBobbing',
+		Name = 'Remove Bobbing',
 		Function = function(call) 
 			if viewmodeleditor.Enabled then
 				if call then
