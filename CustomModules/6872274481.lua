@@ -3272,7 +3272,7 @@ run(function()
 								offset = swordoffset.Value / 10
 								--pcall(function()
 								lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", vmy + swordoffset.Value)
-								if killauraNearPlayer then continue end
+								
 								task.wait(math.random(0.5, 1))
 								local tween = tweenNum(vmy + offset, (vmy - 2) + offset, 0.06, function(value)
 							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
@@ -3285,7 +3285,6 @@ run(function()
 							        end
 							    end
 									
-								if killauraNearPlayer then continue end
 							    local tween2 = tweenNum((vmy - 2) + offset, vmy + offset, 0.06, function(value)
 							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
 								end)
@@ -10141,7 +10140,6 @@ run(function()
 		Function = void
 	})
 end)
-
 
 
 run(function() -- I do not own any of these texture packs!
