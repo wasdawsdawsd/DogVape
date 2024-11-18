@@ -3257,20 +3257,27 @@ run(function()
 				end)
 				
 				task.spawn(function()
-					while Killaura.Enabled do
-						task.wait()
+					repeat
 						if not killauraNearPlayer then
 							lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", vmy)
 						end
+						task.wait()
+					until (not Killaura.Enabled)
+				end)
+				task.spawn(function()
+					while Killaura.Enabled do
+						task.wait()
 						if (killauraanimation.Enabled and killaurasworddown.Enabled and not killauraswing.Enabled) then
 							if killauraNearPlayer then
+								offset = swordoffset.Value / 10
 								--pcall(function()
-								lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value + swordoffset.Value)
+								lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", vmy + swordoffset.Value)
+								if killauraNearPlayer then continue end
 								task.wait(math.random(0.5, 1))
-								local tween = tweenNum(vmy + swordoffset.Value, (vmy - 2) + swordoffset.Value, 0.06, function(value)
+								local tween = tweenNum(vmy + offset, (vmy - 2) + offset, 0.06, function(value)
 							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
 							    end)
-									    
+								
 							    while true do
 							        task.wait(0.01)
 							        if tween(0.01) then
@@ -3278,8 +3285,8 @@ run(function()
 							        end
 							    end
 									
-									    
-							    local tween2 = tweenNum((vmy - 2) + swordoffset.Value, vmy + swordoffset.Value, 0.06, function(value)
+								if killauraNearPlayer then continue end
+							    local tween2 = tweenNum((vmy - 2) + offset, vmy + offset, 0.06, function(value)
 							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
 								end)
 									    
@@ -3688,7 +3695,9 @@ run(function()
 				killaurarangecirclepart.Anchored = true
 				killaurarangecirclepart.Material = Enum.Material.Neon
 				killaurarangecirclepart.Size = Vector3.new((killaurarange.Value*4) * 0.7, 0.01, (killaurarange.Value*4) * 0.7)
-				killaurarangecirclepart.Parent = gameCamera
+				if Killaura.Enabled then
+					killaurarangecirclepart.Parent = camera
+				end
 			else
 				pcall(function()
 					killaurarangecirclepart.Size = Vector3.new(0, 0, 0)
@@ -6350,11 +6359,11 @@ run(function()
 	local FieldOfViewZoom = {Enabled = false}
 	local FieldOfViewValue = {Value = 70}
 	local oldfov
-	FieldOfView = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	FieldOfView = vape.windows.render.CreateOptionsButton({
 		Name = "FOVChanger",
 		Function = function(callback)
 			if callback then
-				oldfov = gameCamera.FieldOfView
+				oldfov = camera.FieldOfView
 				if FieldOfViewZoom.Enabled then
 					task.spawn(function()
 						repeat
@@ -6365,17 +6374,17 @@ run(function()
 						end
 					end)
 				end
-				table.insert(FieldOfView.Connections, gameCamera:GetPropertyChangedSignal('FieldOfView'):Connect(function()
-					gameCamera.FieldOfView = FieldOfViewValue.Value + 10
+				table.insert(FieldOfView.Connections, camera:GetPropertyChangedSignal('FieldOfView'):Connect(function()
+					camera.FieldOfView = FieldOfViewValue.Value + 10
 				end))
 				task.spawn(function()
 					repeat
-						gameCamera.FieldOfView = FieldOfViewValue.Value + 10
+						camera.FieldOfView = FieldOfViewValue.Value + qp
 						task.wait()
 					until (not FieldOfView.Enabled)
 				end)
 			else
-				gameCamera.FieldOfView = oldfov
+				camera.FieldOfView = oldfov
 			end
 		end
 	})
@@ -10099,3 +10108,66 @@ run(function()
 	})
 end)
 
+run(function()
+	local AntiDeath = {Enabled = false}
+	local Health = {Value = 30}
+	local saved = false
+	AntiDeath = vape.windows.utility.CreateOptionsButton({
+		Name = "AntiDeath",
+		Function = function(callback: boolean)
+			if callback then
+				repeat
+					if not vape.istoggled("InfiniteFly") and lplr.Character.Humanoid ~= nil and isAlive(lplr) then
+						if lplr.Character.Humanoid.Health <= Health.Value and not saved then
+							InfiniteFly.ToggleButton()
+							warningNotification("Cat", "Saved you from death! ("..math.ceil(lplr.Character.Humanoid.Health)..")")
+							saved = true
+						end
+						if lplr.Character.Humanoid.Health > Health.Value then
+							saved = false
+						end
+					end
+					task.wait()
+				until (not AntiDeath.Enabled)
+			end
+		end,
+		HoverText = "Prevents you from dying."
+	})
+	Health = AntiDeath.CreateSlider({
+		Name = "Health",
+		Min = 5,
+		Max = 60,
+		Default = 30,
+		Function = void
+	})
+end)
+
+
+
+run(function() -- I do not own any of these texture packs!
+	local TexturePack = {Enabled = false}
+	local Pack = {Value = "VioletDreams"}
+	local packs = {"FatCat", "VioletsDreams", "Enlightened", "Onyx", "Fury", "Wichtiger", "Makima", "Marin-Kitsawaba", "Prime", "Vile", "Devourer", "Acidic", "Moon4Real", "Nebula"}
+	TexturePack = vape.windows.render.CreateOptionsButton({
+		Name = "TexturePack",
+		Function = function(callback: boolean)
+			if callback then
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/"..Pack.Value..".lua"))()
+				repeat
+					for i, v in lplr.Character:GetDescendants() do
+						if v.Name:find("Sword") then
+							pcall(function() v.CanCollide = false end)
+						end
+					end
+					task.wait()
+				until (not TexturePack.Enabled)
+			end
+		end,
+		ExtraText = function() return Pack.Value end
+	})
+	Pack = TexturePack.CreateDropdown({
+		Name = "Pack",
+		List = packs,
+		Function = void
+	})
+end)
