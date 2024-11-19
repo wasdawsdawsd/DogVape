@@ -3686,6 +3686,7 @@ run(function()
 		Function = function(callback)
 			Killaura.ToggleButton()
 			Killaura.ToggleButton()
+			if inputservice.TouchEnabled then return end
 			if callback then
 				killaurarangecirclepart = Instance.new("MeshPart")
 				killaurarangecirclepart.MeshId = "rbxassetid://3726303797"
@@ -9292,26 +9293,13 @@ run(function()
 		Function = function(call)
 			if call then
 				bedtp.ToggleButton()
-				if not vape.istoggled('Bypass') then
-					warningNotification('Cat', 'Teleporting to the destination.', 4) 
-					lplr.Character.Humanoid.Health = 0
-					lplr.CharacterAdded:Wait()
-					task.wait(0.2)
-					local bed = getEnemyBed()
-					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 10, 0))})
-					tween:Play()
-				else
-					warningNotification('Cat', 'Teleporting to the destination.', 4) 
-					local bed = getEnemyBed()
-					local speed = 1
-					local mag = (lplr.Character.HumanoidRootPart.Position - bed.Bed.Position).magnitude
-					if mag >= 20 then speed = 1.5 end
-					if mag >= 40 then speed = 1.85 end
-					if mag >= 60 then speed = 2.5 end
-					if mag >= 80 then speed = 5 end
-					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(speed, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 10, 0))})
-					tween:Play()
-				end
+				warningNotification('Cat', 'Teleporting to the destination.', 4) 
+				lplr.Character.Humanoid.Health = 0
+				lplr.CharacterAdded:Wait()
+				task.wait(0.2)
+				local bed = getEnemyBed()
+				tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 10, 0))})
+				tween:Play()
 			end
 		end
 	}) 
@@ -9342,35 +9330,15 @@ run(function()
 		Name = 'PlayerTP',
 		Function = function(call)
 			if call then
-				if not vape.istoggled('Bypass') then
-					playertp.ToggleButton()
-					warningNotification('Cat', 'Teleporting to the destination.', 4) 
-					lplr.Character.Humanoid.Health = 0
-					lplr.CharacterAdded:Wait()
-					task.wait(0.2)
-					local player = gettarget()
-					if player then
-						tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0))})
-						tween:Play()
-					end
-				else
-					playertp.ToggleButton()
-					warningNotification('Cat', 'Teleporting to the destination.', 4) 
-					task.wait(0.2)
-					local player = gettarget()
-					local speed = 1
-					if player then
-						local mag = (lplr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).magnitude
-						if mag >= 20 then speed = 1.5 end
-						if mag >= 40 then speed = 1.85 end
-						if mag >= 60 then speed = 2.5 end
-						if mag >= 80 then speed = 5 end
-						print('yes')
-						tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(speed, Enum.EasingStyle.Linear), {CFrame = (player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0))})
-						tween:Play()
-					else
-						return warningNotification('CatV5', 'Player not found.', 5)
-					end
+				playertp.ToggleButton()
+				warningNotification('Cat', 'Teleporting to the destination.', 4) 
+				lplr.Character.Humanoid.Health = 0
+				lplr.CharacterAdded:Wait()
+				task.wait(0.2)
+				local player = gettarget()
+				if player then
+					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0))})
+					tween:Play()
 				end
 			end
 		end
@@ -10142,10 +10110,11 @@ run(function()
 end)
 
 
-run(function() -- I do not own any of these texture packs!
+
+run(function() -- I do not most of these texture packs!
 	local TexturePack = {Enabled = false}
 	local Pack = {Value = "VioletDreams"}
-	local packs = {"FatCat", "VioletsDreams", "Enlightened", "Onyx", "Fury", "Wichtiger", "Makima", "Marin-Kitsawaba", "Prime", "Vile", "Devourer", "Acidic", "Moon4Real", "Nebula"}
+	local packs = {"FatCat", "Simply", "VioletsDreams", "Enlightened", "Onyx", "Fury", "Wichtiger", "Makima", "Marin-Kitsawaba", "Prime", "Vile", "Devourer", "Acidic", "Moon4Real", "Nebula"}
 	TexturePack = vape.windows.render.CreateOptionsButton({
 		Name = "TexturePack",
 		Function = function(callback: boolean)
