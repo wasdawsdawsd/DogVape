@@ -120,7 +120,7 @@ local vapeAssetTable = {
 	["catvape/assets/VapeLogo2.png"] = "rbxassetid://13350876307",
 	["catvape/assets/VapeLogo4.png"] = "rbxassetid://13350877564"
 }
-if identifyexecutor():find("Wave") or identifyexecutor():find("macsploit") or identifyexecutor():find("Fluxus") then
+if identifyexecutor():find("Wave") or identifyexecutor() == "macsploit is the best fucking exploit ever made." or identifyexecutor():find("Fluxus") then
 	getgenv().getcustomasset = nil
 	getcustomasset = nil
 end
@@ -245,7 +245,7 @@ shared.GuiLibrary = GuiLibrary
 local saveSettingsLoop = coroutine.create(function()
 	repeat
 		GuiLibrary.SaveSettings()
-        task.wait(10)
+        task.wait(5)
 	until not vapeInjected or not GuiLibrary
 end)
 
@@ -1079,12 +1079,18 @@ local function TextGUIUpdate()
             backgroundFrame.LayoutOrder = i
             backgroundFrame.Size = UDim2.fromOffset(textsize.X + 8, textsize.Y + VapeScale.Scale + 2)
             backgroundFrame.Parent = VapeBackground
-            local backgroundLineFrame = Instance.new("Frame")
-            backgroundLineFrame.Size = UDim2.new(0, 2, 1, 0)
-            backgroundLineFrame.Position = (VapeBackgroundList.HorizontalAlignment == Enum.HorizontalAlignment.Left and UDim2.new() or UDim2.new(1, -2, 0, 0))
-            backgroundLineFrame.BorderSizePixel = 0
-            backgroundLineFrame.Name = "ColorFrame"
-            backgroundLineFrame.Parent = backgroundFrame
+            local backgroundLineFrameRight = Instance.new("Frame")
+            backgroundLineFrameRight.Size = UDim2.new(0, 2, 1, 0)
+            backgroundLineFrameRight.Position = (VapeBackgroundList.HorizontalAlignment == Enum.HorizontalAlignment.Left and UDim2.new() or UDim2.new(1, -2, 0, 0))
+            backgroundLineFrameRight.BorderSizePixel = 0
+            backgroundLineFrameRight.Name = "ColorFrameRight"
+            backgroundLineFrameRight.Parent = backgroundFrame
+            --[[local backgroundLineFrameLeft = Instance.new("Frame")
+            backgroundLineFrameLeft.Size = UDim2.new(0, 5, 1, 0)
+            backgroundLineFrameLeft.Position = (VapeBackgroundList.HorizontalAlignment == Enum.HorizontalAlignment.Left and UDim2.new() or UDim2.new(-0.025, 0, 0, 0))
+            backgroundLineFrameLeft.BorderSizePixel = 0
+            backgroundLineFrameLeft.Name = "ColorFrameLeft"
+            backgroundLineFrameLeft.Parent = backgroundFrame]]
             local backgroundLineExtra = Instance.new("Frame")
             backgroundLineExtra.BorderSizePixel = 0
             backgroundLineExtra.BackgroundTransparency = 0.95
@@ -1102,8 +1108,9 @@ end
 
 task.spawn(function()
 	repeat task.wait() until warningNotification
-	warningNotification("Cat", "Loggin in...", 3)
-	loadfile("catvape/Libraries/Login.lua")()
+	warningNotification("Cat", "Logging in...", 3)
+	shared.info = loadfile("catvape/Libraries/Login.lua")()
+	print("finishe logd")
 end)
 
 TextGUI.GetCustomChildren().Parent:GetPropertyChangedSignal("Position"):Connect(TextGUIUpdate)
@@ -1665,7 +1672,8 @@ GuiLibrary.UpdateUI = function(h, s, val, bypass)
 
 		if TextGUIBackgroundToggle.Enabled then
 			for i, v in pairs(VapeBackgroundTable) do
-				v.ColorFrame.BackgroundColor3 = backgroundTable[v.LayoutOrder] or Color3.new()
+				v.ColorFrameRight.BackgroundColor3 = backgroundTable[v.LayoutOrder] or Color3.new()
+				--v.ColorFrameLeft.BackgroundColor3 = backgroundTable[v.LayoutOrder] or Color3.new()
 			end
 		end
 		VapeText.Text = newTextGUIText
@@ -1817,28 +1825,22 @@ GUISettings.CreateSlider({
 })
 
 local GUIbind = GUI.CreateGUIBind()
-local teleportConnection = playersService.LocalPlayer.OnTeleport:Connect(function(State)
-    if (not teleportedServers) and (not shared.VapeIndependent) then
+local teleportConnection = game:GetService("Players").LocalPlayer.OnTeleport:Connect(function()
+	if (not teleportedServers) and (not shared.VapeIndependent) then
 		teleportedServers = true
 		local teleportScript = [[
 			shared.VapeSwitchServers = true
-			loadfile = loadfile or function(file)
+			local loadfile = loadfile or function(file)
 				return loadstring(readfile(file))
 			end
 			loadfile("catvape/loader.lua")()
 		]]
-		if shared.VapeDeveloper then
-			teleportScript = 'shared.VapeDeveloper = true\n'..teleportScript
-		end
-		if shared.VapePrivate then
-			teleportScript = 'shared.VapePrivate = true\n'..teleportScript
-		end
 		if shared.VapeCustomProfile then
 			teleportScript = "shared.VapeCustomProfile = '"..shared.VapeCustomProfile.."'\n"..teleportScript
 		end
 		GuiLibrary.SaveSettings()
-		task.delay(2, function() queueonteleport(teleportScript) end)
-    end
+		queueonteleport(teleportScript)
+	end
 end)
 
 GuiLibrary.SelfDestruct = function()
@@ -1977,11 +1979,13 @@ GeneralSettings.CreateButton2({
 })
 
 local function loadVape()
-	pcall(function() loadstring(vapeGithubRequest("Universal.lua"))() end)
+	local suc, res = pcall(function() loadstring(vapeGithubRequest("Universal.lua"))() end)
+	if not suc then task.spawn(error, "Universal.lua: "..res) end
 	local gamefile = nil
 	pcall(function() gamefile = vapeGithubRequest(`CustomModules/{game.PlaceId}.lua`); end)
 	if gamefile then
-		pcall(function() loadstring(gamefile)(); end)
+		local suc, res = pcall(function() loadstring(gamefile)(); end)
+		if not suc then task.spawn(error, "CustomModules/"..game.PlaceId..".lua: "..res) end
 	end;
 	if #ProfilesTextList.ObjectList == 0 then
 		table.insert(ProfilesTextList.ObjectList, "default")
