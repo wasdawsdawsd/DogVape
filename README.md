@@ -2,5 +2,5 @@
 > a modification of roblox vape v4.
 
 
-> [!IMPORTANT]
+> [!WARNING]
 > Join the [discord server](https://discord.gg/catvape) to get the script.
