@@ -3,4 +3,4 @@
 
 
 > [!WARNING]
-> Join the [discord server](https://discord.gg/catvape) to get the script.
+> Join the [discord server](https://discord.gg/eeUxzAxwaj) to get the script.
