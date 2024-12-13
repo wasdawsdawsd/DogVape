@@ -373,7 +373,7 @@ local initiate: () -> () = function(profiles: boolean): () -> ()
         end;
     end;
     fakefinished = true
-    repeat task.wait() until progresstext.Text == '150%';
+    repeat task.wait() until progresstext.Text == '100%';
     installing = false;
     installtext.Text = 'Installation Finished, Closing in 5 seconds';
     task.wait(5);
