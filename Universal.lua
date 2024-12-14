@@ -21,6 +21,15 @@ table.insert(vapeConnections, workspace:GetPropertyChangedSignal("CurrentCamera"
 	gameCamera = workspace.CurrentCamera or workspace:FindFirstChildWhichIsA("Camera")
 end))
 getgenv().vape = {
+	RemoveObject = function(name)
+		local gui = GuiLibrary
+		if name:find("OptionsButton") then
+			return gui.RemoveObject(name)
+		else
+			return gui.RemoveObject(name.."OptionsButton")
+		end
+		return nil
+	end,
 	gui = GuiLibrary,
 	object = GuiLibrary.ObjectsThatCanBeSaved,
 	theme = Color3.fromRGB(255, 255, 255),
@@ -50,6 +59,32 @@ getgenv().vape = {
 	end
 }
 vape.platform = game:FindService('UserInputService'):GetPlatform()
+getgenv().rejoin = function()
+	game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId,lplr)
+end
+getgenv().serverhop = function()
+	httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+	if httprequest then -- Credits to Infinite Yield, otherwise I would NOT have figured out how to do this
+		local servers = {}
+		local req = httprequest({Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.PlaceId)})
+		local body = game:GetService("HttpService"):JSONDecode(req.Body)
+
+		if body and body.data then
+			for i, v in next, body.data do
+				if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= game.JobId then
+					table.insert(servers, 1, v.id)
+				end
+			end
+		end
+		if #servers > 0 then
+			game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], lplr)
+		else
+			return warningNotification("Cat", "Couldn't find a server!",5)
+		end
+	else
+		warningNotification("Cat V5", "Your exploit does not support this module (missing request)",5)
+	end
+end
 getgenv().run = function(func)
 	local suc, res = pcall(func)
 	if not suc then
@@ -360,7 +395,8 @@ getgenv().isAlive = function(plr)
 	return plr and plr.Character and plr.Character.Parent ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChildWhichIsA('Humanoid') or false
 end
 
-local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
+local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()
+run(function()
 	local olduninject
 	function whitelist:get(plr)
 		local plrstr = self:hash(plr.Name..plr.UserId)
@@ -389,6 +425,7 @@ local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
 		for i, v in plrtag do
 			newtag = newtag..(rich and '<font color="#'..v.color:ToHex()..'">['..v.text..']</font>' or '['..removeTags(v.text)..']')..' '
 		end
+		
 		return newtag
 	end
 
@@ -475,6 +512,53 @@ local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
 			local plr = playersService:GetPlayerByUserId(data.SpeakerUserId)
 			if plr then
 				data.ExtraData.Tags = data.ExtraData.Tags or {}
+				task.spawn(pcall, function()
+					for i, v in shared.info.whitelists do
+						--print(i, v)
+						if v.player == plr then
+							if v.text then
+								--print("hiya")
+								--print(plr, v.plr)
+								--print(v.text:upper())
+								local NAME_COLORS = { -- taken from roblox devforum :money_mouth:
+									Color3.new(253/255, 41/255, 67/255), -- BrickColor.new("Bright red").Color,
+									Color3.new(1/255, 162/255, 255/255), -- BrickColor.new("Bright blue").Color,
+									Color3.new(2/255, 184/255, 87/255), -- BrickColor.new("Earth green").Color,
+									BrickColor.new("Bright violet").Color,
+									BrickColor.new("Bright orange").Color,
+									BrickColor.new("Bright yellow").Color,
+									BrickColor.new("Light reddish violet").Color,
+									BrickColor.new("Brick yellow").Color,
+								}
+								
+								local function GetNameValue(pName)
+									local value = 0
+									for index = 1, #pName do
+										local cValue = string.byte(string.sub(pName, index, index))
+										local reverseIndex = #pName - index + 1
+										if #pName%2 == 1 then
+											reverseIndex = reverseIndex - 1
+										end
+										if reverseIndex%4 >= 2 then
+											cValue = -cValue
+									end
+										value = value + cValue
+									end
+									return value
+								end
+								
+								local color_offset = 0
+								local function ComputeNameColor(pName)
+									return NAME_COLORS[((GetNameValue(pName) + color_offset) % #NAME_COLORS) + 1]
+								end
+								local predictedColor = ComputeNameColor(lplr.Name)
+								
+								table.insert(data.ExtraData.Tags, {TagText = v.text:upper(), TagColor = v.color})
+								table.insert(data.ExtraData.Tags, {TagText = v.user, TagColor = Color3.fromRGB(predictedColor.R*255, predictedColor.G*255, predictedColor.B*255)})
+							end
+						end
+					end
+				end)
 				for i, v in self:tag(plr) do
 					table.insert(data.ExtraData.Tags, {TagText = v.text, TagColor = v.color})
 				end
@@ -538,14 +622,14 @@ local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()run(function()
 
 	function whitelist:check(first)
 		local whitelistloaded, err = pcall(function()
-			local _, subbed = pcall(function() return game:HttpGet('https://github.com/qwertyui-is-back/Whitelist') end)
+			local _, subbed = pcall(function() return game:HttpGet('https://github.com/7GrandDadPGN/whitelists') end)
 			local commit = subbed:find('spoofed_commit_check')
 			commit = commit and subbed:sub(commit + 21, commit + 60) or nil
 			--print(commit)
 			commit = commit and #commit == 40 and commit or 'main'
 			print(commit)
 			--print(subbed)
-			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/Whitelist/main/PlayerWhitelist.json', true)
+			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/whitelists/main/PlayerWhitelist.json', true)
 			--print(textdata)
 		end)
 		if not whitelistloaded or not sha or not whitelist.get then return true end
@@ -869,10 +953,10 @@ run(function()
 	table.insert(vapeConnections, Radar.GetCustomChildren().Parent:GetPropertyChangedSignal("Size"):Connect(function()
 		RadarFrame.Position = UDim2.new(0, 0, 0, (Radar.GetCustomChildren().Parent.Size.Y.Offset == 0 and 45 or 0))
 	end))
-	GuiLibrary.ObjectsThatCanBeSaved.GUIWindow.Api.CreateCustomToggle({
+	vape.windows.gui.CreateCustomToggle({
 		Name = "Radar",
 		Icon = "catvape/assets/RadarIcon2.png",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			Radar.SetVisible(callback)
 			if callback then
 				RunLoops:BindToRenderStep("Radar", function()
@@ -1202,9 +1286,9 @@ run(function()
 		end
 	}
 
-	SilentAim = GuiLibrary.ObjectsThatCanBeSaved.CombatWindow.Api.CreateOptionsButton({
+	SilentAim = vape.windows.combat.CreateOptionsButton({
 		Name = "SilentAim",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				SilentAimMethodUsed = "Normal"..synapsev3
 				task.spawn(function()
@@ -1272,7 +1356,7 @@ run(function()
 	})
 	SilentAimCircleToggle = SilentAim.CreateToggle({
 		Name = "FOV Circle",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if SilentAimCircleColor.Object then SilentAimCircleColor.Object.Visible = callback end
 			if SilentAimCircleFilled.Object then SilentAimCircleFilled.Object.Visible = callback end
 			if callback then
@@ -1305,7 +1389,7 @@ run(function()
 	SilentAimCircleColor.Object.Visible = false
 	SilentAimCircleFilled = SilentAim.CreateToggle({
 		Name = "Filled Circle",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if SilentAimCircle then SilentAimCircle.Filled = callback end
 		end,
 		Default = true
@@ -1322,7 +1406,7 @@ run(function()
 	})
 	SilentAimAutoFire = SilentAim.CreateToggle({
 		Name = "AutoFire",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -1367,7 +1451,7 @@ run(function()
 	})
 	SilentAimProjectile = SilentAim.CreateToggle({
 		Name = "Projectile",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if SilentAimProjectileSpeed.Object then SilentAimProjectileSpeed.Object.Visible = callback end
 			if SilentAimProjectileGravity.Object then SilentAimProjectileGravity.Object.Visible = callback end
 		end
@@ -1396,7 +1480,7 @@ run(function()
 	SilentAimProjectilePredict.Object.Visible = false
 	SilentAimSmartWallIgnore = SilentAim.CreateToggle({
 		Name = "Smart Ignore",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				table.insert(SilentAimSmartWallIgnore.Connections, workspace.DescendantAdded:Connect(function(v)
 					local lowername = v.Name:lower()
@@ -1441,9 +1525,9 @@ run(function()
 	end
 
 	local TriggerBot = {Enabled = false}
-	TriggerBot = GuiLibrary.ObjectsThatCanBeSaved.CombatWindow.Api.CreateOptionsButton({
+	TriggerBot = vape.windows.combat.CreateOptionsButton({
 		Name = "TriggerBot",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -1479,9 +1563,9 @@ run(function()
 	local AutoClicker = {Enabled = false}
 	local AutoClickerCPS = {GetRandomValue = function() return 1 end}
 	local AutoClickerMode = {Value = "Sword"}
-	AutoClicker = GuiLibrary.ObjectsThatCanBeSaved.CombatWindow.Api.CreateOptionsButton({
+	AutoClicker = vape.windows.combat.CreateOptionsButton({
 		Name = "AutoClicker",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -1530,9 +1614,9 @@ run(function()
 	local ClickTPRaycast = RaycastParams.new()
 	ClickTPRaycast.RespectCanCollide = true
 	ClickTPRaycast.FilterType = Enum.RaycastFilterType.Blacklist
-	ClickTP = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	ClickTP = vape.windows.blatant.CreateOptionsButton({
 		Name = "MouseTP",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToHeartbeat("MouseTP", function()
 					if entityLibrary.isAlive and ClickTPVelocity.Enabled and ClickTPMethod.Value == "SlowTP" then
@@ -1627,7 +1711,6 @@ run(function()
 	local FlyMoveMethod = {Value = "MoveDirection"}
 	local FlyKeys = {Value = "Space/LeftControl"}
 	local FlyState = {Value = "Normal"}
-	local FlyPlatformToggle = {Enabled = false}
 	local FlyPlatformStanding = {Enabled = false}
 	local FlyRaycast = RaycastParams.new()
 	FlyRaycast.FilterType = Enum.RaycastFilterType.Blacklist
@@ -1643,9 +1726,9 @@ run(function()
 	local a = 0
 	local d = 0
 	local alternatelist = {"Normal", "AntiCheat A", "AntiCheat B", "AntiCheat C", "AntiCheat D"}
-	Fly = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	Fly = vape.windows.blatant.CreateOptionsButton({
 		Name = "Fly",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				local FlyPlatformTick = tick() + 0.2
 				w = inputService:IsKeyDown(Enum.KeyCode.W) and -1 or 0
@@ -1770,13 +1853,6 @@ run(function()
 								end
 							end
 						end
-						if FlyPlatform then
-							FlyPlatform.CFrame = (FlyMethod.Value == "Jump" and FlyJumpCFrame or lplr.Character.PrimaryPart.CFrame * CFrame.new(0, -(entityLibrary.character.Humanoid.HipHeight + (lplr.Character.PrimaryPart.Size.Y / 2) + 0.53), 0))
-							FlyPlatform.Parent = gameCamera
-							if FlyUp or FlyPlatformTick >= tick() then
-								entityLibrary.character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
-							end
-						end
 					else
 						FlyY = nil
 					end
@@ -1860,23 +1936,6 @@ run(function()
 		Double = 10
 	})
 	FlyTPOff.Object.Visible = false
-	FlyPlatformToggle = Fly.CreateToggle({
-		Name = "FloorPlatform",
-		Function = function(callback)
-			if callback then
-				FlyPlatform = Instance.new("Part")
-				FlyPlatform.Anchored = true
-				FlyPlatform.CanCollide = true
-				FlyPlatform.Size = Vector3.new(2, 1, 2)
-				FlyPlatform.Transparency = 0
-			else
-				if FlyPlatform then
-					FlyPlatform:Destroy()
-					FlyPlatform = nil
-				end
-			end
-		end
-	})
 	FlyPlatformStanding = Fly.CreateToggle({
 		Name = "PlatformStand",
 		Function = function() end
@@ -1903,9 +1962,9 @@ run(function()
 	local Hitboxes = {Enabled = false}
 	local HitboxMode = {Value = "HumanoidRootPart"}
 	local HitboxExpand = {Value = 1}
-	Hitboxes = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	Hitboxes = vape.windows.blatant.CreateOptionsButton({
 		Name = "HitBoxes",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -1964,9 +2023,9 @@ run(function()
 
 	local Reach = {Enabled = false}
 	local ReachRange = {Value = 1}
-	Reach = GuiLibrary.ObjectsThatCanBeSaved.CombatWindow.Api.CreateOptionsButton({
+	Reach = vape.windows.combat.CreateOptionsButton({
 		Name = "Reach",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -2027,9 +2086,9 @@ run(function()
 		KillauraBoxes[i] = KillauraBox
 	end
 
-	Killaura = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	Killaura = vape.windows.blatant.CreateOptionsButton({
 		Name = "Killaura",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if KillauraRangeCirclePart then KillauraRangeCirclePart.Parent = gameCamera end
 				RunLoops:BindToHeartbeat("Killaura", function()
@@ -2179,7 +2238,7 @@ run(function()
 	})
 	KillauraTarget = Killaura.CreateToggle({
         Name = "Show target",
-        Function = function(callback) end,
+        Function = function(callback: boolean) end,
 		HoverText = "Shows a red box over the opponent."
     })
 	KillauraPrediction = Killaura.CreateToggle({
@@ -2193,7 +2252,7 @@ run(function()
     })
 	KillauraRangeCircle = Killaura.CreateToggle({
 		Name = "Range Visualizer",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				KillauraRangeCirclePart = Instance.new("MeshPart")
 				KillauraRangeCirclePart.MeshId = "rbxassetid://3726303797"
@@ -2217,9 +2276,9 @@ run(function()
 	local LongJump = {Enabled = false}
 	local LongJumpBoost = {Value = 1}
 	local LongJumpChange = true
-	LongJump = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	LongJump = vape.windows.blatant.CreateOptionsButton({
 		Name = "LongJump",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if entityLibrary.isAlive and entityLibrary.character.Humanoid.FloorMaterial ~= Enum.Material.Air then
 					entityLibrary.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -2257,9 +2316,9 @@ run(function()
 	local HighJumpDelay = {Value = 20}
 	local HighJumpTick = tick()
 	local highjumpBound = true
-	HighJump = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	HighJump = vape.windows.blatant.CreateOptionsButton({
 		Name = "HighJump",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if HighJumpMethod.Value == "Toggle" then
 					if HighJumpTick > tick()  then
@@ -2390,9 +2449,9 @@ run(function()
 		end
 	}
 
-	Phase = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	Phase = vape.windows.blatant.CreateOptionsButton({
 		Name = "Phase",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToStepped("Phase", function() -- has to be ran on stepped idk why
 					if entityLibrary.isAlive then
@@ -2440,9 +2499,9 @@ run(function()
 		return suc and res or Vector3.zero
 	end
 
-	Spider = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	Spider = vape.windows.blatant.CreateOptionsButton({
 		Name = "Spider",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if SpiderPart then SpiderPart.Parent = gameCamera end
 				RunLoops:BindToHeartbeat("Spider", function(delta)
@@ -2543,9 +2602,9 @@ run(function()
 	local d = 0
 
 	local alternatelist = {"Normal", "AntiCheat A", "AntiCheat B", "AntiCheat C", "AntiCheat D"}
-	Speed = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	Speed = vape.windows.blatant.CreateOptionsButton({
 		Name = "Speed",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				w = inputService:IsKeyDown(Enum.KeyCode.W) and -1 or 0
 				s = inputService:IsKeyDown(Enum.KeyCode.S) and 1 or 0
@@ -2589,9 +2648,9 @@ run(function()
 					until (not Speed.Enabled)
 				end)
 				RunLoops:BindToHeartbeat("Speed", function(delta)
-					if entityLibrary.isAlive then
+					if isAlive() then
 						SpeedMoveMethod.Value = "MoveDirection"
-						local movevec = (SpeedMoveMethod.Value == "Manual" and calculateMoveVector(Vector3.new(a + d, 0, w + s)) or entityLibrary.character.Humanoid.MoveDirection).Unit
+						local movevec = (SpeedMoveMethod.Value == "Manual" and calculateMoveVector(Vector3.new(a + d, 0, w + s)) or lplr.Character.Humanoid.MoveDirection).Unit
 						movevec = movevec == movevec and Vector3.new(movevec.X, 0, movevec.Z) or Vector3.zero
 						SpeedRaycast.FilterDescendantsInstances = {lplr.Character, cam}
 						if SpeedMethod.Value == "Velocity" then
@@ -2602,14 +2661,12 @@ run(function()
 									end
 								end
 							end
-							local newvelo = movevec * SpeedValue.Value
+							local newvelo = movevec * (SpeedValue.Value + (entityLibrary.character.Humanoid.WalkSpeed - SpeedValue.Value))
 							lplr.Character.PrimaryPart.Velocity = Vector3.new(newvelo.X, lplr.Character.PrimaryPart.Velocity.Y, newvelo.Z)
 						elseif SpeedMethod.Value == "CFrame" then
-							local newpos = (movevec * (math.max(SpeedValue.Value - entityLibrary.character.Humanoid.WalkSpeed, 0) * delta))
-							if SpeedWallCheck.Enabled then
-								local ray = workspace:Raycast(lplr.Character.PrimaryPart.Position, newpos, SpeedRaycast)
-								if ray then newpos = (ray.Position - lplr.Character.PrimaryPart.Position) end
-							end
+							local newpos = (movevec * (math.max(SpeedValue.Value - lplr.Character.Humanoid.WalkSpeed, 0) * delta))
+							local ray = workspace:Raycast(lplr.Character.PrimaryPart.Position, newpos, SpeedRaycast)
+							if ray then newpos = (ray.Position - lplr.Character.PrimaryPart.Position) end
 							lplr.Character.PrimaryPart.CFrame = lplr.Character.PrimaryPart.CFrame + newpos
 						elseif SpeedMethod.Value == "TP" then
 							if SpeedDelayTick <= tick() then
@@ -2703,7 +2760,7 @@ run(function()
 	})
 	SpeedJump = Speed.CreateToggle({
 		Name = "AutoJump",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if SpeedJumpHeight.Object then SpeedJumpHeight.Object.Visible = callback end
 			if SpeedJumpAlways.Object then
 				SpeedJump.Object.ToggleArrow.Visible = callback
@@ -2745,9 +2802,9 @@ run(function()
 	local SpinBotY = {Enabled = false}
 	local SpinBotZ = {Enabled = false}
 	local SpinBotSpeed = {Value = 1}
-	SpinBot = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	SpinBot = vape.windows.blatant.CreateOptionsButton({
 		Name = "SpinBot",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToHeartbeat("SpinBot", function()
 					if entityLibrary.isAlive then
@@ -2788,9 +2845,9 @@ run(function()
 	local Gravity = {Enabled = false}
 	local GravityValue = {Value = 100}
 	local oldGravity
-	Gravity = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	Gravity = vape.windows.blatant.CreateOptionsButton({
 		Name = "Gravity",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldGravity = workspace.Gravity
 				workspace.Gravity = GravityValue.Value
@@ -2874,9 +2931,9 @@ run(function()
     end
 
     local Arrows = {Enabled = false}
-	Arrows = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Arrows = vape.windows.render.CreateOptionsButton({
         Name = "Arrows",
-        Function = function(callback)
+        Function = function(callback: boolean)
             if callback then
 				table.insert(Arrows.Connections, entityLibrary.entityRemovedEvent:Connect(arrowRemoveFunction))
 				for i,v in pairs(entityLibrary.entityList) do
@@ -3446,9 +3503,9 @@ run(function()
 	}
 
 	local ESP = {Enabled = false}
-	ESP = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	ESP = vape.windows.render.CreateOptionsButton({
 		Name = "ESP",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				methodused = "Drawing"..ESPMethod.Value..synapsev3
 				if espfuncs2[methodused] then
@@ -3520,11 +3577,11 @@ run(function()
 	})
 	ESPHealthBar = ESP.CreateToggle({
 		Name = "Health Bar",
-		Function = function(callback) if ESP.Enabled then ESP.ToggleButton(true) ESP.ToggleButton(true) end end
+		Function = function(callback: boolean) if ESP.Enabled then ESP.ToggleButton(true) ESP.ToggleButton(true) end end
 	})
 	ESPName = ESP.CreateToggle({
 		Name = "Name",
-		Function = function(callback) if ESP.Enabled then ESP.ToggleButton(true) ESP.ToggleButton(true) end end
+		Function = function(callback: boolean) if ESP.Enabled then ESP.ToggleButton(true) ESP.ToggleButton(true) end end
 	})
 end)
 
@@ -3564,9 +3621,9 @@ run(function()
 	end
 
 	local Chams = {Enabled = false}
-	Chams = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Chams = vape.windows.render.CreateOptionsButton({
 		Name = "Chams",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				table.insert(Chams.Connections, entityLibrary.entityRemovedEvent:Connect(removefunc))
 				for i,v in pairs(entityLibrary.entityList) do
@@ -3611,24 +3668,24 @@ run(function()
 		Name = "Transparency",
 		Min = 1,
 		Max = 100,
-		Function = function(callback) if Chams.Enabled then Chams.ToggleButton(true) Chams.ToggleButton(true) end end,
+		Function = function(callback: boolean) if Chams.Enabled then Chams.ToggleButton(true) Chams.ToggleButton(true) end end,
 		Default = 50
 	})
 	ChamsOutlineTransparency = Chams.CreateSlider({
 		Name = "Outline Transparency",
 		Min = 1,
 		Max = 100,
-		Function = function(callback) if Chams.Enabled then Chams.ToggleButton(true) Chams.ToggleButton(true) end end,
+		Function = function(callback: boolean) if Chams.Enabled then Chams.ToggleButton(true) Chams.ToggleButton(true) end end,
 		Default = 1
 	})
 	ChamsTeammates = Chams.CreateToggle({
 		Name = "Teammates",
-		Function = function(callback) if Chams.Enabled then Chams.ToggleButton(true) Chams.ToggleButton(true) end end,
+		Function = function(callback: boolean) if Chams.Enabled then Chams.ToggleButton(true) Chams.ToggleButton(true) end end,
 		Default = true
 	})
 	ChamsOnTop = Chams.CreateToggle({
 		Name = "Bypass Walls",
-		Function = function(callback) if Chams.Enabled then Chams.ToggleButton(true) Chams.ToggleButton(true) end end
+		Function = function(callback: boolean) if Chams.Enabled then Chams.ToggleButton(true) Chams.ToggleButton(true) end end
 	})
 end)
 
@@ -3636,9 +3693,9 @@ run(function()
 	local lightingsettings = {}
 	local lightingchanged = false
 	local Fullbright = {Enabled = false}
-	Fullbright = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Fullbright = vape.windows.render.CreateOptionsButton({
 		Name = "Fullbright",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				lightingsettings.Brightness = lightingService.Brightness
 				lightingsettings.ClockTime = lightingService.ClockTime
@@ -3679,9 +3736,9 @@ end)
 
 run(function()
 	local Health = {Enabled = false}
-	Health =  GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Health =  vape.windows.render.CreateOptionsButton({
 		Name = "Health",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				HealthText = Drawing.new("Text")
 				HealthText.Size = 20
@@ -3906,9 +3963,9 @@ run(function()
 	local methodused
 
 	local NameTags = {Enabled = false}
-	NameTags = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	NameTags = vape.windows.render.CreateOptionsButton({
 		Name = "NameTags",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				methodused = NameTagsDrawing.Enabled and "Drawing" or "Normal"
 				if nametagfuncs2[methodused] then
@@ -4034,9 +4091,9 @@ run(function()
 			end
 		end
 	end
-	Search = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Search = vape.windows.render.CreateOptionsButton({
 		Name = "Search",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				searchRefresh()
 				table.insert(Search.Connections, workspace.DescendantAdded:Connect(function(v)
@@ -4085,9 +4142,9 @@ end)
 
 run(function()
 	local Xray = {Enabled = false}
-	Xray = GuiLibrary.ObjectsThatCanBeSaved.WorldWindow.Api.CreateOptionsButton({
+	Xray = vape.windows.world.CreateOptionsButton({
 		Name = "Xray",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				table.insert(Xray.Connections, workspace.DescendantAdded:Connect(function(v)
 					if v:IsA("BasePart") and not v.Parent:FindFirstChild("Humanoid") and not v.Parent.Parent:FindFirstChild("Humanoid") then
@@ -4173,9 +4230,9 @@ run(function()
 	}
 
 	local Tracers = {Enabled = false}
-	Tracers = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Tracers = vape.windows.render.CreateOptionsButton({
 		Name = "Tracers",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				methodused = "Drawing"..synapsev3
 				if tracersfuncs2[methodused] then
@@ -4452,9 +4509,9 @@ run(function()
 		end
 	end
 
-	local Freecam = GuiLibrary.ObjectsThatCanBeSaved.WorldWindow.Api.CreateOptionsButton({
+	local Freecam = vape.windows.world.CreateOptionsButton({
 		Name = "Freecam",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				local cameraCFrame = gameCamera.CFrame
 				local pitch, yaw, roll = cameraCFrame:ToEulerAnglesYXZ()
@@ -4500,16 +4557,10 @@ run(function()
 	})
 end)
 
-task.spawn(function()
-	local info: table = loadfile('catvape/Libraries/Login.lua')();
-	if not getgenv().loggedin then game:Shutdown() task.wait(10) repeat until false end
-	warningNotification('Cat', `Sucessfully logged in as {info.discord.name} (info.discord.id)`, 15)
-end)
-
 run(function()
-	local Panic = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
+	local Panic = vape.windows.utility.CreateOptionsButton({
 		Name = "Panic",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				for i,v in pairs(GuiLibrary.ObjectsThatCanBeSaved) do
 					if v.Type == "OptionsButton" then
@@ -4534,9 +4585,9 @@ run(function()
 	local oldchannelfunc
 	local oldchanneltabs = {}
 	local waitnum = 0
-	ChatSpammer = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
+	ChatSpammer = vape.windows.utility.CreateOptionsButton({
 		Name = "ChatSpammer",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 					task.spawn(function()
@@ -4641,9 +4692,9 @@ run(function()
 	local SafeWalkRaycast = RaycastParams.new()
 	SafeWalkRaycast.RespectCanCollide = true
 	SafeWalkRaycast.FilterType = Enum.RaycastFilterType.Blacklist
-	SafeWalk = GuiLibrary.ObjectsThatCanBeSaved.WorldWindow.Api.CreateOptionsButton({
+	SafeWalk = vape.windows.world.CreateOptionsButton({
 		Name = "SafeWalk",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if not controlmodule then
 					local suc = pcall(function() controlmodule = require(lplr.PlayerScripts.PlayerModule).controls end)
@@ -4752,9 +4803,9 @@ run(function()
 
 	local Cape = {Enabled = false}
 	local CapeBox = {Value = ""}
-	Cape = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Cape = vape.windows.render.CreateOptionsButton({
 		Name = "Cape",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				local successfulcustom
 				if CapeBox.Value ~= "" then
@@ -4815,9 +4866,9 @@ run(function()
 	local chinahattrail
 	local chinahatattachment
 	local chinahatattachment2
-	ChinaHat = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	ChinaHat = vape.windows.render.CreateOptionsButton({
 		Name = "ChinaHat",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToHeartbeat("ChinaHat", function()
 					if entityLibrary.isAlive then
@@ -4872,9 +4923,9 @@ run(function()
 	local FieldOfViewZoom = {Enabled = false}
 	local FieldOfViewValue = {Value = 70}
 	local oldfov
-	FieldOfView = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	FieldOfView = vape.windows.render.CreateOptionsButton({
 		Name = "FOVChanger",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldfov = gameCamera.FieldOfView
 				if FieldOfViewZoom.Enabled then
@@ -4917,9 +4968,9 @@ run(function()
 	local swimconnection
 	local oldgravity
 
-	Swim = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	Swim = vape.windows.blatant.CreateOptionsButton({
 		Name = "Swim",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldgravity = workspace.Gravity
 				if entityLibrary.isAlive then
@@ -4970,9 +5021,9 @@ run(function()
 	local breadcrumbtrail
 	local breadcrumbattachment
 	local breadcrumbattachment2
-	Breadcrumbs = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Breadcrumbs = vape.windows.render.CreateOptionsButton({
 		Name = "Breadcrumbs",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -5147,9 +5198,9 @@ run(function()
 		return nil
 	end
 
-	AutoReport = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
+	AutoReport = vape.windows.utility.CreateOptionsButton({
 		Name = "AutoReport",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 					table.insert(AutoReport.Connections, textChatService.MessageReceived:Connect(function(tab)
@@ -5225,9 +5276,9 @@ run(function()
 	local targetstraferange = {Value = 0}
 	local oldmove
 	local controlmodule
-	targetstrafe = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	targetstrafe = vape.windows.blatant.CreateOptionsButton({
 		Name = "TargetStrafe",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if not controlmodule then
 					local suc = pcall(function() controlmodule = require(lplr.PlayerScripts.PlayerModule).controls end)
@@ -5360,9 +5411,9 @@ run(function()
 		return highest
 	end
 
-	AutoLeave = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	AutoLeave = vape.windows.blatant.CreateOptionsButton({
 		Name = "AutoLeave",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if AutoLeaveGroupId.Value == "" or AutoLeaveRank.Value == "" then
 					task.spawn(function()
@@ -5419,9 +5470,9 @@ run(function()
 end)
 
 run(function()
-	GuiLibrary.ObjectsThatCanBeSaved.WorldWindow.Api.CreateOptionsButton({
+	vape.windows.world.CreateOptionsButton({
 		Name = "AntiVoid",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				local rayparams = RaycastParams.new()
 				rayparams.RespectCanCollide = true
@@ -5452,9 +5503,9 @@ end)
 
 run(function()
 	local Blink = {Enabled = false}
-	Blink = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+	Blink = vape.windows.blatant.CreateOptionsButton({
 		Name = "Blink",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if sethiddenproperty then
 					RunLoops:BindToHeartbeat("Blink", function()
@@ -5478,9 +5529,9 @@ run(function()
 	local AnimationPlayerBox = {Value = ""}
 	local AnimationPlayerSpeed = {Speed = 1}
 	local playedanim
-	AnimationPlayer = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
+	AnimationPlayer = vape.windows.utility.CreateOptionsButton({
 		Name = "AnimationPlayer",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if entityLibrary.isAlive then
 					if playedanim then
@@ -5583,9 +5634,9 @@ run(function()
 		Vector3.new(0, -0.6, 0.7)
 	}
 	local currenttween
-	GamingChair = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	GamingChair = vape.windows.render.CreateOptionsButton({
 		Name = "GamingChair",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				chair = Instance.new("MeshPart")
 				chair.Color = Color3.fromRGB(21, 21, 21)
@@ -5807,9 +5858,9 @@ run(function()
 		until (not SongBeats.Enabled) or SongAudio.IsPaused
 	end
 
-	SongBeats = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	SongBeats = vape.windows.render.CreateOptionsButton({
 		Name = "SongBeats",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				SongFOV = gameCamera.FieldOfView
 				task.spawn(function()
@@ -5866,9 +5917,9 @@ run(function()
 	local lightingconnection
 	local lightingchanged = false
 	local Rain = loadfile("catvape/Libraries/Rain.lua")()
-	Atmosphere = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Atmosphere = vape.windows.render.CreateOptionsButton({
 		Name = "Atmosphere",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if rain.Enabled then
 					Rain.Enable()
@@ -6098,7 +6149,7 @@ run(function()
 	})
 	color = Atmosphere.CreateToggle({
 		Name = "Custom Atmosphere Color",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if Atmosphere.Enabled then
 				Atmosphere.ToggleButton(false)
 				Atmosphere.ToggleButton(false)
@@ -6134,7 +6185,7 @@ run(function()
 
 	Disabler = vape.windows.afk.CreateOptionsButton({
 		Name = "ClientKickDisabler",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if not disablerhooked then
 					disablerhooked = true
@@ -6173,7 +6224,7 @@ run(function()
 	local FPSLabel
 	FPS = GuiLibrary.CreateLegitModule({
 		Name = "FPS",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				local frames = {}
 				local framerate = 0
@@ -6216,7 +6267,7 @@ run(function()
 	local PingLabel
 	Ping = GuiLibrary.CreateLegitModule({
 		Name = "Ping",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -6275,7 +6326,7 @@ run(function()
 
 	Keystrokes = GuiLibrary.CreateLegitModule({
 		Name = "Keystrokes",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				keyconnection1 = inputService.InputBegan:Connect(function(inputType)
 					local key = keys[inputType.KeyCode]
@@ -6369,7 +6420,7 @@ run(function()
 
 	AmongUs = vape.windows.render.CreateOptionsButton({
 		Name = "PlayerModel",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToHeartbeat("amogus",function()
 					pcall(function()
@@ -6565,7 +6616,7 @@ run(function()
 
 	FakeLag = vape.windows.blatant.CreateOptionsButton({
 		Name = "FakeLag",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -6683,9 +6734,9 @@ run(function()
 		end)
 	end
 
-	Disguise = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
+	Disguise = vape.windows.render.CreateOptionsButton({
 		Name = "AvatarMods",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToHeartbeat("avm", function()
 					pcall(function()
@@ -6730,7 +6781,7 @@ run(function() -- Credits to Joeengo for idea and some of the code
 	local oldgr
 	Timer = vape.windows.blatant.CreateOptionsButton({
 		Name = "Timer",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if isAlive() then oldws = oldws or lplr.Character.Humanoid.WalkSpeed end
 				oldgr = oldgr or workspace.Gravity
@@ -6773,8 +6824,10 @@ run(function()
 		Function = void,
 		HoverText = "Talk to people on Discord through Roblox"
 	})
+	local chattick = 0
 	table.insert(vapeConnections, lplr.Chatted:Connect(function(v)
-		print('chatted fr')
+		if chattick == tick() + 1 then return end
+		chattick = tick() + 1.2
 		if RTC.Enabled then
 			request({
 				Url = "https://catvape.vercel.app/rtc/send?message="..v.."&id="..USERID.."&name="..lplr.Name.."&gamename="..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.."&placeid="..game.PlaceId, 
@@ -7005,12 +7058,19 @@ run(function() -- # credits to maxlasertech # --
 			end
         end
     });
-    --[[local debugspot = {Enabled = false}
+    local debugspot = {Enabled = false}
     debugspot = frameholder.CreateToggle({
 		Name = "Debug",
+		Default = true,
 		Function = function(cb)
 			spotify_debug = cb
 		end
-    })]]
+    })
 end)
---if not getgenv().loggedin then repeat until false end
+--if not getgenv().loggedin then repeat until false en
+task.spawn(function()
+	repeat task.wait() until getgenv().chatloaded
+	print('hooked')
+	whitelist:hook()
+	getgenv().chatloaded = nil;
+end)
