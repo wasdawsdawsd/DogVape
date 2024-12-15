@@ -304,7 +304,7 @@ catvape.addconfig = function(pack: {name: string, path: string, top: boolean, ca
     button.MouseButton1Click:Connect(pack.callback)
 end
 
-local files: table = {'GuiLibrary.lua', 'NewMainScript.lua', 'MainScript.lua', 'loader.lua', 'main.lua', 'Universal.lua', 'Libraries/Spotify/API.lua', 'Libraries/Spotify/GuiLibrary.lua', 'Libraries/Spotify/Launcher.lua', 'Libraries/Login.lua', 'Libraries/sha.lua', 'Libraries/Login.lua', 'Libraries/Rain.lua', 'Libraries/Blur.lua', 'Libraries/entityHandler.lua'};
+local files: table = {'GuiLibrary.lua', 'NewMainScript.lua', 'MainScript.lua', 'loader.lua', 'main.lua', 'Universal.lua', 'Libraries/Spotify/API.lua', 'Libraries/Spotify/GuiLibrary.lua', 'Libraries/Spotify/Launcher.lua', 'Libraries/Login.lua', 'Libraries/sha.lua', 'Libraries/Login.lua', 'Libraries/Rain.lua', 'Libraries/Blur.lua', 'Libraries/entityHandler.lua', 'Libraries/Whitelist.lua'};
 local fakefinished: boolean = false
 local initiate: () -> () = function(profiles: boolean): () -> ()
     main.Visible = false;
@@ -333,7 +333,7 @@ local initiate: () -> () = function(profiles: boolean): () -> ()
     task.spawn(function()
         local progress: number = 0;
         repeat
-            if progresstext.Text == '150%' then
+            if progresstext.Text == '100%' then
                 break;
             end;
             progress += 1;
@@ -347,7 +347,7 @@ local initiate: () -> () = function(profiles: boolean): () -> ()
         makefolder(`catvape/{v}`);
         installtext.Text = `Installed catvape/{v}`;
     end;
-    stage = 31;
+    stage = 400;
     for i: number, v: string in files do
         local file: string = game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/'.. v);
         installtext.Text = `Installing catvape/{v}`;
@@ -359,7 +359,7 @@ local initiate: () -> () = function(profiles: boolean): () -> ()
             warn(`❌ [ Installer Error ]: Failed to install, file named catvape/{v} doesn't exist on the github.`);
         end;
     end;
-    stage = 1;
+    stage = 200;
     for i: number, v: table in httpservice:JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/assets')) do
         if v.name then
             installtext.Text = `Installing catvape/assets/{v.name}`;
@@ -412,4 +412,3 @@ for i: number, v: table in configs do
         end;
     });
 end;
-
