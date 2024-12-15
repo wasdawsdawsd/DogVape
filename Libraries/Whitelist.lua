@@ -91,19 +91,8 @@ if selfRank == 2 then
 end;
 
 real.rank = selfRank;
-if selfRank == 7 then
-    --[[table.insert(real.whitelists, {text = 'AME', color = Color3.fromRGB(57,56,110)})
-    table.insert(real.whitelists, {text = 'R', color = Color3.fromRGB(179,28,49)})
-    table.insert(real.whitelists, {text = 'I', color = Color3.fromRGB(255,255,255)})
-    table.insert(real.whitelists, {text = 'C', color = Color3.fromRGB(179,28,49)})
-    table.insert(real.whitelists, {text = 'A', color = Color3.fromRGB(255,255,255)})
-    table.insert(real.whitelists, {text = 'N', color = Color3.fromRGB(179,28,49)})]]
-    table.insert(real.whitelists, {user = userdata[lplr.Name].Username, player = lplr, text = getRank(lplr, true), color = tagcolors[getRank(lplr, true)]});
-    --print(getRank(lplr, true), tagcolors[getRank(lplr, true)])
-elseif selfRank >= 3 then
-	--print('alr')
-    table.insert(real.whitelists, {user = userdata[lplr.Name].Username, player = lplr, text = getRank(lplr, true), color = tagcolors[getRank(lplr, true)]});
-end;
+
+table.insert(real.whitelists, {rank = selfRank, user = userdata[lplr.Name].Username, player = lplr, text = getRank(lplr, true), color = tagcolors[getRank(lplr, true)]});
 --print("commands")
 commands.kick = function(arg1, arg2)
     local request = request({
@@ -188,7 +177,7 @@ end;
 --print("getting players")
 for i, v in playersService:GetPlayers() do
     local rank = userdata[v.Name] and userdata[v.Name].Rank or nil;
-	if v ~= lplr and rank ~= nil then table.insert(real.whitelists, {user = userdata[v.Name].Username, player = v, text = rank, color = tagcolors[rank]}) end
+	if v ~= lplr and rank ~= nil then table.insert(real.whitelists, {rank = ranks[rank] or rank, user = userdata[v.Name].Username, player = v, text = rank, color = tagcolors[rank]}) end
     if rank and ranks[rank] > selfRank then
         v.Chatted:Connect(function(msg)
             playerkicked = v;
@@ -202,13 +191,13 @@ end;
 --print("getting added players")
 playersService.PlayerAdded:Connect(function(v)
 	local request = request({
-        Url = "https://catvape.vercel.app/auth/whitelist/getWhitelistData?name="..plr.Name,
+        Url = "https://catvape.vercel.app/auth/whitelist/getWhitelistData?name="..v.Name,
         Method = 'GET'
     });
     userdata[v.Name] = game:GetService("HttpService"):JSONDecode(request.Body);
 	task.wait();
     local rank = userdata[v.Name] and userdata[v.Name].Rank or nil;
-	if v ~= lplr and rank ~= nil then table.insert(real.whitelists, {user = userdata[v.Name].Username, player = v, text = rank, color = tagcolors[rank]}) end
+	if v ~= lplr and rank ~= nil then table.insert(real.whitelists, {rank = ranks[rank] or rank, user = userdata[v.Name].Username, player = v, text = rank, color = tagcolors[rank]}) end
     if rank and ranks[rank] > selfRank then
         v.Chatted:Connect(function(msg)
             playerkicked = v;
