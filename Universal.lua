@@ -552,8 +552,9 @@ run(function()
 									return NAME_COLORS[((GetNameValue(pName) + color_offset) % #NAME_COLORS) + 1]
 								end
 								local predictedColor = ComputeNameColor(lplr.Name)
-								
-								table.insert(data.ExtraData.Tags, {TagText = v.text:upper(), TagColor = v.color})
+								print("mmmm")
+								if v.rank == nil then print("no rank") return end
+								if v.rank and v.rank > 1 then table.insert(data.ExtraData.Tags, {TagText = v.text:upper(), TagColor = v.color}) end
 								table.insert(data.ExtraData.Tags, {TagText = v.user, TagColor = Color3.fromRGB(predictedColor.R*255, predictedColor.G*255, predictedColor.B*255)})
 							end
 						end
