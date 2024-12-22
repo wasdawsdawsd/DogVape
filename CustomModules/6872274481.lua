@@ -10146,13 +10146,7 @@ run(function()
 		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToStepped("dis", function()
-					for i = 0, 5 do
-						replicatedstorage.rbxts_include.node_modules["@rbxts"].net.out._NetManaged.MomentumUpdate:FireServer({momentumValue = math.huge})
-					end
-					if lplr.Character.Humanoid.MoveDirection == 0 then
-						lplr.Character.Humanoid.MoveDirection = 1
-						lplr.Character.HumanoidRootPart.CFrame *= CFrame.new(math.random(-0.0001, 0.0001), 0, math.random(-0.0001, 0.0001))
-					end
+					replicatedstorage.rbxts_include.node_modules["@rbxts"].net.out._NetManaged.MomentumUpdate:FireServer({momentumValue = math.huge})
 				end)
 			else
 				RunLoops:UnbindFromStepped("dis")
