@@ -10139,19 +10139,3 @@ run(function() -- I do not most of these texture packs!
 	})
 end)
 																																																																																																																																																																																																																																							
-run(function()
-	local Disabler = {Enabled = false}
-	Disabler = vape.windows.exploit.CreateOptionsButton({
-		Name = "KrystalDisabler",
-		Function = function(callback: boolean)
-			if callback then
-				RunLoops:BindToStepped("dis", function()
-					replicatedstorage.rbxts_include.node_modules["@rbxts"].net.out._NetManaged.MomentumUpdate:FireServer({momentumValue = math.huge})
-				end)
-			else
-				RunLoops:UnbindFromStepped("dis")
-			end
-		end
-	})
-end)																																																																																																																																																																																																																																							
-																																																																																																																																																				
