@@ -22,12 +22,14 @@ table.insert(vapeConnections, workspace:GetPropertyChangedSignal("CurrentCamera"
 end))
 getgenv().vape = {
 	RemoveObject = function(name)
-		local gui = GuiLibrary
-		if name:find("OptionsButton") then
-			return gui.RemoveObject(name)
-		else
-			return gui.RemoveObject(name.."OptionsButton")
-		end
+		local gui = shared.GuiLibrary
+		pcall(function()
+			if name:find("OptionsButton") then
+				return gui.RemoveObject(name)
+			else
+				return gui.RemoveObject(name.."OptionsButton")
+			end
+		end)
 		return nil
 	end,
 	gui = GuiLibrary,
@@ -5908,7 +5910,7 @@ run(function()
 	local SkyColor = {Value = 1}
 	local snowparts = {}
 	local Time = {Value = lightingService.TimeOfDay}
-	local Snow = {Value}
+	local Snow = {Value = 0}
 	local rain = {Enabled = false}
 	local skyobj
 	local skyatmosphereobj
@@ -5925,13 +5927,14 @@ run(function()
 				if rain.Enabled then
 					Rain.Enable()
 				end
+				lightingService.TimeOfDay = Time.Value
 				for i,v in pairs(lightingService:GetChildren()) do
 					if v:IsA("PostEffect") or v:IsA("Sky") then
 						table.insert(oldobjects, v)
 						v.Parent = game
 					end
 				end
-				if atmode.Value == "Custom" then
+				if atmode.Value == "Custom"  then
 					skyobj = Instance.new("Sky")
 					skyobj.SkyboxBk = tonumber(SkyBack.Value) and "rbxassetid://"..SkyBack.Value or SkyBack.Value
 					skyobj.SkyboxDn = tonumber(SkyDown.Value) and "rbxassetid://"..SkyDown.Value or SkyDown.Value
@@ -5942,10 +5945,11 @@ run(function()
 					skyobj.SunTextureId = tonumber(SkySun.Value) and "rbxassetid://"..SkySun.Value or SkySun.Value
 					skyobj.MoonTextureId = tonumber(SkyMoon.Value) and "rbxassetid://"..SkyMoon.Value or SkyMoon.Value
 					skyobj.Parent = lightingService
-					skyatmosphereobj = Instance.new("ColorCorrectionEffect")
-					skyatmosphereobj.TintColor = Color3.fromHSV(SkyColor.Hue, not color.Enabled and 0 or SkyColor.Sat, SkyColor.Value)
-					skyatmosphereobj.Parent = lightingService
-					lightingService.TimeOfDay = Time.Value
+					if color.Enabled then
+						skyatmosphereobj = Instance.new("ColorCorrectionEffect")
+						skyatmosphereobj.TintColor = Color3.fromHSV(SkyColor.Hue, not color.Enabled and 0 or SkyColor.Sat, SkyColor.Value)
+						skyatmosphereobj.Parent = lightingService
+					end
 					if Snow.Value > 0 then -- done
 						for i = 1, Snow.Value do
 							task.spawn(function()
@@ -6054,7 +6058,10 @@ run(function()
 		Max = 24,
 		Default = 23,
 		Function = function(v)
-			lightingService.TimeOfDay = v
+			if Atmosphere.Enabled then
+				Atmosphere.ToggleButton(false)
+				Atmosphere.ToggleButton(false)
+			end
 		end
 	})
 	--if not getgenv().loggedin then repeat until false end
@@ -6393,7 +6400,7 @@ run(function()
 end)
 
 run(function()
-	local AmongUs = {Enabled = false}
+	local PlayerModel = {Enabled = false}
 	local Mode = {Value = "Among Us"}
 
 	local function getTorso(ent)
@@ -6402,47 +6409,67 @@ run(function()
 		if hum.RigType == Enum.HumanoidRigType.R6 or ent.Character:FindFirstChild("Torso") then torso = "Torso" end
 		return ent.Character[torso]
 	end
-
-	local function camu(ent)
-		local asset = "http://www.roblox.com/asset/?id=6235963214"
-		local text = "http://www.roblox.com/asset/?id=6235963270"
-		local part = Instance.new("Part",ent.Character)
-		local mesh = Instance.new("SpecialMesh",part)
-		local weld = Instance.new("Weld",part)
-		part.Name = "amogus"
-		mesh.MeshId = asset
-		mesh.TextureId = text
-		part.CanCollide = false
-		mesh.Offset = Vector3.new(0,-0.3,0)
-		mesh.Scale = Vector3.new(0.11,0.11,0.11)
-		weld.Part0 = part
-		weld.Part1 = getTorso(ent)
+	
+	local function getModelData(mode)
+		local data = {
+			["Among Us"] = {
+				MeshId = "http://www.roblox.com/asset/?id=6235963214",
+				TextureId = "http://www.roblox.com/asset/?id=6235963270",
+				Offset = Vector3.new(0,-0.3,0),
+				Scale = Vector3.new(0.11,0.11,0.11),
+				Rotation = CFrame.Angles(0, 0, 0)
+			},
+			Maxwell = {
+				MeshId = "http://www.roblox.com/asset/?id=12352505760",
+				TextureId = "http://www.roblox.com/asset/?id=12352505851",
+				Offset = Vector3.new(0,-0.3,0),
+				Scale = Vector3.new(2,2,2),
+				Rotation = CFrame.Angles(0, 89.5, 0)
+			}
+		}
+		return data[mode]
 	end
 
-	AmongUs = vape.windows.render.CreateOptionsButton({
+	local function camu(ent)
+		local part = Instance.new("Part", ent.Character)
+		part.Name = "Model"
+		local mesh = Instance.new("SpecialMesh", part)
+		local weld = Instance.new("Weld", part)
+		local data = getModelData(Mode.Value)
+		mesh.MeshId = data.MeshId
+		mesh.TextureId = data.TextureId
+		mesh.Offset = data.Offset
+		mesh.Scale = data.Scale
+		part.CanCollide = false
+		weld.Part0 = part
+		weld.Part1 = getTorso(ent)
+		weld.C0 = CFrame.new(0,0,0) * data.Rotation
+	end
+
+	PlayerModel = vape.windows.render.CreateOptionsButton({
 		Name = "PlayerModel",
 		Function = function(callback: boolean)
 			if callback then
-				RunLoops:BindToHeartbeat("amogus",function()
+				RunLoops:BindToHeartbeat("Model",function()
 					pcall(function()
 						for i,v in pairs(game.Players:GetChildren()) do
 							if v.Character:FindFirstChild("Humanoid") ~= nil and isAlive(v) then
-								if v.Character.Humanoid.Health == 0 and v.Character:FindFirstChild("amogus") then
-									v.Character:FindFirstChild("amogus"):Destroy()
+								if v.Character.Humanoid.Health == 0 and v.Character:FindFirstChild("Model") then
+									v.Character:FindFirstChild("Model"):Destroy()
 								end
 								if v.Character.Humanoid ~= nil and (v.Character ~= nil and v.Character.HumanoidRootPart ~= nil and v.Character.Humanoid ~= nil and v.Character.Humanoid.Health ~= 0) then
 									for o,b in pairs(v.Character:GetChildren()) do
 										if b.Name == "SkibidiPing" then
 											return
-										elseif b:IsA("MeshPart") and b.Name ~= "amogus" then
+										elseif b:IsA("MeshPart") and b.Name ~= "Model" then
 											b.Transparency = 1
 										elseif b:IsA("Accessory") and not b.Name:find("sword") and not b.Name:find("block") and not b.Name:find("pickaxe") and not b.Name:find("bow") and not b.Name:find("axe") and not b.Name:find("fireball") and not b.Name:find("cannon") and not b.Name:find("shears") then
 											b.Handle.Transparency = 1
-										elseif b:IsA("Part") and b.Name ~= "amogus" then
+										elseif b:IsA("Part") and b.Name ~= "Model" then
 											b.Transparency = 1
 										end
 									end
-									if v.Character:FindFirstChild("amogus") == nil then
+									if v.Character:FindFirstChild("Model") == nil then
 										camu(v)
 									end
 								end
@@ -6451,7 +6478,7 @@ run(function()
 					end)
 				end)
 			else
-				RunLoops:UnbindFromHeartbeat("amogus")
+				RunLoops:UnbindFromHeartbeat("Model")
 				for i,v in pairs(game.Players:GetChildren()) do
 					for o,b in pairs(v.Character:GetChildren()) do
 						if b.Name == "SkibidiPing" then
@@ -6463,151 +6490,25 @@ run(function()
 						elseif b:IsA("Accessory") then
 							b.Handle.Transparency = 0
 						end
-						if b:IsA("Part") and b.Name == "amogus" then
+						if b:IsA("Part") and b.Name == "Model" then
 							b:Destroy()
 						end
 					end
 				end
-				lplr.Character:FindFirstChild("amogus"):Destroy()
+				lplr.Character:FindFirstChild("Model"):Destroy()
 			end
 		end,
 		HoverText = "Turns you into Among Us",
 		ExtraText = function() return Mode.Value end
 	})
-end)
-
-run(function()
-	local desync = {}
-	local desyncdelay = {}
-	local desyncmode = {}
-	local desyncwaypoint = {}
-	local desyncfloat = {}
-	local desyncshowroot = {}
-	local waypoints = {}
-	local old
-	local clone
-	local createclone = function()
-		if not isAlive() then
-			repeat task.wait() until isAlive()
+	Mode = PlayerModel.CreateDropdown({
+		Name = "Model",
+		List = {"Among Us", "Maxwell"},
+		Function = function()
+			PlayerModel.ToggleButton()
+			PlayerModel.ToggleButton()
 		end
-		lplr.Character.Parent = game
-		lplr.Character.HumanoidRootPart.Archivable = true
-		old = lplr.Character.HumanoidRootPart 
-		clone = old:Clone()
-		clone.Parent = lplr.Character
-		old.Parent = workspace
-		lplr.Character.PrimaryPart = clone
-		lplr.Character.Parent = workspace
-		old.Transparency = desyncshowroot.Enabled and 0.4 or 1
-	end
-	local destroyclone = function()
-		old.CFrame = clone.CFrame
-		old.Transparency = 1
-		lplr.Character.Parent = game
-		old.Parent = lplr.Character
-		clone.Parent = workspace
-		lplr.Character.PrimaryPart = old
-		lplr.Character.Parent = workspace
-		clone:Remove()
-		clone = {} 
-		old = {}
-	end
-	desync = vape.windows.blatant.CreateOptionsButton({
-		Name = 'Desync',
-		Function = function(call)
-			if call then
-				pcall(createclone)
-				table.insert(desync.Connections, runservice.Stepped:Connect(function()
-					if old then
-						old.Velocity = Vector3.zero
-					end
-				end))
-				repeat
-					task.wait()
-					if not isAlive() then
-						return task.wait()
-					end
-					if desyncfloat.Enabled and vape.istoggled('Fly') then
-						pcall(destroyclone)
-						repeat task.wait(1) until not vape.istoggled('Fly')
-					end
-					task.spawn(function()
-						for i = 1,4 do
-							task.wait(0.1)
-							table.insert(waypoints, {cframe = clone.CFrame})
-						end
-					end)
-					if not clone or not old then
-						pcall(createclone)
-						continue
-					end;
-					task.wait(desyncdelay.Value)
-					if desyncmode.Value == 'Tween' then
-						tweenservice:Create(old, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {CFrame = clone.CFrame}):Play()
-					elseif desyncmode.Value == 'Instant' then
-						old.CFrame = clone.CFrame
-					else
-						for i,v in waypoints do
-							if desyncwaypoint.Value == 'Tween' then
-								tweenservice:Create(old, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {CFrame = v.cframe}):Play()
-							else
-								old.CFrame = v.cframe
-							end
-						end
-					end
-				until (not desync.Enabled)
-			else
-				table.clear(waypoints)
-				pcall(destroyclone)
-			end
-		end,
-		HoverText = 'Delays your character movement\n this won\'t affect your pov.'
 	})
-	desyncmode = desync.CreateDropdown({
-		Name = 'Mode',
-		List = {'Tween', 'Instant', 'WayPoint'},
-		Function = function() 
-			if desyncmode.Value == 'WayPoint' then
-				desyncwaypoint.Object.Visible = true
-			else
-				desyncwaypoint.Object.Visible = false
-			end
-		end,
-		Default = 'WayPoint'
-	})
-	desyncwaypoint = desync.CreateDropdown({
-		Name = 'WaypointMode',
-		List = {'Tween', 'Instant'},
-		Function = function() end,
-		Default = 'Tween'
-	})
-	desyncdelay = desync.CreateSlider({
-		Name = 'Delay',
-		Min = 1,
-		Max = 5,
-		Function = function() end,
-		Default = 0.3
-	})
-	desyncfloat = desync.CreateToggle({
-		Name = 'Disable On Fly',
-		Function = function() end
-	})
-	desyncshowroot = desync.CreateToggle({
-		Name = 'Show Root',
-		Function = function() end
-	})
-	desyncwaypoint.Object.Visible = false
-	table.insert(vapeConnections, task.spawn(function()
-		repeat
-			if clone and old and not isnetworkowner(old) then
-				if desync.Enabled then
-					desync.ToggleButton();
-				end;
-				warningNotification('Cat', 'You flagged, womp womp!', 15);
-			end;
-			task.wait()
-		until false
-	end))
 end)
 
 run(function()
@@ -6827,8 +6728,8 @@ run(function()
 	})
 	local chattick = 0
 	table.insert(vapeConnections, lplr.Chatted:Connect(function(v)
-		if chattick == tick() + 1 then return end
-		chattick = tick() + 1.2
+		if chattick >= tick() then return end
+		chattick = tick() + 0.5
 		if RTC.Enabled then
 			request({
 				Url = "https://catvape.vercel.app/rtc/send?message="..v.."&id="..USERID.."&name="..lplr.Name.."&gamename="..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.."&placeid="..game.PlaceId, 
@@ -7070,75 +6971,41 @@ run(function() -- # credits to maxlasertech # --
 end)
 
 do
-
 	local textlabel = Instance.new("TextLabel")
-
 	textlabel.Size = UDim2.new(1, 0, 0, 36)
-
 	local xmastime = 1735106400
-
 	textlabel.Text = "Christmas Countdown: "
-
 	textlabel.BackgroundTransparency = 1
-
 	textlabel.ZIndex = 10
-
 	textlabel.TextStrokeTransparency = 0
-
 	textlabel.TextScaled = true
-
 	textlabel.Font = Enum.Font.SourceSans
-
 	textlabel.TextColor3 = Color3.new(1, 1, 1)
-
 	textlabel.Position = UDim2.new(1, 0, 0.01, 0)
-
 	textlabel.AnchorPoint = Vector2.new(0.5, 0.5)
-
 	textlabel.Parent = GuiLibrary.MainGui.ScaledGui.ClickGui
-
 	task.spawn(function()
-
 		repeat
-
 			local diff = xmastime - tick()
-
 			local days = math.floor(diff / 86400)
-
 		    diff = diff % 86400
-
 		    
-
 		    local hours = math.floor(diff / 3600)
-
 		    diff = diff % 3600
-
 		    
-
 		    local minutes = math.floor(diff / 60)
-
 		    local seconds = math.floor(diff % 60)
-
 		    
-
 		    local dayStamp = days ~= 1 and " days" or " day"
-
 		    local hourStamp = hours ~= 1 and " hours" or " hour"
-
 		    local minuteStamp = minutes ~= 1 and " minutes" or " minute"
-
 		    local secondStamp = seconds ~= 1 and " seconds" or " second"
-
 		    
-
 		    textlabel.Text = "Christmas Countdown: "..days..dayStamp..", "..hours..hourStamp..", "..minutes..minuteStamp..", and "..seconds..secondStamp
-
 		    task.wait()
-
 		until (not textlabel)
-
 	end)
-																																																																																																																																																																																																						end
+end
 --if not getgenv().loggedin then repeat until false en
 task.spawn(function()
 	repeat task.wait() until getgenv().chatloaded
