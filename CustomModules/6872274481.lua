@@ -464,8 +464,8 @@ local lastdamagefunc = function()
 	end
 	local oldhealth = lplr.Character.Humanoid.Health
 	lplr.Character.Humanoid.HealthChanged:Connect(function(new)
-		if new < oldhealth then
-			lastdamagetick = tick() + 0.25
+		if new < oldhealth and not vape.istoggled("LongJump") then
+			lastdamagetick = tick() + 0.5
 		end
 		oldhealth = new
 	end)
@@ -475,21 +475,32 @@ lplr.CharacterAdded:Connect(lastdamagefunc)
 local speedPotion = false
 local speedPotionTick = 0
 local zephyrSpeedTick = 0
+table.insert(vapeConnections, lplr.CharacterAdded:Connect(function()
+	speedPotionTick = 0
+	zephyrSpeedTick = 0
+	lastdamagetick = 0
+end))
+local speedPotion = false
 local function getSpeed()
 	local speed = 1
-	speedPotion = false
 	if lplr.Character then
 		local SpeedDamageBoost = lplr.Character:GetAttribute("SpeedBoost")
-		if SpeedDamageBoost and not vape.istoggled("LongJump") then
+		if SpeedDamageBoost then
 			if not speedPotion then
-				speedTick = tick() + 45
+				speedPotionTick = tick() + 35
 			end
 			spd = (entityLibrary.character.Humanoid.FloorMaterial ~= Enum.Material.Air) and 1.1 or 1.25
 			speed = speed * spd
 			speedPotion = true
+		elseif not SpeedDamageBoost then
+			speedPotion = false
+			speedPotionTick = 0
+		end
+		if vape.istoggled("KrystalDisabler") then
+			speed = speed * 5
 		end
 		if store.grapple > tick() then
-			speed = speed * 3
+			speed = speed + 61
 		end
 		if store.scythe > tick() and gss then
 			speed = speed * (gssv / 16)
@@ -1592,7 +1603,7 @@ run(function()
 	table.insert(vapeConnections, bedwars.ClientStoreHandler.changed:connect(updateStore))
 	updateStore(bedwars.ClientStoreHandler:getState(), {})
 
-	for i, v in pairs({"MatchEndEvent", "EntityDeathEvent", "EntityDamageEvent", "BedwarsBedBreak", "BalloonPopped", "AngelProgress"}) do
+	for i, v in pairs({"MatchEndEvent", "EntityDeathEvent", "EntityDamageEvent", "BedwarsBedBreak", "BalloonPopped", "AngelProgress", "ItemConsumed"}) do
 		bedwars.Client:WaitFor(v):andThen(function(connection)
 			table.insert(vapeConnections, connection:Connect(function(...)
 				vapeEvents[v]:Fire(...)
@@ -1860,17 +1871,6 @@ do
 			end
 		until not vapeInjected
 	end)
-	local textlabel = Instance.new("TextLabel")
-	textlabel.Size = UDim2.new(1, 0, 0, 36)
-	textlabel.Text = "The current version of vape is no longer being maintained, join the discord (click the discord icon) to get updates on the latest release."
-	textlabel.BackgroundTransparency = 1
-	textlabel.ZIndex = 10
-	textlabel.TextStrokeTransparency = 0
-	textlabel.TextScaled = true
-	textlabel.Font = Enum.Font.SourceSans
-	textlabel.TextColor3 = Color3.new(1, 1, 1)
-	textlabel.Position = UDim2.new(0, 0, 1, -36)
-	textlabel.Parent = GuiLibrary.MainGui.ScaledGui.ClickGui
 end
 
 run(function()
@@ -1940,7 +1940,6 @@ GuiLibrary.RemoveObject("MouseTPOptionsButton")
 GuiLibrary.RemoveObject("PhaseOptionsButton")
 GuiLibrary.RemoveObject("AutoClickerOptionsButton")
 GuiLibrary.RemoveObject("SpiderOptionsButton")
-GuiLibrary.RemoveObject('DesyncOptionsButton')
 GuiLibrary.RemoveObject("LongJumpOptionsButton")
 GuiLibrary.RemoveObject("HitBoxesOptionsButton")
 GuiLibrary.RemoveObject("KillauraOptionsButton")
@@ -1964,14 +1963,14 @@ run(function()
 	local AimAssistTargetFrame = {Players = {Enabled = false}}
 	AimAssist = vape.windows.combat.CreateOptionsButton({
 		Name = "AimAssist",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToRenderStep("AimAssist", function(dt)
 					vapeTargetInfo.Targets.AimAssist = nil
 					if ((not AimAssistClickAim.Enabled) or (tick() - bedwars.SwordController.lastSwing) < 0.4) then
 						local plr = EntityNearPosition(18)
 						if plr then
-							vapeTargetInfo.Targets.AimAssist = {
+					vapeTargetInfo.Targets.AimAssist = {
 								Humanoid = {
 									Health = (plr.Character:GetAttribute("Health") or plr.Humanoid.Health) + getShieldAttribute(plr.Character),
 									MaxHealth = plr.Character:GetAttribute("MaxHealth") or plr.Humanoid.MaxHealth
@@ -2087,7 +2086,7 @@ run(function()
 
 	autoclicker = vape.windows.combat.CreateOptionsButton({
 		Name = "AutoClicker",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if inputservice.TouchEnabled then
 					pcall(function()
@@ -2131,7 +2130,7 @@ run(function()
 	local noclickfunc
 	noclickdelay = vape.windows.combat.CreateOptionsButton({
 		Name = "NoClickDelay",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				noclickfunc = bedwars.SwordController.isClickingTooFast
 				bedwars.SwordController.isClickingTooFast = function(self)
@@ -2151,7 +2150,7 @@ run(function()
 
 	Reach = vape.windows.combat.CreateOptionsButton({
 		Name = "Reach",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			bedwars.CombatConstant.RAYCAST_SWORD_CHARACTER_DISTANCE = callback and (ReachValue.Value + 2) * 4 or 14.4 
 		end,
 		HoverText = "Extends attack reach"
@@ -2174,7 +2173,7 @@ run(function()
 	local oldSprintFunction
 	Sprint = vape.windows.combat.CreateOptionsButton({
 		Name = "Sprint",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if inputservice.TouchEnabled then
 					pcall(function() lplr.PlayerGui.MobileUI["4"].Visible = false end)
@@ -2212,7 +2211,7 @@ run(function()
 	local applyKnockback
 	Velocity = vape.windows.combat.CreateOptionsButton({
 		Name = "Velocity",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				applyKnockback = bedwars.KnockbackUtil.applyKnockback
 				bedwars.KnockbackUtil.applyKnockback = function(root, mass, dir, knockback, ...)
@@ -2252,7 +2251,7 @@ run(function()
 	local roact
 	local FastConsume = vape.windows.blatant.CreateOptionsButton({
 		Name = "FastConsume",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldclickhold = bedwars.ClickHold.startClick
 				oldclickhold2 = bedwars.ClickHold.showProgress
@@ -2356,7 +2355,7 @@ run(function()
 
 	Fly = vape.windows.blatant.CreateOptionsButton({
 		Name = "Fly",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				olddeflate = bedwars.BalloonController.deflateBalloon
 				bedwars.BalloonController.deflateBalloon = function() end
@@ -2554,7 +2553,7 @@ run(function()
 	local camcontrol
 	FlyDamageAnimation = Fly.CreateToggle({
 		Name = "Damage Animation",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if Flydamagecamera.Object then
 				Flydamagecamera.Object.Visible = callback
 			end
@@ -2614,7 +2613,7 @@ run(function()
 	Flydamagecamera.Object.Visible = false
 	FlyAnywayProgressBar = Fly.CreateToggle({
 		Name = "Progress Bar",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				FlyAnywayProgressBarFrame = Instance.new("Frame")
 				FlyAnywayProgressBarFrame.AnchorPoint = Vector2.new(0.5, 0)
@@ -2675,7 +2674,7 @@ run(function()
 
 	GrappleExploit = vape.windows.blatant.CreateOptionsButton({
 		Name = "GrappleExploit",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				local grappleHooked = false
 				table.insert(GrappleExploit.Connections, bedwars.Client:Get("GrapplingHookFunctions"):Connect(function(p4)
@@ -2750,7 +2749,9 @@ run(function()
 	FlyOverlap.FilterDescendantsInstances = {}
 	FlyOverlap.RespectCanCollide = true
 
+	local antihitenabled = false
 	local function disablefunc()
+		lplr.Character.HumanoidRootPart.Anchored = false
 		if bodyvelo then bodyvelo:Destroy() end
 		RunLoops:UnbindFromHeartbeat("InfiniteFlyOff")
 		disabledproper = true
@@ -2782,14 +2783,24 @@ run(function()
 		lplr.Character.Humanoid.HipHeight = hip or 2
 		local origcf = {oldcloneroot.CFrame:GetComponents()}
 		origcf[2] = oldclonepos
+		local ray = workspace:Raycast(oldcloneroot.Position, Vector3.new(0, -1000, 0), store.blockRaycast)
+		if ray then
+			local args = {oldcloneroot.CFrame:GetComponents()}
+			args[2] = ray.Position.Y + (oldcloneroot.Size.Y / 2) + lplr.Character.Humanoid.HipHeight
+			origcf[2] = CFrame.new(unpack(args)).Y
+		end
 		oldcloneroot.CFrame = CFrame.new(unpack(origcf))
 		oldcloneroot = nil
 		warningNotification("InfiniteFly", "Landed!", 3)
+		if antihitenabled then
+			antihitenabled = false
+			vape.gui.ObjectsThatCanBeSaved.AntiHitOptionsButton.Api.ToggleButton()
+		end
 	end
 
 	InfiniteFly = vape.windows.blatant.CreateOptionsButton({
 		Name = "InfiniteFly",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if not entityLibrary.isAlive then
 					disabledproper = true
@@ -2828,6 +2839,10 @@ run(function()
 				end
 				clonesuccess = false
 				if entityLibrary.isAlive and entityLibrary.character.Humanoid.Health > 0 and isnetworkowner(entityLibrary.character.HumanoidRootPart) then
+					if vape.istoggled('AntiHit') then
+						antihitenabled = true
+						vape.gui.ObjectsThatCanBeSaved.AntiHitOptionsButton.Api.ToggleButton()
+					end
 					cloned = lplr.Character
 					oldcloneroot = entityLibrary.character.HumanoidRootPart
 					oldcloneroot.Anchored = false
@@ -2939,6 +2954,7 @@ run(function()
 					disabledproper = false
 					if isnetworkowner(oldcloneroot) then
 						if InfiniteFlyNotifs.Enabled then warningNotification("InfiniteFly", `Waiting {InfiniteFlyLandTime.Value}s to not flag`, 3) end
+						lplr.Character.HumanoidRootPart.Anchored = true
 						task.delay(InfiniteFlyLandTime.Value, disablefunc)
 					else
 						disablefunc()
@@ -3219,7 +3235,7 @@ run(function()
 
 	Killaura = vape.windows.blatant.CreateOptionsButton({
 		Name = "Killaura",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if killauraaimcirclepart then killauraaimcirclepart.Parent = camera end
 				if killaurarangecirclepart then killaurarangecirclepart.Parent = camera killaurarangecirclepart.Size = Vector3.new((killaurarange.Value*4) * 0.7, 0.01, (killaurarange.Value*4) * 0.7) end
@@ -3256,10 +3272,14 @@ run(function()
 					until Killaura.Enabled == false
 				end)
 				
+				local offset = 0
 				task.spawn(function()
 					repeat
 						if not killauraNearPlayer then
 							lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", vmy)
+							offset = 0
+						else
+							offset = swordoffset.Value / 10
 						end
 						task.wait()
 					until (not Killaura.Enabled)
@@ -3269,13 +3289,12 @@ run(function()
 						task.wait()
 						if (killauraanimation.Enabled and killaurasworddown.Enabled and not killauraswing.Enabled) then
 							if killauraNearPlayer then
-								offset = swordoffset.Value / 10
 								--pcall(function()
-								lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", vmy + swordoffset.Value)
+								lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", vmy + offset)
 								
 								task.wait(math.random(0.5, 1))
-								local tween = tweenNum(vmy + offset, (vmy - 2) + offset, 0.06, function(value)
-							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
+								local tween = tweenNum(vmy, vmy - 2, 0.06, function(value)
+							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value + offset)
 							    end)
 								
 							    while true do
@@ -3285,8 +3304,8 @@ run(function()
 							        end
 							    end
 									
-							    local tween2 = tweenNum((vmy - 2) + offset, vmy + offset, 0.06, function(value)
-							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value)
+							    local tween2 = tweenNum(vmy - 2, vmy, 0.06, function(value)
+							        lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", value + offset)
 								end)
 									    
 							    while true do
@@ -3353,6 +3372,7 @@ run(function()
 								end
 								if originalRootC0 and killauracframe.Enabled then
 									if targetedPlayer ~= nil then
+										lplr.Character:SetPrimaryPartCFrame(CFrame.new(lplr.Character.PrimaryPart.Position, Vector3.new(targetedPlayer.RootPart.Position.X, lplr.Character.PrimaryPart.Position.Y, targetedPlayer.RootPart.Position.Z)))
 										local targetPos = targetedPlayer.RootPart.Position + Vector3.new(0, 2, 0)
 										local direction = (Vector3.new(targetPos.X, targetPos.Y, targetPos.Z) - entityLibrary.character.Head.Position).Unit
 										local direction2 = (Vector3.new(targetPos.X, Root.Position.Y, targetPos.Z) - Root.Position).Unit
@@ -3558,7 +3578,7 @@ run(function()
 	local oldeffect
 	killauraautoblock = Killaura.CreateToggle({
 		Name = "AutoBlock",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldviewmodel = bedwars.ViewmodelController.setHeldItem
 				bedwars.ViewmodelController.setHeldItem = function(self, newItem, ...)
@@ -3610,7 +3630,7 @@ run(function()
 	})
 	killauratarget = Killaura.CreateToggle({
 		Name = "Show target",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if killauratargethighlight.Object then
 				killauratargethighlight.Object.Visible = callback
 			end
@@ -3619,7 +3639,7 @@ run(function()
 	})
 	killauratargethighlight = Killaura.CreateToggle({
 		Name = "Use New Highlight",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			for i, v in pairs(killauraboxes) do
 				v:Remove()
 			end
@@ -3683,7 +3703,7 @@ run(function()
 	})
 	killaurarangecircle = Killaura.CreateToggle({
 		Name = "Range Visualizer",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			Killaura.ToggleButton()
 			Killaura.ToggleButton()
 			if inputservice.TouchEnabled then return end
@@ -3710,7 +3730,7 @@ run(function()
 	})
 	killauraaimcircle = Killaura.CreateToggle({
 		Name = "Aim Visualizer",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				killauraaimcirclepart = Instance.new("Part")
 				killauraaimcirclepart.Shape = Enum.PartType.Ball
@@ -3733,7 +3753,7 @@ run(function()
 	})
 	killauraparticle = Killaura.CreateToggle({
 		Name = "Crit Particle",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				killauraparticlepart = Instance.new("Part")
 				killauraparticlepart.Transparency = 1
@@ -3776,7 +3796,7 @@ run(function()
 	})
 	killauraanimation = Killaura.CreateToggle({
 		Name = "Custom Animation",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if killauraanimationtween.Object then killauraanimationtween.Object.Visible = callback end
 			if killaurasworddown.Object then killaurasworddown.Object.Visible = callback end
 			if swordoffset.Object then swordoffset.Object.Visible = callback end
@@ -4027,7 +4047,7 @@ run(function()
 	local origY = nil
 	LongJump = vape.windows.blatant.CreateOptionsButton({
 		Name = "LongJump",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				table.insert(LongJump.Connections, vapeEvents.EntityDamageEvent.Event:Connect(function(damageTable)
 					if damageTable.entityInstance == lplr.Character and (not damageTable.knockbackMultiplier or not damageTable.knockbackMultiplier.disabled) then
@@ -4168,7 +4188,7 @@ run(function()
 	local oldfall
 	NoFall = vape.windows.blatant.CreateOptionsButton({
 		Name = "NoFall",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				bedwars.Client:Get("GroundHit"):SendToServer()
 			end
@@ -4182,7 +4202,7 @@ run(function()
 	local OldSetSpeedFunc
 	NoSlowdown = vape.windows.blatant.CreateOptionsButton({
 		Name = "NoSlowdown",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				OldSetSpeedFunc = bedwars.SprintController.setSpeed
 				bedwars.SprintController.setSpeed = function(tab1, val1)
@@ -4225,7 +4245,7 @@ run(function()
 
 	Phase = vape.windows.blatant.CreateOptionsButton({
 		Name = "Phase",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToHeartbeat("Phase", function()
 					if entityLibrary.isAlive and entityLibrary.character.Humanoid.MoveDirection ~= Vector3.zero and (not GuiLibrary.ObjectsThatCanBeSaved.SpiderOptionsButton.Api.Enabled or holdingshift) then
@@ -4266,7 +4286,7 @@ run(function()
 	local BowAimbotFOV = {Value = 1000}
 	local BowAimbot = vape.windows.blatant.CreateOptionsButton({
 		Name = "ProjectileAimbot",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldCalculateAim = bedwars.ProjectileController.calculateImportantLaunchValues
 				bedwars.ProjectileController.calculateImportantLaunchValues = function(self, projmeta, worldmeta, shootpospart, ...)
@@ -4417,7 +4437,7 @@ run(function()
 	local oldspeed
 	Scaffold = vape.windows.blatant.CreateOptionsButton({
 		Name = "Scaffold",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				scaffoldtext.Visible = ScaffoldBlockCount.Enabled
 				if entityLibrary.isAlive then
@@ -4501,12 +4521,12 @@ run(function()
 	})
 	ScaffoldDiagonal = Scaffold.CreateToggle({
 		Name = "Diagonal",
-		Function = function(callback) end,
+		Function = function(callback: boolean) end,
 		Default = true
 	})
 	ScaffoldTower = Scaffold.CreateToggle({
 		Name = "Tower",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if ScaffoldStopMotion.Object then
 				ScaffoldTower.Object.ToggleArrow.Visible = callback
 				ScaffoldStopMotion.Object.Visible = callback
@@ -4515,12 +4535,12 @@ run(function()
 	})
 	ScaffoldMouseCheck = Scaffold.CreateToggle({
 		Name = "Require mouse down",
-		Function = function(callback) end,
+		Function = function(callback: boolean) end,
 		HoverText = "Only places when left click is held.",
 	})
 	ScaffoldDownwards  = Scaffold.CreateToggle({
 		Name = "Downwards",
-		Function = function(callback) end,
+		Function = function(callback: boolean) end,
 		HoverText = "Goes down when left shift is held."
 	})
 	ScaffoldStopMotion = Scaffold.CreateToggle({
@@ -4534,7 +4554,7 @@ run(function()
 	ScaffoldStopMotion.Object.Visible = ScaffoldTower.Enabled
 	ScaffoldBlockCount = Scaffold.CreateToggle({
 		Name = "Block Count",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if Scaffold.Enabled then
 				scaffoldtext.Visible = callback
 			end
@@ -4571,7 +4591,7 @@ run(function()
 	local alternatelist = {"Normal", "AntiCheat A", "AntiCheat B"}
 	Speed = vape.windows.blatant.CreateOptionsButton({
 		Name = "Speed",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToHeartbeat("Speed", function(delta)
 					if GuiLibrary.ObjectsThatCanBeSaved["Lobby CheckToggle"].Api.Enabled then
@@ -4649,7 +4669,7 @@ run(function()
 	})
 	SpeedJump = Speed.CreateToggle({
 		Name = "AutoJump",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if SpeedJumpHeight.Object then SpeedJumpHeight.Object.Visible = callback end
 			if SpeedJumpAlways.Object then
 				SpeedJump.Object.ToggleArrow.Visible = callback
@@ -4693,7 +4713,7 @@ run(function()
 	local SpiderPart
 	Spider = vape.windows.blatant.CreateOptionsButton({
 		Name = "Spider",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				table.insert(Spider.Connections, inputservice.InputBegan:Connect(function(input1)
 					if input1.KeyCode == Enum.KeyCode.LeftShift then
@@ -4773,7 +4793,7 @@ run(function()
 	local block
 	TargetStrafe = vape.windows.blatant.CreateOptionsButton({
 		Name = "TargetStrafe",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					if not controlmodule then
@@ -4843,7 +4863,7 @@ run(function()
 	local BedESPOnTop = {Enabled = true}
 	BedESP = vape.windows.render.CreateOptionsButton({
 		Name = "BedESP",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				table.insert(BedESP.Connections, collection:GetInstanceAddedSignal("bed"):Connect(function(bed)
 					task.wait(0.2)
@@ -4992,7 +5012,7 @@ run(function()
 
 	BedPlates = vape.windows.render.CreateOptionsButton({
 		Name = "BedPlates",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				table.insert(BedPlates.Connections, vapeEvents.PlaceBlockEvent.Event:Connect(function(p5)
 					for i, v in pairs(BedPlatesFolder:GetChildren()) do
@@ -5112,7 +5132,7 @@ run(function()
 
 	ChestESP = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
 		Name = 'ChestESP',
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					table.insert(ChestESP.Connections, collection:GetInstanceAddedSignal('chest'):Connect(chestfunc))
@@ -5186,7 +5206,7 @@ run(function()
 
 	FPSBoost = vape.windows.render.CreateOptionsButton({
 		Name = "FPSBoost",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			local damagetab = debug.getupvalue(bedwars.DamageIndicator, 2)
 			if callback then
 				wasenabled = true
@@ -5241,19 +5261,19 @@ run(function()
 	})
 	removetextures = FPSBoost.CreateToggle({
 		Name = "Remove Textures",
-		Function = function(callback) if FPSBoost.Enabled then FPSBoost.ToggleButton(false) FPSBoost.ToggleButton(false) end end
+		Function = function(callback: boolean) if FPSBoost.Enabled then FPSBoost.ToggleButton(false) FPSBoost.ToggleButton(false) end end
 	})
 	fpsboostdamageindicator = FPSBoost.CreateToggle({
 		Name = "Remove Damage Indicator",
-		Function = function(callback) if FPSBoost.Enabled then FPSBoost.ToggleButton(false) FPSBoost.ToggleButton(false) end end
+		Function = function(callback: boolean) if FPSBoost.Enabled then FPSBoost.ToggleButton(false) FPSBoost.ToggleButton(false) end end
 	})
 	fpsboostdamageeffect = FPSBoost.CreateToggle({
 		Name = "Remove Damage Effect",
-		Function = function(callback) if FPSBoost.Enabled then FPSBoost.ToggleButton(false) FPSBoost.ToggleButton(false) end end
+		Function = function(callback: boolean) if FPSBoost.Enabled then FPSBoost.ToggleButton(false) FPSBoost.ToggleButton(false) end end
 	})
 	fpsboostkilleffect = FPSBoost.CreateToggle({
 		Name = "Remove Kill Effect",
-		Function = function(callback) if FPSBoost.Enabled then FPSBoost.ToggleButton(false) FPSBoost.ToggleButton(false) end end
+		Function = function(callback: boolean) if FPSBoost.Enabled then FPSBoost.ToggleButton(false) FPSBoost.ToggleButton(false) end end
 	})
 end)
 
@@ -5262,7 +5282,7 @@ run(function()
 	local GameFixerHit = {Enabled = false}
 	GameFixer = vape.windows.render.CreateOptionsButton({
 		Name = "GameFixer",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			debug.setconstant(bedwars.SwordController.swingSwordAtMouse, 23, callback and 'raycast' or 'Raycast')
 			debug.setupvalue(bedwars.SwordController.swingSwordAtMouse, 4, callback and bedwars.QueryUtil or workspace)
 		end,
@@ -5701,7 +5721,7 @@ run(function()
 
 	GameTheme = vape.windows.render.CreateOptionsButton({
 		Name = "GameTheme",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				if not transformed then
 					transformed = true
@@ -5821,7 +5841,7 @@ run(function()
 	local KillEffect = {Enabled = false}
 	KillEffect = vape.windows.render.CreateOptionsButton({
 		Name = "KillEffect",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat task.wait() until store.matchState ~= 0 or not KillEffect.Enabled
@@ -5912,7 +5932,7 @@ run(function()
 
 	KitESP = vape.windows.render.CreateOptionsButton({
 		Name = "KitESP",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat task.wait() until store.equippedKit ~= ""
@@ -6246,7 +6266,7 @@ run(function()
 	local NameTags = {Enabled = false}
 	NameTags = vape.windows.render.CreateOptionsButton({
 		Name = "NameTags",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				methodused = NameTagsDrawing.Enabled and "Drawing" or "Normal"
 				if nametagfuncs2[methodused] then
@@ -6361,7 +6381,7 @@ run(function()
 	local oldfov
 	FieldOfView = vape.windows.render.CreateOptionsButton({
 		Name = "FOVChanger",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldfov = camera.FieldOfView
 				if FieldOfViewZoom.Enabled then
@@ -6436,7 +6456,7 @@ run(function()
 
 	SongBeats = vape.windows.render.CreateOptionsButton({
 		Name = "SongBeats",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					if #SongBeatsList.ObjectList <= 0 then
@@ -6478,7 +6498,7 @@ run(function()
 	local performed = false
 	vape.windows.render.CreateOptionsButton({
 		Name = "UICleanup",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback and not performed then
 				performed = true
 				task.spawn(function()
@@ -6572,7 +6592,7 @@ run(function()
 	local AutoBalloon = {Enabled = false}
 	AutoBalloon = vape.windows.utility.CreateOptionsButton({
 		Name = "AutoBalloon",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat task.wait() until store.matchState ~= 0 or  not vapeInjected
@@ -6861,7 +6881,7 @@ run(function()
 
 	AutoBuy = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
 		Name = "AutoBuy",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				buyingthing = false
 				task.spawn(function()
@@ -7007,7 +7027,7 @@ run(function()
 
 	AutoConsume = vape.windows.utility.CreateOptionsButton({
 		Name = "AutoConsume",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				table.insert(AutoConsume.Connections, vapeEvents.InventoryAmountChanged.Event:Connect(AutoConsumeFunc))
 				table.insert(AutoConsume.Connections, vapeEvents.AttributeChanged.Event:Connect(function(changed)
@@ -7149,7 +7169,7 @@ run(function()
 
 	AutoHotbar = vape.windows.utility.CreateOptionsButton({
 		Name = "AutoHotbar",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				AutoHotbarSort()
 				if AutoHotbarMode.Value == "On Key" then
@@ -7205,7 +7225,7 @@ run(function()
 
 	AutoKit = vape.windows.utility.CreateOptionsButton({
 		Name = "AutoKit",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldfish = bedwars.FishermanController.startMinigame
 				bedwars.FishermanController.startMinigame = function(Self, dropdata, func) func({win = true}) end
@@ -7439,7 +7459,7 @@ end)
 
 	AutoForge = vape.windows.utility.CreateOptionsButton({
 		Name = "AutoForge",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -7499,7 +7519,7 @@ run(function()
 	local AutoReportV2Notify = {Enabled = false}
 	AutoReportV2 = vape.windows.utility.CreateOptionsButton({
 		Name = "AutoReportV2",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -7617,7 +7637,7 @@ run(function()
 
 	AutoToxic = vape.windows.utility.CreateOptionsButton({
 		Name = "AutoToxic",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				table.insert(AutoToxic.Connections, vapeEvents.BedwarsBedBreak.Event:Connect(function(bedTable)
 					if AutoToxicBedDestroyed.Enabled and bedTable.brokenBedTeam.id == lplr:GetAttribute("Team") then
@@ -7877,7 +7897,7 @@ run(function()
 
 	ChestStealer = vape.windows.utility.CreateOptionsButton({
 		Name = "ChestStealer",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat task.wait() until store.queueType ~= "bedwars_test"
@@ -7924,7 +7944,7 @@ run(function()
 	local FastDrop = {Enabled = false}
 	FastDrop = vape.windows.utility.CreateOptionsButton({
 		Name = "FastDrop",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -7945,7 +7965,7 @@ run(function()
 	local MissileTeleportDelaySlider = {Value = 30}
 	MissileTP = vape.windows.utility.CreateOptionsButton({
 		Name = "MissileTP",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					if getItem("guided_missile") then
@@ -7995,7 +8015,7 @@ run(function()
 	local PickupRange = {Enabled = false}
 	PickupRange = vape.windows.utility.CreateOptionsButton({
 		Name = "PickupRange",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				local pickedup = {}
 				task.spawn(function()
@@ -8036,7 +8056,7 @@ run(function()
 	local RavenTP = {Enabled = false}
 	RavenTP = vape.windows.utility.CreateOptionsButton({
 		Name = "RavenTP",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					if getItem("raven") then
@@ -8095,7 +8115,7 @@ run(function()
 
 	vape.windows.utility.CreateOptionsButton({
 		Name = "ShopTierBypass",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				for i,v in pairs(bedwars.ShopItems) do
 					if type(v) == "table" then
@@ -8165,7 +8185,7 @@ run(function()
 	local antivoiding = false
 	AntiVoid = vape.windows.world.CreateOptionsButton({
 		Name = "AntiVoid",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					AntiVoidPart = Instance.new("Part")
@@ -8298,7 +8318,7 @@ run(function()
 
 	local AutoTool = vape.windows.world.CreateOptionsButton({
 		Name = "AutoTool",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldhitblock = bedwars.BlockBreaker.hitBlock
 				bedwars.BlockBreaker.hitBlock = function(self, maid, raycastparams, ...)
@@ -8379,7 +8399,7 @@ run(function()
 	local bedprotectorrange = {Value = 1}
 	BedProtector = vape.windows.world.CreateOptionsButton({
 		Name = "BedProtector",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					for i, obj in pairs(collection:GetTagged("bed")) do
@@ -8425,7 +8445,7 @@ run(function()
 
 	Nuker = vape.windows.world.CreateOptionsButton({
 		Name = "Nuker",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				for i,v in pairs(store.blocks) do
 					if table.find(nukercustom.ObjectList, v.Name) or (nukerluckyblock.Enabled and v.Name:find("lucky")) or (nukerironore.Enabled and v.Name == "iron_ore") then
@@ -8506,7 +8526,7 @@ run(function()
 	})
 	nukereffects = Nuker.CreateToggle({
 		Name = "Show HealthBar & Effects",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if not callback then
 				bedwars.BlockBreaker.healthbarMaid:DoCleaning()
 			end
@@ -8523,7 +8543,7 @@ run(function()
 	})
 	nukerbeds = Nuker.CreateToggle({
 		Name = "Break Beds",
-		Function = function(callback) end,
+		Function = function(callback: boolean) end,
 		Default = true
 	})
 	nukernofly = Nuker.CreateToggle({
@@ -8532,7 +8552,7 @@ run(function()
 	})
 	nukerluckyblock = Nuker.CreateToggle({
 		Name = "Break LuckyBlocks",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				luckyblocktable = {}
 				for i,v in pairs(store.blocks) do
@@ -8548,7 +8568,7 @@ run(function()
 	})
 	nukerironore = Nuker.CreateToggle({
 		Name = "Break IronOre",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				luckyblocktable = {}
 				for i,v in pairs(store.blocks) do
@@ -8583,7 +8603,7 @@ run(function()
 	local SafeWalkMode = {Value = "Optimized"}
 	SafeWalk = vape.windows.world.CreateOptionsButton({
 		Name = "SafeWalk",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				oldmove = controlmodule.moveFunction
 				controlmodule.moveFunction = function(Self, vec, facecam)
@@ -8739,7 +8759,7 @@ run(function()
 
 	Schematica = vape.windows.world.CreateOptionsButton({
 		Name = "Schematica",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				local mouseinfo = bedwars.BlockEngine:getBlockSelector():getMouseInfo(0)
 				if mouseinfo and isfile(SchematicaBox.Value) then
@@ -8977,7 +8997,7 @@ run(function()
 	GuiLibrary.ObjectsThatCanBeSaved.GUIWindow.Api.CreateCustomToggle({
 		Name = "Overlay",
 		Icon = "catvape/assets/TargetIcon1.png",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			overlayenabled = callback
 			Overlay.SetVisible(callback)
 			if callback then
@@ -9109,7 +9129,7 @@ run(function()
 	local ReachLabel
 	ReachDisplay = GuiLibrary.CreateLegitModule({
 		Name = "Reach Display",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				task.spawn(function()
 					repeat
@@ -9161,7 +9181,7 @@ run(function()
 
 	viewmodeleditor = vape.windows.render.CreateOptionsButton({
 		Name = 'ViewmodelEditor',
-		Function = function(callback)
+		Function = function(callback: boolean)
 			local viewmodel = camera:FindFirstChild("Viewmodel")
 			if viewmodel then
 				if callback then
@@ -9293,13 +9313,18 @@ run(function()
 		Function = function(call)
 			if call then
 				bedtp.ToggleButton()
-				warningNotification('Cat', 'Teleporting to the destination.', 4) 
-				lplr.Character.Humanoid.Health = 0
-				lplr.CharacterAdded:Wait()
-				task.wait(0.2)
-				local bed = getEnemyBed()
-				tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 10, 0))})
-				tween:Play()
+				if vape.istoggled("KrystalDisabler") then
+					local bed = getEnemyBed()
+					lplr.Character.HumanoidRootPart.CFrame = (bed.Bed.CFrame + Vector3.new(0, 10, 0))
+				else
+					warningNotification('Cat', 'Teleporting to the destination.', 4) 
+					lplr.Character.Humanoid.Health = 0
+					lplr.CharacterAdded:Wait()
+					task.wait(0.2)
+					local bed = getEnemyBed()
+					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (bed.Bed.CFrame + Vector3.new(0, 10, 0))})
+					tween:Play()
+				end
 			end
 		end
 	}) 
@@ -9331,14 +9356,19 @@ run(function()
 		Function = function(call)
 			if call then
 				playertp.ToggleButton()
-				warningNotification('Cat', 'Teleporting to the destination.', 4) 
-				lplr.Character.Humanoid.Health = 0
-				lplr.CharacterAdded:Wait()
-				task.wait(0.2)
-				local player = gettarget()
-				if player then
-					tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0))})
-					tween:Play()
+				if vape.istoggled("KrystalDisabler") then
+					local player = gettarget()
+					lplr.Character.HumanoidRootPart.CFrame = (player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0))
+				else
+					warningNotification('Cat', 'Teleporting to the destination.', 4) 
+					lplr.Character.Humanoid.Health = 0
+					lplr.CharacterAdded:Wait()
+					task.wait(0.2)
+					local player = gettarget()
+					if player then
+						tween = tweenservice:Create(lplr.Character.PrimaryPart, TweenInfo.new(0.45, Enum.EasingStyle.Linear), {CFrame = (player.Character.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0))})
+						tween:Play()
+					end
 				end
 			end
 		end
@@ -9380,7 +9410,7 @@ run(function()
 
 	PingSpoof = vape.windows.blatant.CreateOptionsButton({
 		Name = "PingSpoof",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then 
 				bticks = 0
 				clonepos = Instance.new("Part", workspace)
@@ -9434,176 +9464,13 @@ run(function()
 	})
 	PingSpoofPart = PingSpoof.CreateToggle({
 		Name = "Show Part",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if clonepos then
 				clonepos.Transparency = callback and 0.65 or 1
 			end
 		end
 	})
 end)]]
-run(function()
-	local desync = {}
-	local desyncdelay = {}
-	local desyncmode = {}
-	local desyncwaypoint = {}
-	local desyncfloat = {}
-	local desyncshowroot = {}
-	local desyncraycast = {}
-	local waypoints = {}
-	local createclone = function()
-		if not isAlive() then
-			repeat task.wait() until isAlive()
-		end
-		lplr.Character.Parent = game
-		lplr.Character.HumanoidRootPart.Archivable = true
-		old = lplr.Character.HumanoidRootPart 
-		old.Anchored = false
-		clone = old:Clone()
-		clone.Parent = lplr.Character
-		old.Parent = workspace
-		lplr.Character.PrimaryPart = clone
-		entityLibrary.character.HumanoidRootPart = clone
-		lplr.Character.Parent = workspace
-		old.Transparency = desyncshowroot.Enabled and 0.4 or 1
-	end
-	local destroyclone = function()
-		old.CFrame = clone.CFrame
-		old.Transparency = 1
-		lplr.Character.Parent = game
-		old.Parent = lplr.Character
-		clone.Parent = workspace
-		lplr.Character.PrimaryPart = old
-		lplr.Character.Parent = workspace
-		entityLibrary.character.HumanoidRootPart = old
-		clone:Remove()
-		clone = {} 
-		old = {} 
-	end
-	desync = vape.windows.blatant.CreateOptionsButton({
-		Name = 'Desync',
-		Function = function(call)
-			store.desyncing = call
-			if call then
-				pcall(createclone)
-				table.insert(desync.Connections, runservice.Stepped:Connect(function()
-					if old then
-						old.Velocity = Vector3.zero
-					end
-				end))
-				table.insert(desync.Connections, lplr.Character.Humanoid.HealthChanged:Connect(function(v)
-					if v == 0 then
-						pcall(destroyclone)
-					end
-				end))
-				table.insert(desync.Connections, lplr.CharacterAdded:Connect(function()
-					repeat task.wait(1) until isAlive()
-					pcall(createclone)
-				end))
-				repeat
-					if not isAlive() then
-						return task.wait()
-					end
-					if vape.istoggled('InfiniteFly') then
-						store.desyncing = false
-						pcall(destroyclone)
-						repeat task.wait(2) until not vape.istoggled('InfiniteFly') or not desync.Enabled
-						pcall(createclone)
-						store.desyncing = true
-					end
-					if desyncfloat.Enabled and vape.istoggled('Fly') then
-						pcall(destroyclone)
-						store.desyncing = false
-						repeat task.wait(1) until not vape.istoggled('Fly')
-						pcall(createclone)
-						store.desyncing = true
-					end
-					if not isnetworkowner(entityLibrary.character.HumanoidRootPart) then
-						pcall(destroyclone)
-						store.desyncing = false
-						warningNotification('Cat', 'Desync is temporaily disabled.', 5)
-						repeat task.wait(1) until isnetworkowner(old)
-						pcall(createclone)
-						store.desyncing = true
-					end
-					task.spawn(function()
-						for i = 1,4 do
-							task.wait(0.1)
-							local ray = desyncraycast.Enabled and workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), store.blockRaycast)
-							table.insert(waypoints, {cframe = ray and ray.Position + Vector3.new(0, 3, 0) or clone.Position})
-						end
-					end)
-					task.wait(vape.istoggled('LongJump') and 0.35 or desyncdelay.Value)
-					local ray = not vape.istoggled('Fly') and desyncraycast.Enabled and workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), store.blockRaycast)
-					if store.desyncing then
-						if LongJump.Enabled then
-							tweenservice:Create(old, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Position = ray and ray.Position + Vector3.new(0, 3, 0) or clone.Position}):Play()
-							return
-						end
-						if desyncmode.Value == 'Tween' then
-							tweenservice:Create(old, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Position = ray and ray.Position + Vector3.new(0, 3, 0) or clone.Position}):Play()
-						elseif desyncmode.Value == 'Instant' then
-							old.Position = ray and ray.Position + Vector3.new(0, 2, 0) or clone.Position
-						else
-							for i,v in waypoints do
-								if desyncwaypoint.Value == 'Tween' then
-									tweenservice:Create(old, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Position = v.cframe}):Play()
-								else
-									old.Position = v.cframe or clone.Position
-								end
-							end
-						end
-					end
-				until (not desync.Enabled)
-			else
-				table.clear(waypoints)
-				pcall(destroyclone)
-			end
-		end,
-		HoverText = 'Delays your character movement\n this won\'t affect your pov.'
-	})
-	desyncmode = desync.CreateDropdown({
-		Name = 'Mode',
-		List = {'Tween', 'Instant', 'WayPoint'},
-		Function = function() 
-			if desyncmode.Value == 'WayPoint' then
-				desyncwaypoint.Object.Visible = true
-			else
-				desyncwaypoint.Object.Visible = false
-			end
-		end,
-		Default = 'WayPoint'
-	})
-	desyncwaypoint = desync.CreateDropdown({
-		Name = 'WaypointMode',
-		List = {'Tween', 'Instant'},
-		Function = function() end,
-		Default = 'Tween'
-	})
-	desyncdelay = desync.CreateSlider({
-		Name = 'Delay',
-		Min = 1,
-		Max = 5,
-		Function = function() end,
-		Default = 0.3
-	})
-	desyncfloat = desync.CreateToggle({
-		Name = 'Disable On Fly',
-		Function = function() end
-	})
-	desyncshowroot = desync.CreateToggle({
-		Name = 'Show Root',
-		Function = function() end
-	})
-	desyncBoost = desync.CreateToggle({
-		Name = 'SpeedBoost',
-		Function = function() end
-	})
-	desyncraycast = desync.CreateToggle({
-		Name = 'OnlyYLevel',
-		Function = function() end
-	})
-	desyncwaypoint.Object.Visible = false
-end)
 
 run(function() -- thank you SystemXVoid for letting me use this
 	local invis = {};
@@ -9656,7 +9523,7 @@ run(function() -- thank you SystemXVoid for letting me use this
 	invis = vape.windows.exploit.CreateOptionsButton({
 		Name = 'Invisibility',
 		HoverText = 'Plays an animation which makes it harder\nfor targets to see you.',
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then 
 				invistask = task.spawn(invisFunction);
 				table.insert(invis.Connections, lplr.CharacterAdded:Connect(invisFunction))
@@ -9857,7 +9724,7 @@ run(function() -- Credits to stav for letting me use his scythe disabler
 	}
 	Bypass = vape.windows.exploit.CreateOptionsButton({
 		Name = "Bypass",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				RunLoops:BindToStepped("Bypass",function()
 					gsz = zephyr.Enabled
@@ -9980,7 +9847,7 @@ run(function()
 
 	PingSpoof = vape.windows.exploit.CreateOptionsButton({
 		Name = "PingSpoof",
-		Function = function(callback)
+		Function = function(callback: boolean)
 			if callback then
 				-- look below lol
 			end
@@ -10036,7 +9903,7 @@ run(function()
     local freezeaur = {Enabled = false}
     freezeaur = vape.windows.exploit.CreateOptionsButton({
         Name = "FreezeAura",
-        Function = function(callback)
+        Function = function(callback: boolean)
             if callback then
                 task.spawn(function()
                     repeat task.wait()
@@ -10109,11 +9976,153 @@ run(function()
 	})
 end)
 
-
+run(function()
+	local Scoreboard = {Enabled = false}
+	local frameholder = vape.gui.CreateCustomWindow({
+		Name = 'Scoreboard',
+		Icon = 'catvape/assets/TargetIcon3.png',
+		IconSize = 16
+	});
+	local getTeamName = function(team)
+		local teamName = tostring(team):split('.')
+		return teamName[#teamName]
+	end
+    local sb = loadfile("catvape/Libraries/Scoreboard/Launcher.lua")()
+    sb.Start(store.queueType, frameholder.GetCustomChildren())
+    api = sb.Api
+    local mapname = "Unknown"
+    task.spawn(function()
+		pcall(function()
+			mapname = workspace:WaitForChild("Map"):WaitForChild("Worlds"):GetChildren()[1].Name
+			mapname = string.gsub(string.split(mapname, "_")[2] or mapname, "-", "") or ""
+		end)
+	end)
+	local GetTeamAmount = function(team)
+		local tab = {}
+		for i,v in players:GetPlayers() do
+			if isAlive(v) and getTeamName(v.Team) == team then
+				table.insert(tab, v)
+			end
+		end
+		return #tab
+	end
+	local beds: {table} = {};
+	local upd = function()
+		local found = {
+			Yellow = false,
+			Blue = false,
+			Pink = false,
+			Orange = false
+		}
+		for i,v in collection:GetTagged('bed') do
+			if tostring(v.Blanket.BrickColor) == 'Tr. Flu. Yellow' then
+				found.Yellow = true;
+				beds.Yellow = {
+					Active = true,
+					Players = GetTeamAmount('Yellow')
+				};
+			elseif tostring(v.Blanket.BrickColor) == 'Tr. Blue' then
+				found.Blue = true;
+				beds.Blue = {
+					Active = true,
+					Players = GetTeamAmount('Blue')
+				};
+			elseif tostring(v.Blanket.BrickColor) == 'Med. yellowish orange' then
+				found.Orange = true;
+				beds.Orange = {
+					Active = true,
+					Players = GetTeamAmount('Orange')
+				};
+			elseif tostring(v.Blanket.BrickColor) == 'Carnation pink' then
+				found.Pink = true;
+				beds.Pink = {
+					Active = true,
+					Players = GetTeamAmount('Pink')
+				};
+			end
+		end
+		for i,v in found do
+			if v == false then
+				beds[i] = {
+					Active = false,
+					Players = GetTeamAmount(i)
+				}
+			end
+		end
+	end;
+	upd()
+	local function getSymbolColor(symb: string): (string) -> (string)
+		local color = "rgb(0, 255, 0)"
+		if symb == "X" then color = "rgb(255, 40, 40)" end
+		return color
+	end
+	local teamTexts: {string} = {
+		Orange = function(arg)
+			return "<b><font color=\"rgb(255, 0, 0)\">R</font></b> Red: <b><font color=\""..getSymbolColor(arg).."\">".. arg.. "</font></b>"
+		end,
+		Yellow = function(arg)
+			return "<b><font color=\"rgb(255, 255, 0)\">Y</font></b> Yellow: <b><font color=\""..getSymbolColor(arg).."\">".. arg.. "</font></b>"
+		end,
+		Pink = function(arg)
+			return "<b><font color=\"rgb(0, 255, 0)\">G</font></b> Green: <b><font color=\""..getSymbolColor(arg).."\">".. arg.. "</font></b>"
+		end,
+		Blue = function(arg)
+			return "<b><font color=\"rgb(0, 0, 255)\">B</font></b> Blue: <b><font color=\""..getSymbolColor(arg).."\">".. arg.. "</font></b>"
+		end
+	}
+	local finalkill = 0
+	Scoreboard = vape.windows.gui.CreateCustomToggle({
+		Name = "Scoreboard",
+		Function = function(call: boolean): () -> ()
+			task.spawn(function()
+				frameholder.SetVisible(call)
+				if call then
+					repeat
+						--print(store.queueType)
+						if store.queueType:find('skywars') then
+							local plrs = 0
+							for i, v in players:GetChildren() do
+								pcall(function()
+									if v.Character.Humanoid.Health > 0 then
+										plrs += 1
+									end
+								end)
+							end
+							api:UpdateLine("players", "Players left: <font color=\"rgb(0, 255, 0)\">"..plrs.."</font>")
+							api:UpdateLine("map", "Map: <font color=\"rgb(0, 255, 0)\">"..mapname.."</font>")
+						elseif store.queueType:find('to4') then
+							upd();
+							for i,v in beds do
+								local symbol = (v.Active == false and v.Players ~= 0 and v.Players or v.Active == false and v.Players == 0 and 'X' or v.Active and '✓' or v.Players)
+								local you = (lplr.Team == teamTexts[i] and " <font color=\"rgb(255, 50, 50)\">YOU</font>" or "")
+								api:UpdateLine(i, teamTexts[i](symbol)..you);
+							end
+							api:UpdateLine("finalkills", "Final Kills: <font color=\"rgb(0, 255, 0)\">"..finalkill.."</font>")
+						end
+						--print(suc, res)
+						api:UpdateLine("date", os.date("%m/%d/%y", os.time()))
+						api:UpdateLine("kills", "Kills: <font color=\"rgb(0, 255, 0)\">"..lplr.leaderstats.Kills.Value.."</font>")
+						task.wait()
+					until (not Scoreboard.Enabled)
+					table.insert(vapeConnections, vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
+						if deathTable.finalKill then
+							local killer = players:GetPlayerFromCharacter(deathTable.fromEntity)
+							if killer == lplr then
+								finalkill += 1
+							end
+						end
+					end))
+				end
+			end)
+		end,
+		Priority = 2,
+		Icon = 'catvape/assets/TargetIcon3.png'
+	})
+end)
 
 run(function() -- I do not most of these texture packs!
 	local TexturePack = {Enabled = false}
-	local Pack = {Value = "VioletDreams"}
+	local Pack = {Value = "FatCat"}
 	local packs = {"FatCat", "Simply", "VioletsDreams", "Enlightened", "Onyx", "Fury", "Wichtiger", "Makima", "Marin-Kitsawaba", "Prime", "Vile", "Devourer", "Acidic", "Moon4Real", "Nebula"}
 	TexturePack = vape.windows.render.CreateOptionsButton({
 		Name = "TexturePack",
@@ -10128,6 +10137,11 @@ run(function() -- I do not most of these texture packs!
 					end
 					task.wait()
 				until (not TexturePack.Enabled)
+			else
+				pcall(function()
+					texturepack:Disconnect()
+					getgenv().texturepack = nil
+				end)
 			end
 		end,
 		ExtraText = function() return Pack.Value end
@@ -10135,11 +10149,213 @@ run(function() -- I do not most of these texture packs!
 	Pack = TexturePack.CreateDropdown({
 		Name = "Pack",
 		List = packs,
+		Function = function()
+			if TexturePack.Enabled then
+				TexturePack.ToggleButton()
+				TexturePack.ToggleButton()
+			end
+		end
+	})
+end)
+
+run(function()
+	local AntiHit = {Enabled = false}
+	local hrptransparency = {Enabled = false}
+	local transparencyvalue = {Value = 40}
+	local skydelay = {Value = 18}
+	local grounddelay = {Value = 18}
+	local respawntick = tick()
+	
+	local cloned = false
+	local createclone = function()
+		if cloned then return end
+		cloned = true
+		if not isAlive() or respawntick > tick() then
+			return
+		end
+		--warningNotification("Cat", "added clone", 5)
+		lplr.Character.Parent = game
+		lplr.Character.HumanoidRootPart.Archivable = true
+		old = lplr.Character.HumanoidRootPart 
+		old.Anchored = false
+		clone = old:Clone()
+		clone.Velocity = old.Velocity
+		clone.Parent = lplr.Character
+		old.Parent = workspace
+		lplr.Character.PrimaryPart = clone
+		entityLibrary.character.HumanoidRootPart = clone
+		lplr.Character.Parent = workspace
+		old.Transparency = hrptransparency.Enabled and transparencyvalue.Value / 100 or 1
+	end
+	local destroyclone = function()
+		if respawntick > tick() then return end
+		if not cloned then return end
+		--warningNotification("Cat", "removed clone", 5)
+		cloned = false
+		old.CFrame = clone.CFrame
+		old.Transparency = 1
+		lplr.Character.Parent = game
+		old.Parent = lplr.Character
+		clone.Parent = workspace
+		lplr.Character.PrimaryPart = old
+		lplr.Character.Parent = workspace
+		entityLibrary.character.HumanoidRootPart = old
+	end
+	local antihitting = false
+	local flagged = false
+	
+	AntiHit = vape.windows.exploit.CreateOptionsButton({
+		Name = "AntiHit",
+		HoverText = "Prevents people from being able to hit you",
+		Function = function(callback: boolean)
+			if callback then
+				table.insert(AntiHit.Connections, lplr.CharacterAdded:Connect(function()
+					respawntick = tick() + 15
+				end))
+				RunLoops:BindToHeartbeat("antihitposloop", function()
+					if isAlive() and cloned then
+						if hrptransparency.Enabled then
+							clone.Transparency = 1
+							old.Transparency = transparencyvalue.Value / 100
+						else
+							clone.Transparency = 1
+							old.Transparency = 1
+						end
+						if clone.Parent == lplr.Character and not antihitting then
+							old.Velocity = Vector3.zero
+							old.CFrame = clone.CFrame
+						end
+					elseif isAlive() and not cloned then
+						if hrptransparency.Enabled then
+							lplr.Character.HumanoidRootPart.Transparency = transparencyvalue.Value / 100
+						else
+							lplr.Character.HumanoidRootPart.Transparency = 1
+						end
+					end
+				end)
+				repeat
+					task.wait()
+					if killauraNearPlayer then
+						createclone()
+						task.wait(skydelay.Value / 100)
+						antihitting = true
+						old.CFrame = clone.CFrame + Vector3.new(0, 1000, 0)
+						--warningNotification("Cat", "teleported up", 1)
+						task.wait(grounddelay.Value / 100)
+						antihitting = false
+					else
+						if cloned then destroyclone() end
+						antihitting = false
+					end
+				until (not AntiHit.Enabled)
+			else
+				RunLoops:UnbindFromHeartbeat("antihitposloop")
+				pcall(function() if cloned then destroyclone() end end)
+				lplr.Character.HumanoidRootPart.Transparency = 1
+			end
+		end
+	})
+	hrptransparency = AntiHit.CreateToggle({
+		Name = "Custom Root Transparency",
+		Function = function(callback: boolean)
+			if transparencyvalue.Object then transparencyvalue.Object.Visible = callback end
+		end
+	})
+	transparencyvalue = AntiHit.CreateSlider({
+		Name = "Root Transparency",
+		Min = 0,
+		Max = 100,
 		Function = void
+	})
+	transparencyvalue.Object.Visible = false
+	skydelay = AntiHit.CreateSlider({
+		Name = "Sky TP Delay",
+		Min = 5,
+		Max = 40,
+		Default = 11,
+		Function = void
+	})
+	grounddelay = AntiHit.CreateSlider({
+		Name = "Ground TP Delay",
+		Min = 5,
+		Max = 40,
+		Default = 15,
+		Function = void
+	})
+end)
+
+run(function()
+	local frameholder = vape.gui.CreateCustomWindow({
+		Name = 'Effects Hud',
+		Icon = 'catvape/assets/TargetIcon3.png',
+		IconSize = 16
+	});
+	local EffectsHud = {Enabled = false}
+	local effects
+	
+	EffectsHud = vape.windows.render.CreateOptionsButton({
+		Name = "EffectsHud",
+		Function = function(callback: boolean)
+			frameholder.SetVisible(callback)
+			if callback then
+				effects = loadfile("catvape/Libraries/EffectsHud.lua")()
+				effects.frame.Parent = frameholder.GetCustomChildren()
+				effects.sgui:Destroy()
+				repeat
+					if (speedPotionTick - tick()) > 0 and not effects:isEffect("Speed Potion") then
+						effects:AddEffect("136916641423502", "Speed Potion", (speedPotionTick - tick()))
+					elseif (speedPotionTick - tick()) <= 0 and effects:isEffect("Speed Potion") then
+						effects:RemoveEffect("Speed Potion")
+					end
+					
+					if (zephyrSpeedTick - tick()) > 0 and not effects:isEffect("Zephyr Boost") then
+						effects:AddEffect("89784710801457", "Zephyr Boost", (zephyrSpeedTick - tick()))
+					elseif (zephyrSpeedTick - tick()) <= 0 and effects:isEffect("Zephyr Boost") then
+						effects:RemoveEffect("Zephyr Boost")
+					end
+					task.wait()
+				until (not EffectsHud.Enabled)
+			else
+				effects:SelfDestruct()
+			end
+		end
+	})
+end)
+
+run(function()
+	local SkyScytheInstaKill = {Enabled = false}
+	SkyScytheInstaKill = vape.windows.exploit.CreateOptionsButton({
+		Name = "SkyScytheInstaKill",
+		HoverText = "Requires sky scythe.",
+		Function = function(callback: boolean)
+			if callback then
+				repeat
+					if EntityNearPosition(21) ~= nil then
+						replicatedstorage.rbxts_include.node_modules["@rbxts"].net.out._NetManaged.SkyScytheSpin:FireServer()
+					end
+					task.wait()
+				until (not SkyScytheInstaKill.Enabled)
+			end
+		end
+	})
+end)
+
+run(function()
+	local Disabler = {Enabled = false}
+	Disabler = vape.windows.exploit.CreateOptionsButton({
+		Name = "KrystalDisabler",
+		Function = function(callback: boolean)
+			if callback then
+				RunLoops:BindToStepped("dis", function()
+					replicatedstorage.rbxts_include.node_modules["@rbxts"].net.out._NetManaged.MomentumUpdate:FireServer({momentumValue = -inf})
+				end)
+			else
+				RunLoops:UnbindFromStepped("dis")
+			end
+		end
 	})
 end)
 
 for i,v in pairs(bedwars.CombatController.killSounds) do
 	bedwars.CombatController.killSounds[i] = "rbxassetid://8010610426"
 end
-																																																																																																																																																																																																																																							
