@@ -1,4 +1,6 @@
 getgenv().void = function() end
+getgenv().request = request or http.request
+getgenv().inf = math.huge
 local loadfile: () -> () = loadfile or function(string: string): (string) -> ()
     return loadstring(readfile(string))()
 end;
