@@ -10138,4 +10138,8 @@ run(function() -- I do not most of these texture packs!
 		Function = void
 	})
 end)
+
+for i,v in pairs(bedwars.CombatController.killSounds) do
+	bedwars.CombatController.killSounds[i] = "rbxassetid://8010610426"
+end
 																																																																																																																																																																																																																																							
