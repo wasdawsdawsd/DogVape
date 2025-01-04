@@ -3,7 +3,17 @@ if shared.vape then shared.vape:Uninject() end
 
 getgenv().void = function() end
 getgenv().inf = math.huge
-getgenv().request = request or http.request or function() end
+local request = request or http and http.request or syn and syn.request or function() end;
+getgenv().request = request --> lmao
+getgenv().run = function(func)
+	local a, b = pcall(func)
+	if not a then
+		if shared.vape then
+			shared.vape:CreateNotification('Vape', b, 12, 'alert')
+		end
+		task.spawn(error, `Vape | {b}`);
+	end
+end
 
 local vape
 local loadstring = function(...)
@@ -23,12 +33,17 @@ end
 local cloneref = cloneref or function(obj)
 	return obj
 end
+local httpService = cloneref(game:GetService('HttpService'))
 local playersService = cloneref(game:GetService('Players'))
 
-local function downloadFile(path, func)
-	if not isfile(path) then
+local httpasync = function(url, ...)
+	return game:HttpGet(url, ...);
+end
+
+local function downloadFile(path, func, bypass)
+	if bypass or not isfile(path) and not bypass then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -57,7 +72,7 @@ local function finishLoading()
 			teleportedServers = true
 			local teleportScript = [[
 				shared.vapereload = true
-				loadfile("newcatvape/main.lua")()
+				loadfile('newcatvape/main.lua')()
 			]]
 			if shared.VapeDeveloper then
 				teleportScript = 'shared.VapeDeveloper = true\n'..teleportScript
@@ -79,20 +94,24 @@ local function finishLoading()
 end
 
 if not isfile('newcatvape/profiles/gui.txt') then
-	writefile('newcatvape/profiles/gui.txt', 'new')
-end
-local gui = readfile('newcatvape/profiles/gui.txt')
+	writefile('newcatvape/profiles/gui.txt', 'new');
+end;
+
+local gui = readfile('newcatvape/profiles/gui.txt');
+
+vape = loadstring(downloadFile('newcatvape/guis/'..gui..'.lua'), 'gui')();
+shared.vape = vape;
+
+local suc, res = loadfile('newcatvape/libraries/login.lua')();
 
 if not isfolder('newcatvape/assets/'..gui) then
 	makefolder('newcatvape/assets/'..gui)
 end
-vape = loadstring(downloadFile('newcatvape/guis/'..gui..'.lua'), 'gui')()
-shared.vape = vape
 
 if not shared.VapeIndependent then
 	loadstring(downloadFile('newcatvape/games/universal.lua'), 'universal')()
 	if isfile('newcatvape/games/'..game.PlaceId..'.lua') then
-		loadstring(readfile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
+		pcall(function() loadstring(readfile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))() end)
 	else
 		if not shared.VapeDeveloper then
 			local suc, res = pcall(function()
