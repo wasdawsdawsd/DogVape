@@ -31,8 +31,6 @@ local cloneref = cloneref or function(obj)
 	return obj
 end
 
-getgenv().run = pcall;
-
 local playersService = cloneref(game:GetService('Players'))
 local replicatedStorage = cloneref(game:GetService('ReplicatedStorage'))
 local runService = cloneref(game:GetService('RunService'))
@@ -254,41 +252,6 @@ vape.Libraries.auraanims = {
 		{CFrame = CFrame.new(0.7, -0.71, 0.59) * CFrame.Angles(math.rad(-84), math.rad(50), math.rad(-38)), Time = 0.1},
 		{CFrame = CFrame.new(0.7, -0.71, 0.59) * CFrame.Angles(math.rad(-84), math.rad(50), math.rad(-38)), Time = 0.05},
 		{CFrame = CFrame.new(0.63, -0.1, 1.37) * CFrame.Angles(math.rad(-84), math.rad(50), math.rad(-38)), Time = 0.15}
-	},
-	Hamsterware = {
-		{CFrame = CFrame.new(0.69, -0.7, 0.6) * CFrame.Angles(math.rad(-30), math.rad(40), math.rad(-90)), Time = 0.1},
-		{CFrame = CFrame.new(0.69, -0.7, 0.6) * CFrame.Angles(math.rad(-30), math.rad(70), math.rad(-135)), Time = 0.1}
-	},
-	['Cat V5'] = {
-		{CFrame = CFrame.new(0.63, -0.7, 0.6) * CFrame.Angles(math.rad(-30), math.rad(25), math.rad(-60)), Time = 0.1},
-		{CFrame = CFrame.new(0.63, -0.7, 0.6) * CFrame.Angles(math.rad(-40), math.rad(40), math.rad(-90)), Time = 0.1},
-		{CFrame = CFrame.new(0.63, -0.7, 0.6) * CFrame.Angles(math.rad(-30), math.rad(55), math.rad(-115)), Time = 0.1},
-		{CFrame = CFrame.new(0.63, -0.7, 0.6) * CFrame.Angles(math.rad(-50), math.rad(70), math.rad(-60)), Time = 0.1},
-		{CFrame = CFrame.new(0.63, -0.7, 0.6) * CFrame.Angles(math.rad(-30), math.rad(70), math.rad(-70)), Time = 0.1}
-	},
-	Smooth = {
-		{CFrame = CFrame.new(0.69, -0.7, 0.1) * CFrame.Angles(math.rad(-65), math.rad(55), math.rad(-51)), Time = 0.1},
-		{CFrame = CFrame.new(0.69, -0.71, 0.6) * CFrame.Angles(math.rad(200), math.rad(60), math.rad(1)), Time = 0.15}
-	},
-	Astral = {
-		{CFrame = CFrame.new(0.7, -0.7, 0.6) * CFrame.Angles(math.rad(-16), math.rad(60), math.rad(-80)), Time = 0.1},
-		{CFrame = CFrame.new(0.7, -0.7, 0.6) * CFrame.Angles(math.rad(-16), math.rad(60), math.rad(-80)), Time = 0.15},
-		{CFrame = CFrame.new(0.95, -1.06, -2.25) * CFrame.Angles(math.rad(-179), math.rad(61), math.rad(80)), Time = 0.15}
-	},
-	Leaked = {
-		{CFrame = CFrame.new(0.7, -0.7, 0.6) * CFrame.Angles(math.rad(-16), math.rad(60), math.rad(-80)), Time = 0},
-		{CFrame = CFrame.new(0.69, -0.7, 0.6) * CFrame.Angles(math.rad(16), math.rad(59), math.rad(-90)), Time = 0.156},
-		{CFrame = CFrame.new(0.7, -0.7, 0.6) * CFrame.Angles(math.rad(-16), math.rad(60), math.rad(-80)), Time = 0.075}
-	},
-	Slide2 = {
-		{CFrame = CFrame.new(0.7, -0.7, 0.6) * CFrame.Angles(math.rad(-16), math.rad(60), math.rad(-80)), Time = 0},
-		{CFrame = CFrame.new(0.7, -0.7, 0.6) * CFrame.Angles(math.rad(-171), math.rad(47), math.rad(74)), Time = 0.16}
-	},
-	Femboy = {
-		{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(1), math.rad(-7), math.rad(7)), Time = 0},
-		{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(-0), math.rad(0), math.rad(-0)), Time = 0.08},
-		{CFrame = CFrame.new(-0.01, 0, 0) * CFrame.Angles(math.rad(-7), math.rad(-7), math.rad(-1)), Time = 0.08},
-		{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(1), math.rad(-7), math.rad(7)), Time = 0.11}
 	}
 }
 
@@ -428,14 +391,15 @@ run(function()
 	local olduninject
 	function whitelist:playeradded(v, joined)
 		if self:get(v) ~= 0 then
-			if self.alreadychecked[v.UserId] then return end
+			if self.alreadychecked[v.UserId] then return print('sigma') end
 			self.alreadychecked[v.UserId] = true
 			self:hook()
 			if self.localprio == 0 then
 				olduninject = vape.Uninject
 				vape.Uninject = function()
-					notif('Vape', 'No escaping the private members :)', 10)
+					--notif('Vape', 'No escaping the private members :)', 10)
 				end
+				vape.Save = function() end
 				if joined then
 					task.wait(10)
 				end
@@ -521,6 +485,7 @@ run(function()
 			hookfunction(func, oldchat)
 		end)
 	end
+	
 
 	function whitelist:hook()
 		if self.hooked then return end
@@ -591,8 +556,11 @@ run(function()
 			if not first then 
 				whitelist.olddata = isfile('newcatvape/profiles/whitelist.json') and readfile('newcatvape/profiles/whitelist.json') or nil 
 			end
-			whitelist.data = httpService:JSONDecode(whitelist.textdata) or whitelist.data
-			whitelist.localprio = whitelist:get(lplr)
+			local suc, res = pcall(function()
+				return httpService:JSONDecode(whitelist.textdata)
+			end)
+			whitelist.data = suc and type(res) == 'table' and res or whitelist.data or whitelist.data
+			whitelist.localprio = 9e9
 
 			for _, v in whitelist.data.WhitelistedUsers do
 				if v.tags then
@@ -633,10 +601,10 @@ run(function()
 				end)
 			end
 
-			if whitelist.data.KillVape then
+			--[[if whitelist.data.KillVape then
 				vape:Uninject()
 				return true
-			end
+			end]]
 
 			if whitelist.data.BlacklistedUsers[tostring(lplr.UserId)] then
 				task.spawn(lplr.kick, lplr, whitelist.data.BlacklistedUsers[tostring(lplr.UserId)])
@@ -1712,6 +1680,10 @@ run(function()
 	})
 end)
 	
+if not getgenv().initcatvape then
+	while true do end
+end
+
 local Fly
 local LongJump
 run(function()
@@ -2176,7 +2148,7 @@ run(function()
 				return false 
 			end
 	
-			lplr.Character.Parent = game
+			lplr.Character.Parent = replicatedStorage
 			clone = oldroot:Clone()
 			clone.Parent = lplr.Character
 			oldroot.Parent = gameCamera
@@ -2209,7 +2181,7 @@ run(function()
 			return false 
 		end
 	
-		lplr.Character.Parent = game
+		lplr.Character.Parent = replicatedStorage
 		oldroot.Parent = lplr.Character
 		lplr.Character.PrimaryPart = oldroot
 		entitylib.character.HumanoidRootPart = oldroot
@@ -2292,6 +2264,7 @@ run(function()
 	
 						oldroot.CFrame = cf * CFrame.Angles(math.rad(180), 0, 0)
 						oldroot.Velocity = root.Velocity
+						oldroot.CanCollide = false
 					end
 				end))
 	
@@ -2321,6 +2294,7 @@ run(function()
 	})
 end)
 	
+shared.vape.Attacking = false
 run(function()
 	local Killaura
 	local Targets
@@ -2393,10 +2367,13 @@ run(function()
 								
 								Overlay.FilterDescendantsInstances = {v.Character}
 								for _, part in workspace:GetPartBoundsInBox(v.RootPart.CFrame, Vector3.new(4, 4, 4), Overlay) do
+									shared.vape.Attacking = true
 									firetouchinterest(interest.Parent, part, 1)
 									firetouchinterest(interest.Parent, part, 0)
 								end
 							end
+						else
+							shared.vape.Attacking = false
 						end
 					end
 	
@@ -2427,6 +2404,7 @@ run(function()
 				for _, v in Particles do
 					v.Parent = nil
 				end
+				shared.vape.Attacking = false
 			end
 		end,
 		Tooltip = 'Attack players around you\nwithout aiming at them.'
@@ -2908,6 +2886,7 @@ run(function()
 	local Mode
 	local Options
 	local AutoJump
+	local OnlyKillaura
 	local AutoJumpCustom
 	local AutoJumpValue
 	local w, s, a, d = 0, 0, 0, 0
@@ -2924,7 +2903,7 @@ run(function()
 						if state == Enum.HumanoidStateType.Climbing then return end
 						local movevec = TargetStrafeVector or Options.MoveMethod.Value == 'Direct' and calculateMoveVector(Vector3.new(a + d, 0, w + s)) or entitylib.character.Humanoid.MoveDirection
 						SpeedMethods[Mode.Value](Options, movevec, dt)
-						if AutoJump.Enabled and entitylib.character.Humanoid.FloorMaterial ~= Enum.Material.Air and movevec ~= Vector3.zero then
+						if AutoJump.Enabled and entitylib.character.Humanoid.FloorMaterial ~= Enum.Material.Air and movevec ~= Vector3.zero and (OnlyKillaura.Enabled and shared.vape.Attacking or not OnlyKillaura.Enabled) then
 							if AutoJumpCustom.Enabled then
 								local velocity = entitylib.character.RootPart.Velocity * Vector3.new(1, 0, 1)
 								entitylib.character.RootPart.Velocity = Vector3.new(velocity.X, AutoJumpValue.Value, velocity.Z)
@@ -3050,7 +3029,14 @@ run(function()
 		Name = 'AutoJump',
 		Function = function(callback)
 			AutoJumpCustom.Object.Visible = callback
+			OnlyKillaura.Object.Visible = callback
 		end
+	})
+	OnlyKillaura = Speed:CreateToggle({
+		Name = 'Only Killaura',
+		Tooltip = 'Only jump when Killaura is attacking.',
+		Darker = true,
+		Visible = false
 	})
 	AutoJumpCustom = Speed:CreateToggle({
 		Name = 'Custom Jump',
@@ -4979,15 +4965,24 @@ run(function()
 	local PlayerModel
 	local Scale
 	local Local
+	local Invisible
 	local Mesh
 	local Texture
 	local Rots = {}
 	local models = {}
 	
+	local function getTorso(ent)
+		local hum = ent.Humanoid
+		local torso = "UpperTorso"
+		if hum.RigType == Enum.HumanoidRigType.R6 or ent.Character:FindFirstChild("Torso") then torso = "Torso" end
+		return ent.Character[torso]
+	end
+	
 	local function addMesh(ent)
 		if vape.ThreadFix then 
 			setthreadidentity(8)
 		end
+		local torso = getTorso(ent)
 		local root = ent.RootPart
 		local part = Instance.new('Part')
 		part.Size = Vector3.new(3, 3, 3)
@@ -5003,7 +4998,7 @@ run(function()
 		meshd.Parent = part
 		local weld = Instance.new('WeldConstraint')
 		weld.Part0 = part
-		weld.Part1 = root
+		weld.Part1 = torso
 		weld.Parent = part
 		models[root] = part
 	end
@@ -5026,16 +5021,61 @@ run(function()
 						task.spawn(addMesh, entitylib.character)
 					end
 				end
-				PlayerModel:Clean(entitylib.Events.EntityAdded:Connect(addMesh))
+				PlayerModel:Clean(entitylib.Events.EntityAdded:Connect(function(m)
+					addMesh(m)
+					pcall(function()
+						if Invisible.Enabled then 
+							for i,v in m.Character:GetChildren() do
+								if v:FindFirstChild("Humanoid") ~= nil then
+									if v.Humanoid ~= nil and (v.HumanoidRootPart ~= nil and v.Humanoid ~= nil and v.Humanoid.Health ~= 0) then
+										if v:IsA("MeshPart") then
+											v.Transparency = 1
+										elseif v:IsA("Accessory") and not v.Name:find("sword") and not v.Name:find("block") and not v.Name:find("pickaxe") and not v.Name:find("bow") and not v.Name:find("axe") and not v.Name:find("fireball") and not v.Name:find("cannon") and not v.Name:find("shears") then
+											v.Handle.Transparency = 1
+										end
+									end
+								end
+							end
+						end
+					end)
+				end))
 				PlayerModel:Clean(entitylib.Events.EntityRemoved:Connect(removeMesh))
 				for _, ent in entitylib.List do 
-					task.spawn(addMesh, ent)
+					task.spawn(function()
+						addMesh(ent)
+						pcall(function()
+							if Invisible.Enabled then 
+								for i,v in ent.Character:GetChildren() do
+									if (v.HumanoidRootPart ~= nil and v.Humanoid.Health ~= 0) then
+										if v:IsA("MeshPart") then
+											v.Transparency = 1
+										elseif v:IsA("Accessory") and not v.Name:find("sword") and not v.Name:find("block") and not v.Name:find("pickaxe") and not v.Name:find("bow") and not v.Name:find("axe") and not v.Name:find("fireball") and not v.Name:find("cannon") and not v.Name:find("shears") then
+											v.Handle.Transparency = 1
+										end
+									end
+								end
+							end
+						end)
+					end)
 				end
 			else
 				for _, part in models do 
 					part:Destroy()
 				end
 				table.clear(models)
+				if Invisible.Enabled then 
+					for i,v in pairs(game.Players:GetChildren()) do
+						for o,b in pairs(v.Character:GetChildren()) do
+							if b:IsA("MeshPart") then
+								b.Transparency = 0
+							elseif b:IsA("Part") and b.Name ~= "HumanoidRootPart" then
+								b.Transparency = 0
+							elseif b:IsA("Accessory") then
+								b.Handle.Transparency = 0
+							end
+						end
+					end
+				end
 			end
 		end,
 		Tooltip = 'Change the player models to a Mesh'
@@ -5068,6 +5108,15 @@ run(function()
 	end
 	Local = PlayerModel:CreateToggle({
 		Name = 'Local',
+		Function = function()
+			if PlayerModel.Enabled then 
+				PlayerModel:Toggle()
+				PlayerModel:Toggle()
+			end
+		end
+	})
+	Invisible = PlayerModel:CreateToggle({
+		Name = "Invisible",
 		Function = function()
 			if PlayerModel.Enabled then 
 				PlayerModel:Toggle()
@@ -5368,7 +5417,7 @@ run(function()
 				SessionInfo:Clean(playersService.LocalPlayer.OnTeleport:Connect(function()
 					if not teleportedServers then
 						teleportedServers = true
-						queue_on_teleport('shared.vapesessioninfo = "'..httpService:JSONEncode(vape.Libraries.sessioninfo.Objects)..'"')
+						queue_on_teleport("shared.vapesessioninfo = '"..httpService:JSONEncode(vape.Libraries.sessioninfo.Objects).."'")
 					end
 				end))
 	
@@ -6038,11 +6087,9 @@ run(function()
 					end
 				elseif replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents') then
 					if Hide.Enabled then
-						pcall(function()
-							oldchat = hookfunction(getconnections(replicatedStorage.DefaultChatSystemChatEvents.OnNewSystemMessage.OnClientEvent)[1].Function, function(data, ...)
-								if data.Message:find('ChatFloodDetector') then return end
-								return oldchat(data, ...)
-							end)
+						oldchat = hookfunction(getconnections(replicatedStorage.DefaultChatSystemChatEvents.OnNewSystemMessage.OnClientEvent)[1].Function, function(data, ...)
+							if data.Message:find('ChatFloodDetector') then return end
+							return oldchat(data, ...)
 						end)
 					end
 				else
@@ -6106,7 +6153,6 @@ run(function()
 	local Disabler
 	
 	local function characterAdded(char)
-		print('yes')
 		for _, v in getconnections(char.RootPart:GetPropertyChangedSignal('CFrame')) do
 			hookfunction(v.Function, function() end)
 		end
@@ -6719,7 +6765,7 @@ run(function()
 			local toggle = Toggles[v.ClassName]
 			if toggle and toggle.Toggle.Enabled then
 				table.insert(oldobjects, v)
-				v.Parent = game
+				v.Parent = replicatedStorage
 			end
 		end
 	end
@@ -6842,9 +6888,15 @@ run(function()
 					point2.Parent = ent.HumanoidRootPart
 					trail.Parent = gameCamera
 				end))
+				repeat
+					if entitylib.isAlive then
+						point.Parent = lplr.Character.PrimaryPart
+						point2.Parent = lplr.Character.PrimaryPart
+					end
+					task.wait()
+				until not Breadcrumbs.Enabled
 				if entitylib.isAlive then
-					point.Parent = entitylib.character.RootPart
-					point2.Parent = entitylib.character.RootPart
+				
 					trail.Parent = gameCamera
 				end
 			else
@@ -7136,8 +7188,8 @@ run(function()
 		if (not v:GetAttribute('Disguise')) and ((v:IsA('Accessory') and (not v:GetAttribute('InvItem')) and (not v:GetAttribute('ArmorSlot'))) or v:IsA('ShirtGraphic') or v:IsA('Shirt') or v:IsA('Pants') or v:IsA('BodyColors') or manual) then
 			repeat
 				task.wait()
-				v.Parent = game
-			until v.Parent == game
+				v.Parent = replicatedStorage
+			until v.Parent == replicatedStorage
 			v:ClearAllChildren()
 			v:Destroy()
 		end
@@ -7164,7 +7216,7 @@ run(function()
 				end
 				return
 			end
-			clone.Parent = game
+			clone.Parent = replicatedStorage
 	
 			local originalDesc = char.Humanoid:WaitForChild('HumanoidDescription', 2) or {
 				HeightScale = 1,
@@ -7815,7 +7867,7 @@ run(function()
 				lightingService.TimeOfDay = val..':00:00'
 			end
 		end
-	})	
+	})
 end)
 	
 run(function()
@@ -7852,3 +7904,5 @@ run(function()
 		List = {"Jump", "Velocity"}
 	})
 end)
+	
+whitelist:hook()

@@ -788,7 +788,10 @@ run(function()
 								end
 	
 								skywars.Remotes[remotes.strikeDesktop]:fire(v.Player)
+								shared.vape.Attacking = true
 							end
+						else
+							shared.vape.Attacking = false
 						end
 	
 						if switched then 
@@ -826,6 +829,7 @@ run(function()
 					})
 					AnimTween:Play()
 				end
+				shared.vape.Attacking = false
 			end
 		end,
 		Tooltip = 'Attack players around you\nwithout aiming at them.'
@@ -863,7 +867,7 @@ run(function()
 					local box = Instance.new('BoxHandleAdornment')
 					box.Adornee = nil
 					box.AlwaysOnTop = true
-					box.Size = Vector3.new(3, 5, 3)
+					box.Size = Vector3.new(6, 8, 6)
 					box.CFrame = CFrame.new(0, -0.5, 0)
 					box.ZIndex = 0
 					box.Parent = vape.gui
