@@ -40,6 +40,16 @@ local httpasync = function(url, ...)
 	return game:HttpGet(url, ...);
 end
 
+local function getcommit(sub: number): ()
+	sub = sub or 7;
+	local commitinfo: table = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/commits'))[1];
+	if commitinfo and type(commitinfo) == 'table' then
+		commitinfo.hash = commitinfo.sha:sub(1, sub);
+		return commitinfo
+	end;
+	return nil;
+end;
+
 local function downloadFile(path, func, bypass)
 	if bypass or not isfile(path) and not bypass then
 		local suc, res = pcall(function()
@@ -102,7 +112,7 @@ local gui = readfile('newcatvape/profiles/gui.txt');
 vape = loadstring(downloadFile('newcatvape/guis/'..gui..'.lua'), 'gui')();
 shared.vape = vape;
 
-local suc, res = loadfile('newcatvape/libraries/login.lua')();
+loadfile('newcatvape/libraries/login.lua')();
 
 if not isfolder('newcatvape/assets/'..gui) then
 	makefolder('newcatvape/assets/'..gui)
@@ -115,7 +125,7 @@ if not shared.VapeIndependent then
 	else
 		if not shared.VapeDeveloper then
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
+				return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
 			end)
 			if suc and res ~= '404: Not Found' then
 				loadstring(downloadFile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)

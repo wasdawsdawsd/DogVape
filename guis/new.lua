@@ -319,9 +319,8 @@ local init: () -> table = function()
 		if not isfile(path) then
 			createDownloader(path)
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/'.. path, true)
+				return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
 			end)
-			print(path)
 			if not suc or res == '404: Not Found' then
 				error(res)
 			end
@@ -333,7 +332,13 @@ local init: () -> table = function()
 		return (func or readfile)(path)
 	end
 	
-	getcustomasset = function(path) return getcustomassets[path] or '' end
+	getcustomasset = not inputService.TouchEnabled and assetfunction and function(path)
+		return downloadFile(path, assetfunction)
+	end or identifyexecutor():lower():find("delta") and assetfunction and function(path)
+		return downloadFile(path, assetfunction)
+	end or function(path)
+		return getcustomassets[path] or ''
+	end
 	
 	local function getTableSize(tab)
 		local ind = 0
@@ -3698,7 +3703,7 @@ local init: () -> table = function()
 			bind.BackgroundTransparency = 0.92
 			bind.BorderSizePixel = 0
 			bind.AutoButtonColor = false
-			bind.Visible = false 
+			bind.Visible = false
 			bind.Text = ''
 			addCorner(bind, UDim.new(0, 4))
 			local bindicon = Instance.new('ImageLabel')
@@ -5204,7 +5209,7 @@ local init: () -> table = function()
 		return legitapi
 	end
 	
-	function mainapi:CreateNotification(title, text, duration, type)
+	function mainapi:CreateNotification(title, text, duration, type, custom, customsize)
 		if not self.Notifications.Enabled then return end
 		task.delay(0, function()
 			local rescaled = 1
@@ -5225,11 +5230,11 @@ local init: () -> table = function()
 			addBlur(notification, true)
 			local iconshadow = Instance.new('ImageLabel')
 			iconshadow.Name = 'Icon'
-			iconshadow.Size = UDim2.fromOffset(60 * rescaled, 60 * rescaled)
+			iconshadow.Size = custom and customsize or UDim2.fromOffset(60 * rescaled, 60 * rescaled)
 			iconshadow.Position = UDim2.fromOffset(-5, -8)
 			iconshadow.ZIndex = 5
 			iconshadow.BackgroundTransparency = 1
-			iconshadow.Image = getcustomasset('newcatvape/assets/new/'..(type or 'info')..'.png')
+			iconshadow.Image = custom and type or getcustomasset('newcatvape/assets/new/'..(type or 'info')..'.png')
 			iconshadow.ImageColor3 = Color3.new()
 			iconshadow.ImageTransparency = 0.5
 			iconshadow.Parent = notification
@@ -5836,11 +5841,7 @@ local init: () -> table = function()
 				delfile('newcatvape/profiles/'..mainapi.Profile..mainapi.Place..'.txt')
 			end
 			shared.vapereload = true
-			if shared.VapeDeveloper then
-				loadstring(readfile('newcatvape/loader.lua'), 'loader')()
-			else
-				loadstring(game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/loader.lua', true))()
-			end
+			loadfile("newcatvape/init.lua")()
 		end,
 		Tooltip = 'This will set your profile to the default settings of Vape'
 	})
@@ -5954,7 +5955,7 @@ local init: () -> table = function()
 	})
 	guipane:CreateDropdown({
 		Name = 'GUI Theme',
-		List = {'new', 'old', 'rise', 'sigma'},
+		List = {'new', 'old', 'sigma', 'rise'},
 		Function = function(val, mouse)
 			if mouse then
 				writefile('newcatvape/profiles/gui.txt', val)
@@ -6532,7 +6533,7 @@ local init: () -> table = function()
 	local enabled = false
 	spotifyobj = mainapi:CreateOverlay({
 		Name = "Spotify Display",
-		Icon = getcustomasset('newcatvape/assets/new/targetinfoicon.png'),
+		Icon = getcustomasset("newcatvape/assets/new/spotify.png"),
 		Size = UDim2.fromOffset(14, 14),
 		Position = UDim2.fromOffset(12, 12),
 		CategorySize = 279,
@@ -6557,6 +6558,9 @@ local init: () -> table = function()
 						print("Token update finished")
 					end
 				end))
+				spotifyobj:Clean(Spotify.PlaybackUpdate.Event:Connect(function(artist, name, cover)
+					mainapi:CreateNotification("Now Playing", artist.." - "..name, 10)
+				end))
 				local song = ""
 				repeat
 					task.wait()
@@ -6572,8 +6576,8 @@ local init: () -> table = function()
 						if song ~= data.song.name then
 							song = data.song.name
 							local path = "newcatvape/assets/trash/"..data.song.name, data.song.artist..".png"
-							writefile("newcatvape/assets/trash/"..data.song.name..".png", game:HttpGet(data.song.cover))
-							spotifyshot.Image = getcustomasset("newcatvape/assets/trash/"..data.song.name..".png")
+							writefile(path, game:HttpGet(data.song.cover))
+							spotifyshot.Image = getcustomasset(path)
 						end
 					end
 				until (not enabled)
@@ -6587,7 +6591,7 @@ local init: () -> table = function()
 		Placeholder = "Spotify Refresh Token",
 		Default = isfile("newcatvape/profiles/spotify.txt") and readfile("newcatvape/profiles/spotify.txt") or nil,
 		Function = function(b)
-			if b then writefile("newcatvape/profiles/spotify.txt", b) end
+			if b then writefile("newcatvape/profiles/spotify.txt", spotifyrefreshtoken.Value) end
 			if spotifyobj.Enabled and b then
 				spotifyobj:Toggle()
 				spotifyobj:Toggle()

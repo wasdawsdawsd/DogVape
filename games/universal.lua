@@ -391,13 +391,13 @@ run(function()
 	local olduninject
 	function whitelist:playeradded(v, joined)
 		if self:get(v) ~= 0 then
-			if self.alreadychecked[v.UserId] then return print('sigma') end
+			if self.alreadychecked[v.UserId] then return end
 			self.alreadychecked[v.UserId] = true
 			self:hook()
 			if self.localprio == 0 then
 				olduninject = vape.Uninject
 				vape.Uninject = function()
-					--notif('Vape', 'No escaping the private members :)', 10)
+					notif('Vape', 'No escaping the private members :)', 10)
 				end
 				vape.Save = function() end
 				if joined then
@@ -485,7 +485,6 @@ run(function()
 			hookfunction(func, oldchat)
 		end)
 	end
-	
 
 	function whitelist:hook()
 		if self.hooked then return end
@@ -560,7 +559,7 @@ run(function()
 				return httpService:JSONDecode(whitelist.textdata)
 			end)
 			whitelist.data = suc and type(res) == 'table' and res or whitelist.data or whitelist.data
-			whitelist.localprio = 9e9
+			whitelist.localprio = whitelist:get(lplr)
 
 			for _, v in whitelist.data.WhitelistedUsers do
 				if v.tags then
@@ -601,10 +600,10 @@ run(function()
 				end)
 			end
 
-			--[[if whitelist.data.KillVape then
+			if whitelist.data.KillVape then
 				vape:Uninject()
 				return true
-			end]]
+			end
 
 			if whitelist.data.BlacklistedUsers[tostring(lplr.UserId)] then
 				task.spawn(lplr.kick, lplr, whitelist.data.BlacklistedUsers[tostring(lplr.UserId)])
@@ -1680,10 +1679,6 @@ run(function()
 	})
 end)
 	
-if not getgenv().initcatvape then
-	while true do end
-end
-
 local Fly
 local LongJump
 run(function()
@@ -7905,4 +7900,3 @@ run(function()
 	})
 end)
 	
-whitelist:hook()

@@ -3725,7 +3725,7 @@ scaleslider = topbar:CreateSlider({
 })
 topbar:CreateDropdown({
 	Name = 'GUI Theme',
-	List = inputService.TouchEnabled and {'new', 'old'} or {'new', 'old', 'rise'},
+	List = {'new', 'old', 'sigma', 'rise'},
 	Function = function(val, mouse)
 		if mouse then
 			writefile('newcatvape/profiles/gui.txt', val)

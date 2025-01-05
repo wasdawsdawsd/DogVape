@@ -1,4 +1,3 @@
---This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.
 local entitylib = {
 	isAlive = false,
 	character = {},
@@ -135,7 +134,7 @@ entitylib.EntityMouse = function(entitysettings)
 				})
 			end
 		end
-		
+
 		table.sort(sortingTable, entitysettings.Sort or function(a, b)
 			return a.Magnitude < b.Magnitude
 		end)
@@ -195,9 +194,7 @@ entitylib.AllPosition = function(entitysettings)
 			if not entitysettings.Players and v.Player then continue end
 			if not entitysettings.NPCs and v.NPC then continue end
 			if not v.Targetable then continue end
-			local ylevel = localPosition.Y - v[entitysettings.Part].Position.Y
-			local positionlol = shared.vape and shared.vape.Place == 6872274481 and v[entitysettings.Part].Position.Y >= 150 and Vector3.new(v[entitysettings.Part].Position.X, localPosition.Y, v[entitysettings.Part].Position.Z) or v[entitysettings.Part].Position
-			local mag = (positionlol - localPosition).Magnitude
+			local mag = (v[entitysettings.Part].Position - localPosition).Magnitude
 			if mag > entitysettings.Range then continue end
 			if entitylib.isVulnerable(v) then
 				table.insert(sortingTable, {Entity = v, Magnitude = v.Target and -1 or mag})
@@ -212,7 +209,6 @@ entitylib.AllPosition = function(entitysettings)
 			if entitysettings.Wallcheck then
 				if entitylib.Wallcheck(localPosition, v.Entity[entitysettings.Part].Position, entitysettings.Wallcheck) then continue end
 			end
-			 
 			table.insert(returned, v.Entity)
 			if #returned >= (entitysettings.Limit or math.huge) then break end
 		end
@@ -313,7 +309,7 @@ entitylib.removeEntity = function(char, localcheck)
 			task.cancel(entitylib.EntityThreads[char])
 			entitylib.EntityThreads[char] = nil
 		end
-		
+
 		local entity, ind = entitylib.getEntity(char)
 		if ind then
 			for _, v in entity.Connections do

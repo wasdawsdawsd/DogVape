@@ -54,7 +54,6 @@ local store = {
 	attackReach = 0,
 	attackReachUpdate = tick(),
 	damage = {},
-	blocks = {},
 	damageBlockFail = tick(),
 	hand = {},
 	inventory = {
@@ -258,10 +257,10 @@ local function getSpeed()
 
 	if badexecutor then
 		for i, v in lplr.PlayerGui.StatusEffectHudScreen.StatusEffectHud:GetChildren() do
-			if v.ClassName ~= 'UIListLayout' and table.find({'Speed Boost', 'WindWalkerEffect'}, v.Name) then
+			if v.ClassName ~= 'UIListLayout' and table.find({'Speed Boost'}, v.Name) then
 				if v.Name == 'WindWalkerEffect' then
-					if tonumber(v.EffectStack.ContentText) >= 1 then
-						multi += 1.25
+					if tonumber(v.EffectStack.Text) >= 1 then
+						multi += 1.3
 					end
 				else
 					multi += 0.16
@@ -325,19 +324,12 @@ local function roundPos(vec)
 	return Vector3.new(math.round(vec.X / 3) * 3, math.round(vec.Y / 3) * 3, math.round(vec.Z / 3) * 3)
 end
 
-local switchremote = replicatedStorage.rbxts_include.node_modules['@rbxts'].net.out._NetManaged.SetInvItem
-pcall(function()
-	switchremote = bedwars.Client:Get(remotes.EquipItem)
-end)
 local function switchItem(tool, delayTime)
 	delayTime = delayTime or 0.05
 	local check = lplr.Character and lplr.Character:FindFirstChild('HandInvItem') or nil
 	if check and check.Value ~= tool and tool.Parent ~= nil then
-		pcall(function()
-			switchremote:InvokeServer({hand = tool})
-		end)
 		task.spawn(function()
-			switchremote:CallServerAsync({hand = tool})
+			bedwars.Client:Get(badexecutor and 'SetInvItem' or remotes.EquipItem):CallServerAsync({hand = tool})
 		end)
 		check.Value = tool
 		if delayTime > 0 then
@@ -640,7 +632,7 @@ run(function()
 	end
 	badexecutor = not KnitInit
 
-	if not badexecutor and not debug.getupvalue(Knit.Start, 1) then
+	if not debug.getupvalue(Knit.Start, 1) then
 		repeat task.wait() until debug.getupvalue(Knit.Start, 1)
 	end
 
@@ -714,37 +706,71 @@ run(function()
 		end
 	})
 
-	local remoteNames = {
-		AckKnockback = debug.getconstants(debug.getproto(debug.getproto(Knit.Controllers.KnockbackController.KnitStart, 1), 1)),
-		AfkStatus = debug.getconstants(debug.getproto(Knit.Controllers.AfkController.KnitStart, 1)),
-		AttackEntity = debug.getconstants(Knit.Controllers.SwordController.sendServerRequest),
-		ConsumeBattery = debug.getconstants(debug.getproto(debug.getproto(Knit.Controllers.BatteryController.KnitStart, 1), 1)),
-		CannonAim = debug.getconstants(debug.getproto(Knit.Controllers.CannonController.startAiming, 5)),
-		CannonLaunch = debug.getconstants(Knit.Controllers.CannonHandController.launchSelf),
-		ConsumeItem = debug.getconstants(debug.getproto(Knit.Controllers.ConsumeController.onEnable, 1)),
-		ConsumeSoul = debug.getconstants(Knit.Controllers.GrimReaperController.consumeSoul),
-		ConsumeTreeOrb = debug.getconstants(debug.getproto(debug.getproto(Knit.Controllers.BigmanController.KnitStart, 1), 2)),
-		DepositPinata = debug.getconstants(debug.getproto(debug.getproto(Knit.Controllers.PiggyBankController.KnitStart, 2), 5)),
-		DragonBreath = debug.getconstants(debug.getproto(Knit.Controllers.VoidDragonController.KnitStart, 4)),
-		DragonEndFly = debug.getconstants(debug.getproto(Knit.Controllers.VoidDragonController.flapWings, 1)),
-		DragonFly = debug.getconstants(Knit.Controllers.VoidDragonController.flapWings),
-		DropItem = debug.getconstants(Knit.Controllers.ItemDropController.dropItemInHand),
-		EquipItem = debug.getconstants(debug.getproto(require(replicatedStorage.TS.entity.entities['inventory-entity']).InventoryEntity.equipItem, 3)),
-		FireProjectile = debug.getconstants(debug.getupvalue(Knit.Controllers.ProjectileController.launchProjectileWithValues, 2)),
-		GroundHit = debug.getconstants(Knit.Controllers.FallDamageController.KnitStart),
-		GuitarHeal = debug.getconstants(Knit.Controllers.GuitarController.performHeal),
-		HannahKill = debug.getconstants(debug.getproto(debug.getproto(Knit.Controllers.HannahController.KnitStart, 2), 1)),
-		HarvestCrop = debug.getconstants(Knit.Controllers.CropController.KnitStart),
-		MageSelect = debug.getconstants(debug.getproto(Knit.Controllers.MageController.registerTomeInteraction, 1)),
-		MinerDig = debug.getconstants(debug.getproto(Knit.Controllers.MinerController.setupMinerPrompts, 1)),
-		PickupItem = debug.getconstants(Knit.Controllers.ItemDropController.checkForPickup),
-		PickupMetal = debug.getconstants(debug.getproto(debug.getproto(Knit.Controllers.MetalDetectorController.KnitStart, 1), 2)),
-		ReportPlayer = debug.getconstants(require(lplr.PlayerScripts.TS.controllers.global.report['report-controller']).default.reportPlayer),
-		ResetCharacter = debug.getconstants(debug.getproto(Knit.Controllers.ResetController.createBindable, 1)),
-		SpawnRaven = debug.getconstants(Knit.Controllers.RavenController.spawnRaven),
-		SummonerClawAttack = debug.getconstants(Knit.Controllers.SummonerClawController.attack)
-	}
 
+	local remoteNames = {
+		SummonerClawAttack = debug.getconstants(Knit.Controllers.SummonerClawController.attack),
+		AckKnockback = debug.getproto(debug.getproto(Knit.Controllers.KnockbackController.KnitStart, 1), 1),
+		AfkStatus = debug.getproto(Knit.Controllers.AfkController.KnitStart, 1),
+		AttackEntity = Knit.Controllers.SwordController.sendServerRequest,
+		ConsumeBattery = debug.getproto(debug.getproto(Knit.Controllers.BatteryController.KnitStart, 1), 1),
+		CannonAim = debug.getproto(Knit.Controllers.CannonController.startAiming, 5),
+		CannonLaunch = Knit.Controllers.CannonHandController.launchSelf,
+		ConsumeItem = debug.getproto(Knit.Controllers.ConsumeController.onEnable, 1),
+		ConsumeSoul = Knit.Controllers.GrimReaperController.consumeSoul,
+		ConsumeTreeOrb = debug.getproto(Knit.Controllers.EldertreeController.createTreeOrbInteraction, 1),
+		DepositPinata = debug.getproto(debug.getproto(Knit.Controllers.PiggyBankController.KnitStart, 2), 5),
+		DragonBreath = debug.getproto(Knit.Controllers.VoidDragonController.KnitStart, 4),
+		DragonEndFly = debug.getproto(Knit.Controllers.VoidDragonController.flapWings, 1),
+		DragonFly = Knit.Controllers.VoidDragonController.flapWings,
+		DropItem = Knit.Controllers.ItemDropController.dropItemInHand,
+		EquipItem = debug.getproto(require(replicatedStorage.TS.entity.entities['inventory-entity']).InventoryEntity.equipItem, 3),
+		FireProjectile = debug.getupvalue(Knit.Controllers.ProjectileController.launchProjectileWithValues, 2),
+		GroundHit = Knit.Controllers.FallDamageController.KnitStart,
+		GuitarHeal = Knit.Controllers.GuitarController.performHeal,
+		HannahKill = debug.getproto(debug.getproto(Knit.Controllers.HannahController.KnitStart, 2), 1),
+		HarvestCrop = Knit.Controllers.CropController.KnitStart,
+		MageSelect = debug.getproto(Knit.Controllers.MageController.registerTomeInteraction, 1),
+		MinerDig = debug.getproto(Knit.Controllers.MinerController.setupMinerPrompts, 1),
+		PickupItem = Knit.Controllers.ItemDropController.checkForPickup,
+		PickupMetal = debug.getproto(debug.getproto(Knit.Controllers.MetalDetectorController.KnitStart, 1), 2),
+		ReportPlayer = require(lplr.PlayerScripts.TS.controllers.global.report['report-controller']).default.reportPlayer,
+		ResetCharacter = debug.getproto(Knit.Controllers.ResetController.createBindable, 1),
+		SpawnRaven = Knit.Controllers.RavenController.spawnRaven,
+		SummonerClawAttack = Knit.Controllers.SummonerClawController.attack
+	}
+	pcall(function()
+		remoteNames = {
+			SummonerClawAttack = debug.getconstants(Knit.Controllers.SummonerClawController.attack),
+			AckKnockback = debug.getproto(debug.getproto(Knit.Controllers.KnockbackController.KnitStart, 1), 1),
+			AfkStatus = debug.getproto(Knit.Controllers.AfkController.KnitStart, 1),
+			AttackEntity = Knit.Controllers.SwordController.sendServerRequest,
+			ConsumeBattery = debug.getproto(debug.getproto(Knit.Controllers.BatteryController.KnitStart, 1), 1),
+			CannonAim = debug.getproto(Knit.Controllers.CannonController.startAiming, 5),
+			CannonLaunch = Knit.Controllers.CannonHandController.launchSelf,
+			ConsumeItem = debug.getproto(Knit.Controllers.ConsumeController.onEnable, 1),
+			ConsumeSoul = Knit.Controllers.GrimReaperController.consumeSoul,
+			ConsumeTreeOrb = debug.getproto(Knit.Controllers.EldertreeController.createTreeOrbInteraction, 1),
+			DepositPinata = debug.getproto(debug.getproto(Knit.Controllers.PiggyBankController.KnitStart, 2), 5),
+			DragonBreath = debug.getproto(Knit.Controllers.VoidDragonController.KnitStart, 4),
+			DragonEndFly = debug.getproto(Knit.Controllers.VoidDragonController.flapWings, 1),
+			DragonFly = Knit.Controllers.VoidDragonController.flapWings,
+			DropItem = Knit.Controllers.ItemDropController.dropItemInHand,
+			EquipItem = debug.getproto(require(replicatedStorage.TS.entity.entities['inventory-entity']).InventoryEntity.equipItem, 3),
+			FireProjectile = debug.getupvalue(Knit.Controllers.ProjectileController.launchProjectileWithValues, 2),
+			GroundHit = Knit.Controllers.FallDamageController.KnitStart,
+			GuitarHeal = Knit.Controllers.GuitarController.performHeal,
+			HannahKill = debug.getproto(debug.getproto(Knit.Controllers.HannahController.KnitStart, 2), 1),
+			HarvestCrop = Knit.Controllers.CropController.KnitStart,
+			MageSelect = debug.getproto(Knit.Controllers.MageController.registerTomeInteraction, 1),
+			MinerDig = debug.getproto(Knit.Controllers.MinerController.setupMinerPrompts, 1),
+			PickupItem = Knit.Controllers.ItemDropController.checkForPickup,
+			PickupMetal = debug.getproto(debug.getproto(Knit.Controllers.MetalDetectorController.KnitStart, 1), 2),
+			ReportPlayer = require(lplr.PlayerScripts.TS.controllers.global.report['report-controller']).default.reportPlayer,
+			ResetCharacter = debug.getproto(Knit.Controllers.ResetController.createBindable, 1),
+			SpawnRaven = Knit.Controllers.RavenController.spawnRaven,
+			SummonerClawAttack = Knit.Controllers.SummonerClawController.attack
+		}
+	end)
 	local function dumpRemote(tab)
 		local ind
 		for i, v in tab do
@@ -757,7 +783,7 @@ run(function()
 	end
 
 	for i, v in remoteNames do
-		local remote = dumpRemote(v)
+		local remote = dumpRemote(debug.getconstants(v))
 		if remote == '' then
 			notif('Vape', 'Failed to grab remote ('..i..')', 10, 'alert')
 		end
@@ -816,7 +842,6 @@ run(function()
 		return call
 	end
 
-	local cache, blockhealthbar = {}, {blockHealth = -1, breakingBlockPosition = Vector3.zero}
 	pcall(function()
 		bedwars.BlockController.isBlockBreakable = function(self, breakTable, plr)
 			local obj = bedwars.BlockController:getStore():getBlockAt(breakTable.blockPosition)
@@ -832,6 +857,7 @@ run(function()
 			return OldBreak(self, breakTable, plr)
 		end
 	
+		local cache, blockhealthbar = {}, {blockHealth = -1, breakingBlockPosition = Vector3.zero}
 		store.blockPlacer = bedwars.BlockPlacer.new(bedwars.BlockEngine, 'wool_white')
 	
 		local function getBlockHealth(block, blockpos)
@@ -1793,8 +1819,8 @@ run(function()
 				end))
 				Fly:Clean(runService.PreSimulation:Connect(function(dt)
 					if entitylib.isAlive and not InfiniteFly.Enabled and isnetworkowner(entitylib.character.RootPart) then
-						local flyAllowed = (lplr.Character:GetAttribute('InflatedBalloons') and lplr.Character:GetAttribute('InflatedBalloons') > 0) or store.matchState == 2 or getSpeed() >= 30
-						local mass = (1.95 + (flyAllowed and 8 or 0) * (tick() % 0.4 < 0.2 and -1 or 1)) + ((up + down) * VerticalValue.Value)
+						local flyAllowed = (lplr.Character:GetAttribute('InflatedBalloons') and lplr.Character:GetAttribute('InflatedBalloons') > 0) or store.matchState == 2
+						local mass = (1.95 + (flyAllowed and 6 or 0) * (tick() % 0.4 < 0.2 and -1 or 1)) + ((up + down) * VerticalValue.Value)
 						local root, moveDirection = entitylib.character.RootPart, entitylib.character.Humanoid.MoveDirection
 						local velo = getSpeed() + (boostTick > tick() and boostAmount or 0)
 						local destination = (moveDirection * math.max(Value.Value - velo, 0) * dt)
@@ -2412,7 +2438,7 @@ run(function()
 								store.attackReachUpdate = tick() + 1
 								AttackRemote:FireServer({
 									weapon = sword.tool,
-									chargedAttack = {chargeRatio = badexecutor and 0 or (meta.sword.chargedAttack and not meta.sword.chargedAttack.disableOnGrounded and 0.999 or 0)},
+									chargedAttack = {chargeRatio = badexecutor and 0.999 or (meta.sword.chargedAttack and not meta.sword.chargedAttack.disableOnGrounded and 0.999 or 0)},
 									entityInstance = v.Character,
 									validate = {
 										raycast = {
@@ -3058,7 +3084,7 @@ run(function()
 	rayCheck.FilterType = Enum.RaycastFilterType.Include
 	local projectileRemote = replicatedStorage.rbxts_include.node_modules['@rbxts'].net.out._NetManaged.ProjectileFire
 	local FireDelays = {}
-	task.spawn(pcall, function()
+	task.spawn(function()
 		projectileRemote = bedwars.Client:Get(remotes.FireProjectile).instance
 	end)
 	
@@ -4558,7 +4584,7 @@ run(function()
 							
 							if (localPosition - v.Position).Magnitude <= Range.Value then
 								if Lower.Enabled and (localPosition.Y - v.Position.Y) < (entitylib.character.HipHeight - 1) then continue end
-								task.spawn(pcall, function()
+								task.spawn(function()
 									if type(pickupRemote) == 'Instance' and pickupRemote:IsA('RemoteFunction') then
 										pickupRemote:FireServer({
 											itemDrop = v
@@ -6378,7 +6404,7 @@ run(function()
 		Name = 'AutoHotbar',
 		Function = function(callback)
 			if callback then
-				task.spawn(pcall, sortCallback)
+				task.spawn(sortCallback)
 				if Mode.Value == 'On Key' then 
 					AutoHotbar:Toggle() 
 					return 
@@ -7986,11 +8012,7 @@ run(function()
 	
 	local bedtpmodes = {
 		Reset = function(res)
-			if badexecutor then
-				pcall(function() lplr.Character.Humanoid.Health = 0 end)
-			else
-				bedwars.Client:Get('ResetCharacter'):SendToServer()
-			end
+			bedwars.Client:Get('ResetCharacter'):SendToServer()
 			lplr.CharacterAdded:Wait();
 			task.wait(0.2)
 			local speed: number = bedtpautospeed.Enabled and (entitylib.character.RootPart.Position - res.Position).Magnitude / 800 or bedtpspeed.Value;
@@ -8070,11 +8092,7 @@ run(function()
 	
 	local playermodes = {
 		Reset = function(plr)
-			if badexecutor then
-				pcall(function() lplr.Character.Humanoid.Health = 0 end)
-			else
-				bedwars.Client:Get('ResetCharacter'):SendToServer()
-			end
+			bedwars.Client:Get('ResetCharacter'):SendToServer()
 			lplr.CharacterAdded:Wait();
 			task.wait(0.2)
 			local speed: number = playertpautospeed.Enabled and (entitylib.character.RootPart.Position - plr.RootPart.Position).Magnitude / 800 or playertpspeed.Value;
@@ -8626,5 +8644,5 @@ run(function()
 end)
 
 if badexecutor then
-	vape:CreateNotification('Vape', 'Your currently using a low-tier executor, Some features might not work as its intented.', 30, 'info')
+	vape:CreateNotification('Cat', 'Your currently using a low-tier executor, Some features might not work as its intented.', 30, 'info')
 end

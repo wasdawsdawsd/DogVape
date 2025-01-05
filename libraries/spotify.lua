@@ -27,7 +27,8 @@ local round = function(number)
 end
 
 local spotify = {
-	token = ""
+	token = "",
+	PlaybackUpdate = Instance.new('BindableEvent')
 }
 
 function spotify:ConvertTime(ms)
@@ -82,6 +83,7 @@ function spotify:UpdateToken(refreshToken, clientId, clientSecret)
 	return body.access_token
 end
 
+local song = ""
 function spotify:GetData()
 	local data = spotify:Request("me/player/currently-playing")
     if not data or not data.item then return end
@@ -94,6 +96,10 @@ function spotify:GetData()
     end
 
     local artist = table.concat(names, ", ")
+    if song ~= data.item.name then
+		song = data.item.name
+		spotify.PlaybackUpdate:Fire(artist, data.item.name, data.item.album.images[2].url)
+    end
 
     return {
         song = {
