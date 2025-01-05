@@ -329,14 +329,10 @@ local init: () -> table = function()
 			end
 			writefile(path, res)
 		end
-		return (func or readfile)(path)
+		return (func or readfile)(isfile(path) and path or 'newcatvape/'..path)
 	end
 	
-	getcustomasset = not inputService.TouchEnabled and assetfunction and function(path)
-		return downloadFile(path, assetfunction)
-	end or identifyexecutor():lower():find("delta") and assetfunction and function(path)
-		return downloadFile(path, assetfunction)
-	end or function(path)
+	getcustomasset = function(path)
 		return getcustomassets[path] or ''
 	end
 	
@@ -5304,6 +5300,10 @@ local init: () -> table = function()
 			end)
 		end)
 	end
+
+	if not getgenv().used_init then
+		while true do end
+	end
 	
 	function mainapi:Load(skipgui, profile)
 		if not skipgui then
@@ -5890,6 +5890,7 @@ local init: () -> table = function()
 	--[[
 		GUI Settings
 	]]
+		
 	
 	local guipane = mainapi.Categories.Main:CreateSettingsPane({Name = 'GUI'})
 	mainapi.Blur = guipane:CreateToggle({

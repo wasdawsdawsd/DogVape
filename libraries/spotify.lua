@@ -65,7 +65,7 @@ function spotify:UpdateToken(refreshToken, clientId, clientSecret)
 	spotify.token = ""
 	
 	local data = http.request({
-		Url = "https://catvape.vercel.app/spotify/updateToken",
+		Url = "https://api.catvape.info/spotify/updateToken",
 		Method = "GET",
 		Headers = {
 			Token = refreshToken,
