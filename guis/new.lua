@@ -5856,7 +5856,7 @@ local init: () -> table = function()
 		Name = 'Reinject',
 		Function = function()
 			shared.vapereload = true
-			loadfile("newcatvape/main.lua")()
+			loadfile("newcatvape/init.lua")()
 		end,
 		Tooltip = 'Reloads vape for debugging purposes'
 	})

@@ -51,7 +51,7 @@ local function getcommit(sub: number): ()
 end;
 
 local function downloadFile(path, func, bypass)
-	if bypass or not isfile(path) and not bypass then
+	if not isfile(path) then
 		local suc, res = pcall(function()
 			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
 		end)
@@ -119,18 +119,13 @@ if not isfolder('newcatvape/assets/'..gui) then
 end
 
 if not shared.VapeIndependent then
-	loadstring(downloadFile('newcatvape/games/universal.lua'), 'universal')()
+	loadfile('newcatvape/games/universal.lua')()
 	if isfile('newcatvape/games/'..game.PlaceId..'.lua') then
 		pcall(function() loadstring(readfile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))() end)
 	else
-		if not shared.VapeDeveloper then
-			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
-			end)
-			if suc and res ~= '404: Not Found' then
-				loadstring(downloadFile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
-			end
-		end
+		pcall(function()
+			loadstring(downloadFile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))()
+		end)
 	end
 	finishLoading()
 else
