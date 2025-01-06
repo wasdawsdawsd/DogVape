@@ -104,7 +104,11 @@ if not shared.catvapedev then
 	if readfile('newcatvape/profiles/commit.txt') ~= commitdata.sha then
 		for i, v in commitdata.files do
 			print('downloading '.. v.filename)
-			downloadFile('newcatvape/'.. v.filename)
+			if isfolderv2(v.filename) then
+				makefolder('newcatvape/'.. v.filename)
+			else
+			        downloadFile('newcatvape/'.. v.filename)
+			end
 			print('downloaded '.. v.filename)
 		end
 		writefile('newcatvape/profiles/commit.txt', commitdata.sha)
