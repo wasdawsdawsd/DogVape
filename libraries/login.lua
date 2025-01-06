@@ -84,6 +84,7 @@ if not success or success and res == 'Down' then
 		task.delay(7, function()
 			vape:Uninject()
 		end)
+		task.spawn(warn, res)
 		vape:CreateNotification('Cat', 'Invalid api result, Please report this problem to qwertyui or fuzzy.', 7, 'alert')
 		error('CatVape | Invalid api result, Please report this problem to qwertyui or fuzzy.')
 	end
