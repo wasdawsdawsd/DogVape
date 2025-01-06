@@ -45,20 +45,21 @@ end
 if isfolder('newcatvape') and isfolder('newcatvape/libraries') and isfile('newcatvape/libraries/debug') then
 	delfolder('newcatvape')
 end
-if not isfolder('newcatvape') or #listfiles('newcatvape') <= 5 then
+local commitdata = getcommit()
+if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 then
 	for _, folder in {'newcatvape', 'newcatvape/games', 'newcatvape/profiles', 'newcatvape/assets', 'newcatvape/libraries', 'newcatvape/guis'} do
 		if not isfolder(folder) then
 			makefolder(folder)
 		end
 	end
-	writefile('newcatvape/profiles/commit.txt', getcommit().sha)
+	writefile('newcatvape/profiles/commit.txt', commitdata.sha)
 	local files = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents', true))
 	for i,v in files do
 		if v.path == 'assets' or v.name:find('assets') then continue end
 		if not isfolderv2(v.name) then
-			print('downloading '.. v.name)
+			print('downloading new file '.. v.name)
 			writefile('newcatvape/'.. v.name, downloadFile('newcatvape/'..v.name))
-			print('downloaded '.. v.name)
+			print('new file downloaded '.. v.name)
 		else
 			makefolder('newcatvape/'.. v.name)
 			local files2 = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/' .. v.path, true))
@@ -89,7 +90,7 @@ task.spawn(pcall, function()
 end)
 
 if not shared.catvapedev then
-	local commitdata = getcommit()
+	--local commitdata = getcommit()
 	if not isfile('newcatvape/profiles/commit.txt') then
 		writefile('newcatvape/profiles/commit.txt', 'nil')
 	end
