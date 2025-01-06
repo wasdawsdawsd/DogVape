@@ -112,7 +112,7 @@ local gui = readfile('newcatvape/profiles/gui.txt');
 vape = loadstring(downloadFile('newcatvape/guis/'..gui..'.lua'), 'gui')();
 shared.vape = vape;
 
-loadfile('newcatvape/libraries/login.lua')();
+loadstring(downloadFile('newcatvape/libraries/login.lua'))()
 
 if not isfolder('newcatvape/assets/'..gui) then
 	makefolder('newcatvape/assets/'..gui)
