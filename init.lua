@@ -42,10 +42,10 @@ local function downloadFile(path, func)
 end
 
 local isfolderv2 = function(filename)
-	return httpasync('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/refs/heads/main/'.. filename) == '404: Not Found'
-end
-if isfolder('newcatvape') and isfolder('newcatvape/libraries') and isfile('newcatvape/libraries/debug') then
-	delfolder('newcatvape')
+	local a, b = pcall(function()
+		return httpasync('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha .. '/' .. filename) == '404: Not Found'
+	end)
+	return not a or b == '404: Not Found'
 end
 
 if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 then
