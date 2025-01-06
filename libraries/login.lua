@@ -24,7 +24,7 @@ if catauth or isfile('cak') then
 				Method = 'GET'
 			})
 			local body = httpService:JSONDecode(result.Body)
-			if body.Rank then
+			if body and body.Rank then
 				return 'Success'
 			else
 				error('Failed')
@@ -56,7 +56,7 @@ local success, res = pcall(function()
 	})
 	print(req.StatusCode)
 	print(req.Body)
-	if req.Body:find('502 Bad Gateway') then
+	if tostring(req.Body) == '404' or tostring(req.Body):find('502 Bad Gateway') then
 		return 'Down'
 	end
 	local API
