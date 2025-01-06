@@ -29,9 +29,10 @@ local delfile = delfile or function(file)
 	writefile(file, '')
 end
 
+local commitdata = getcommit()
 local function downloadFile(path, func)
 	local suc, res = pcall(function()
-		return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+		return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
 	end)
 	if not suc or res == '404: Not Found' then
 		task.spawn(error, path.. ' | '.. res)
@@ -46,7 +47,7 @@ end
 if isfolder('newcatvape') and isfolder('newcatvape/libraries') and isfile('newcatvape/libraries/debug') then
 	delfolder('newcatvape')
 end
-local commitdata = getcommit()
+
 if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 then
 	for _, folder in {'newcatvape', 'newcatvape/games', 'newcatvape/profiles', 'newcatvape/assets', 'newcatvape/libraries', 'newcatvape/guis'} do
 		if not isfolder(folder) then
