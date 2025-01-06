@@ -1,6 +1,7 @@
 getgenv().void = function() end
 getgenv().request = request or http.request or function() end
 getgenv().keypress = keypress or function() end
+getgenv().initcatvape = true
 
 local httpService = game:GetService('HttpService')
 local httpasync = function(...)
