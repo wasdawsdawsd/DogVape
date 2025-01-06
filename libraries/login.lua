@@ -59,7 +59,13 @@ local success, res = pcall(function()
 	if req.Body:find('502 Bad Gateway') then
 		return 'Down'
 	end
-	local API = httpService:JSONDecode(req.Body)
+	local API
+	local a2, v2 in pcall(function()
+		API = httpService:JSONDecode(req.Body)
+	end
+	if not a2 then
+		return "Down"
+	end
 	assert(API.userid)
 	vape:CreateNotification('Cat', 'Logged in as '.. API.name.. ' ('.. API.userid.. ')', 7)
 	task.spawn(function()
