@@ -119,7 +119,7 @@ if not isfolder('newcatvape/assets/'..gui) then
 end
 
 if not shared.VapeIndependent then
-	loadfile(downloadFile('newcatvape/games/universal.lua'))()
+	loadstring(downloadFile('newcatvape/games/universal.lua'))()
 	pcall(function()
 		loadstring(downloadFile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))()
 	end)
