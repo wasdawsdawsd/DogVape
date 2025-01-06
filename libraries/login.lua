@@ -60,7 +60,7 @@ local success, res = pcall(function()
 		return 'Down'
 	end
 	local API
-	local a2, v2 in pcall(function()
+	local a2, v2 = pcall(function()
 		API = httpService:JSONDecode(req.Body)
 	end
 	if not a2 then
