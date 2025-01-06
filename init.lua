@@ -8,6 +8,11 @@ local httpasync = function(...)
 	return game:HttpGet(...)
 end
 
+if not isfile('catvape_reset') then
+	pcall(delfolder, 'newcatvape')
+	writefile('catvape_reset', '')
+end
+
 local function getcommit(sub)
 	sub = sub or 7
 	local commitinfo = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/commits'))[1]
