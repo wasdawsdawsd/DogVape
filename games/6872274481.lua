@@ -762,57 +762,55 @@ run(function()
 	OldBreak = bedwars.BlockController.isBlockBreakable
 
 	local cache, blockhealthbar = {}, {blockHealth = -1, breakingBlockPosition = Vector3.zero}
-	pcall(function()
-		Client.Get = function(self, remoteName)
-			local call = OldGet(self, remoteName)
-	
-			if remoteName == remotes.AckKnockback then
-				return {
-					instance = call.instance,
-					SendToServer = function(_, knockback)
-						if not StoreDamage.Enabled then
-							return call:SendToServer(knockback)
-						end
-	
-						local damage = debug.getstack(3, 3)
-						if damage.knockbackId and (not damage.knockbackMultiplier or not damage.knockbackMultiplier.disabled) then
-							table.insert(store.damage, damage)
-							vapeEvents.KnockbackReceived:Fire()
-						end
+	Client.Get = function(self, remoteName)
+		local call = OldGet(self, remoteName)
+
+		if remoteName == remotes.AckKnockback then
+			return {
+				instance = call.instance,
+				SendToServer = function(_, knockback)
+					if not StoreDamage.Enabled then
+						return call:SendToServer(knockback)
 					end
-				}
-			elseif remoteName == remotes.AttackEntity then
-				return {
-					instance = call.instance,
-					SendToServer = function(_, attackTable, ...)
-						local suc, plr = pcall(function()
-							return playersService:GetPlayerFromCharacter(attackTable.entityInstance)
-						end)
-	
-						local selfpos = attackTable.validate.selfPosition.value
-						local targetpos = attackTable.validate.targetPosition.value
-						store.attackReach = ((selfpos - targetpos).Magnitude * 100) // 1 / 100
-						store.attackReachUpdate = tick() + 1
-	
-						if Reach.Enabled or HitBoxes.Enabled then
-							attackTable.validate.raycast = attackTable.validate.raycast or {}
-							attackTable.validate.selfPosition.value += CFrame.lookAt(selfpos, targetpos).LookVector * math.max((selfpos - targetpos).Magnitude - 14.399, 0)
-						end
-	
-						if suc and plr then
-							if not select(2, whitelist:get(plr)) then return end
-						end
-	
-						return call:SendToServer(attackTable, ...)
+
+					local damage = debug.getstack(3, 3)
+					if damage.knockbackId and (not damage.knockbackMultiplier or not damage.knockbackMultiplier.disabled) then
+						table.insert(store.damage, damage)
+						vapeEvents.KnockbackReceived:Fire()
 					end
-				}
-			elseif remoteName == 'StepOnSnapTrap' and TrapDisabler.Enabled then
-				return {SendToServer = function() end}
-			end
-	
-			return call
+				end
+			}
+		elseif remoteName == remotes.AttackEntity then
+			return {
+				instance = call.instance,
+				SendToServer = function(_, attackTable, ...)
+					local suc, plr = pcall(function()
+						return playersService:GetPlayerFromCharacter(attackTable.entityInstance)
+					end)
+
+					local selfpos = attackTable.validate.selfPosition.value
+					local targetpos = attackTable.validate.targetPosition.value
+					store.attackReach = ((selfpos - targetpos).Magnitude * 100) // 1 / 100
+					store.attackReachUpdate = tick() + 1
+
+					if Reach.Enabled or HitBoxes.Enabled then
+						attackTable.validate.raycast = attackTable.validate.raycast or {}
+						attackTable.validate.selfPosition.value += CFrame.lookAt(selfpos, targetpos).LookVector * math.max((selfpos - targetpos).Magnitude - 14.399, 0)
+					end
+
+					if suc and plr then
+						if not select(2, whitelist:get(plr)) then return end
+					end
+
+					return call:SendToServer(attackTable, ...)
+				end
+			}
+		elseif remoteName == 'StepOnSnapTrap' and TrapDisabler.Enabled then
+			return {SendToServer = function() end}
 		end
-	end)
+
+		return call
+	end
 
 	pcall(function()
 		bedwars.BlockController.isBlockBreakable = function(self, breakTable, plr)
