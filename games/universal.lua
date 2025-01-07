@@ -5814,7 +5814,7 @@ run(function()
 		Function = function()
 			if entitylib.isAlive then
 				local pos = entitylib.character.RootPart.Position // 1
-				List:ChangeValue(pos.X..','..pos.Y..','..pos.Z..'/'.. waypointname.Value.. ' '..(#List.List + 1))
+				List:ChangeValue(pos.X..','..pos.Y..','..pos.Z..'/'.. waypointname.Value)
 			end
 		end
 	})
