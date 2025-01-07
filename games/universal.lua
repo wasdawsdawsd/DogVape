@@ -5808,14 +5808,20 @@ run(function()
 			end
 		end
 	})
+	local waypointname;
 	Waypoints:CreateButton({
 		Name = 'Add current position',
 		Function = function()
 			if entitylib.isAlive then
 				local pos = entitylib.character.RootPart.Position // 1
-				List:ChangeValue(pos.X..','..pos.Y..','..pos.Z..'/Waypoint '..(#List.List + 1))
+				List:ChangeValue(pos.X..','..pos.Y..','..pos.Z..'/'.. waypointname.Value.. ' '..(#List.List + 1))
 			end
 		end
+	})
+	waypointname = Waypoints:CreateTextBox({
+		Name = 'Waypoint name',
+		Placeholder = 'pos name',
+		Function = void
 	})
 	Color = Waypoints:CreateColorSlider({
 		Name = 'Color',
