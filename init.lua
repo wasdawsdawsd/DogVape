@@ -9,7 +9,9 @@ local httpasync = function(...)
 end
 
 if not isfile('catvape_reset') then
-	pcall(delfolder, 'newcatvape')
+	pcall(function()
+		delfolder('newcatvape')
+	end)
 	writefile('catvape_reset', '')
 end
 

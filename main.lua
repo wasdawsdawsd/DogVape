@@ -82,7 +82,7 @@ local function finishLoading()
 			teleportedServers = true
 			local teleportScript = [[
 				shared.vapereload = true
-				loadfile('newcatvape/main.lua')()
+				loadfile('newcatvape/init.lua')()
 			]]
 			if shared.VapeDeveloper then
 				teleportScript = 'shared.VapeDeveloper = true\n'..teleportScript
