@@ -5814,7 +5814,8 @@ run(function()
 		Function = function()
 			if entitylib.isAlive then
 				local pos = entitylib.character.RootPart.Position // 1
-				List:ChangeValue(pos.X..','..pos.Y..','..pos.Z..'/'.. waypointname.Value == '' and 'Waypoint ' or waypointname.Value..(waypointname.Value == '' and #List.List + 1 or ''))
+				local isempty = waypointname.Value == ''
+				List:ChangeValue(pos.X..','..pos.Y..','..pos.Z..'/'.. isempty and 'Waypoint '.. (#List.List + 1) or waypointname.Value)
 			end
 		end
 	})
