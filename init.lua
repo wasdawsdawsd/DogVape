@@ -64,7 +64,7 @@ if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 then
 	writefile('newcatvape/profiles/commit.txt', commitdata.sha)
 	local files = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents', true))
 	for i,v in files do
-		if v.path == 'assets' or v.path:find('assets') then continue end
+		if v.path == 'assets' or v.path:find('assets') or v.path == 'profiles' or v.path:find('profiles') then continue end
 		if not isfolderv2(v.name) then
 			print('downloading new file '.. v.path)
 			writefile('newcatvape/'.. v.name, downloadFile('newcatvape/'..v.path))
@@ -105,11 +105,30 @@ if not shared.catvapedev then
 			if isfolderv2(v.filename) then
 				makefolder('newcatvape/'.. v.filename)
 			else
-			    downloadFile('newcatvape/'.. v.filename)
+				local name = v.filename
+				if v.filename:find('pc/') or v.filename:find('mob/') then
+					local ismob = v.filename:find('mob/')
+					local spliited = v.filename:split(ismob and 'mob/' or 'pc/')
+					name = spliited[1]..spliited[2]
+					writefile('newcatvape/'.. name, httpasync('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'.. v.filename))
+				else
+					downloadFile('newcatvape/'.. name)
+				end
 			end
 			print('downloaded '.. v.filename)
 		end
 		writefile('newcatvape/profiles/commit.txt', commitdata.sha)
+	end
+end
+
+if #listfiles('newcatvape/profile') <= 3 then
+	local files = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/profiles/pc'))
+	for i,v in files do
+		local name = v.path
+		local ismob = v.filename:find('mob/')
+		local spliited = v.filename:split(ismob and 'mob/' or 'pc/')
+		name = spliited[1]..spliited[2]
+		writefile('newcatvape/'.. name, httpasync('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'.. v.filename))
 	end
 end
 
