@@ -48,7 +48,7 @@ end
 
 local isfolderv2 = function(filename)
 	local a, b = pcall(function()
-		return httpasync('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha .. '/' .. filename) == '404: Not Found'
+		return httpasync('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha .. '/' .. filename)
 	end)
 	return not a or b == '404: Not Found'
 end
@@ -62,13 +62,13 @@ if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 then
 	writefile('newcatvape/profiles/commit.txt', commitdata.sha)
 	local files = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents', true))
 	for i,v in files do
-		if v.path == 'assets' or v.name:find('assets') then continue end
+		if v.path == 'assets' or v.path:find('assets') then continue end
 		if not isfolderv2(v.name) then
-			print('downloading new file '.. v.name)
-			writefile('newcatvape/'.. v.name, downloadFile('newcatvape/'..v.name))
-			print('new file downloaded '.. v.name)
+			print('downloading new file '.. v.path)
+			writefile('newcatvape/'.. v.name, downloadFile('newcatvape/'..v.path))
+			print('new file downloaded '.. v.path)
 		else
-			makefolder('newcatvape/'.. v.name)
+			makefolder('newcatvape/'.. v.path)
 			local files2 = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/' .. v.path, true))
 			for i2 ,v2 in files2 do
 				if not isfolderv2(v2.path) then
@@ -97,17 +97,13 @@ task.spawn(pcall, function()
 end)
 
 if not shared.catvapedev then
-	--local commitdata = getcommit()
-	if not isfile('newcatvape/profiles/commit.txt') then
-		writefile('newcatvape/profiles/commit.txt', 'nil')
-	end
 	if readfile('newcatvape/profiles/commit.txt') ~= commitdata.sha then
 		for i, v in commitdata.files do
 			print('downloading '.. v.filename)
 			if isfolderv2(v.filename) then
 				makefolder('newcatvape/'.. v.filename)
 			else
-			        downloadFile('newcatvape/'.. v.filename)
+			    downloadFile('newcatvape/'.. v.filename)
 			end
 			print('downloaded '.. v.filename)
 		end
