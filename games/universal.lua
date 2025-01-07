@@ -5814,8 +5814,7 @@ run(function()
 		Function = function()
 			if entitylib.isAlive then
 				local pos = entitylib.character.RootPart.Position // 1
-				local isempty = waypointname.Value == ''
-				List:ChangeValue(pos.X..','..pos.Y..','..pos.Z..'/'.. isempty and 'Waypoint '.. (#List.List + 1) or waypointname.Value)
+				List:ChangeValue(pos.X..','..pos.Y..','..pos.Z..'/'.. waypointname.Value == '' and 'Waypoint '.. (#List.List + 1) or waypointname.Value)
 			end
 		end
 	})
@@ -7874,7 +7873,7 @@ end)
 	
 run(function()
 	local InfiniteJump
-	local Mode
+	local Mode = {Value = 'Velocity'}
 	local jumps = 0
 	InfiniteJump = vape.Categories.Blatant:CreateModule({
 		Name = "InfiniteJump",
@@ -7899,7 +7898,8 @@ run(function()
 					end
 				end))
 			end
-		end
+		end,
+		ExtraText = Mode.Value
 	})
 	Mode = InfiniteJump:CreateDropdown({
 		Name = "Mode",

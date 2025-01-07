@@ -17,13 +17,18 @@ end
 
 local function getcommit(sub)
 	sub = sub or 7
-	local commitinfo = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/commits'))[1]
-	if commitinfo and type(commitinfo) == 'table' then
-		local fullinfo = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/commits/'.. commitinfo.sha))
-		fullinfo.hash = commitinfo.sha:sub(1, sub)
-		return fullinfo
+	local suc, res = pcall(function()
+		local commitinfo = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/commits'))[1]
+		if commitinfo and type(commitinfo) == 'table' then
+			local fullinfo = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/commits/'.. commitinfo.sha))
+			fullinfo.hash = commitinfo.sha:sub(1, sub)
+			return fullinfo
+		end
+	end)
+	if res == nil then
+		res = 'main'
 	end
-	return nil
+	return res
 end
 
 local isfile = isfile or function(file)
