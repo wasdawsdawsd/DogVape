@@ -126,7 +126,7 @@ if not shared.catvapedev then
 	end
 end
 
-if #listfiles('newcatvape/profile') <= 3 then
+if #listfiles('newcatvape/profiles') <= 3 then
 	local files = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/profiles/pc'))
 	for i,v in files do
 		local name = v.path
