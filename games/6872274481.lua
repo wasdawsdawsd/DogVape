@@ -706,7 +706,9 @@ run(function()
 		end
 	})
 
-
+	local debug = debug or {
+		getconstants = function() end
+	}
 	local remoteNames = {}
 	pcall(function()
 		remoteNames = {
@@ -752,15 +754,13 @@ run(function()
 		return ind and tab[ind + 1] or ''
 	end
 
-	pcall(function()
-		for i, v in remoteNames do
-			local remote = dumpRemote(debug.getconstants(v))
-			if remote == '' then
-				notif('Vape', 'Failed to grab remote ('..i..')', 10, 'alert')
-			end
-			remotes[i] = remote
+	for i, v in remoteNames do
+		local remote = dumpRemote(debug.getconstants(v))
+		if remote == '' then
+			notif('Vape', 'Failed to grab remote ('..i..')', 10, 'alert')
 		end
-	end)
+		remotes[i] = remote
+	end
 
 	OldBreak = bedwars.BlockController.isBlockBreakable
 
