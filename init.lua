@@ -126,17 +126,6 @@ if not shared.catvapedev then
 	end
 end
 
-if #listfiles('newcatvape/profiles') <= 3 then
-	local files = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/profiles/pc'))
-	for i,v in files do
-		local name = v.path
-		local ismob = v.filename:find('mob/')
-		local spliited = v.filename:split(ismob and 'mob/' or 'pc/')
-		name = spliited[1]..spliited[2]
-		writefile('newcatvape/'.. name, httpasync('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'.. v.filename))
-	end
-end
-
 getgenv().used_init = true
 
 return loadstring(downloadFile('newcatvape/main.lua'), 'main')()
