@@ -7873,7 +7873,7 @@ end)
 	
 run(function()
 	local InfiniteJump
-	local Mode = {Value = 'Velocity'}
+	local Mode
 	local jumps = 0
 	InfiniteJump = vape.Categories.Blatant:CreateModule({
 		Name = "InfiniteJump",
@@ -7899,7 +7899,7 @@ run(function()
 				end))
 			end
 		end,
-		ExtraText = Mode.Value
+		ExtraText = function() return Mode.Value end
 	})
 	Mode = InfiniteJump:CreateDropdown({
 		Name = "Mode",
