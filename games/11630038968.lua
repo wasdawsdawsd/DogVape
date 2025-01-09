@@ -321,9 +321,13 @@ run(function()
 									SwingDelay = tick() + 0.25
 									entitylib.character.Humanoid.Animator:LoadAnimation(tool.Animations.Swing):Play()
 									
-									setthreadidentity(2)
+									if vape.ThreadFix then
+										setthreadidentity(2)
+									end
 									bd.ViewmodelController:PlayAnimation(tool.Name)
-									setthreadidentity(8) 
+									if vape.ThreadFix then
+										setthreadidentity(8)
+									end
 								end
 	
 								if delta.Magnitude > AttackRange.Value then continue end
@@ -334,7 +338,8 @@ run(function()
 										bd.Blink.item_action.attack_entity.fire({
 											target_entity_id = bdent.Id,
 											is_crit = entitylib.character.RootPart.AssemblyLinearVelocity.Y < 0,
-											weapon_name = tool.Name
+											weapon_name = tool.Name,
+											rizz = '\226\128\139'
 										})
 										if FaceTarget.Enabled then lplr.Character:SetPrimaryPartCFrame(CFrame.new(lplr.Character.PrimaryPart.Position, Vector3.new(v.HumanoidRootPart.Position.X, lplr.Character.PrimaryPart.Position.Y, v.HumanoidRootPart.Position.Z))) end
 									end
@@ -736,12 +741,17 @@ run(function()
 										fake.Size = Vector3.new(3, 3, 3)
 										fake.Position = blockpos
 										fake:AddTag('TempBlock')
+										fake:AddTag('Block')
 										fake.Parent = workspace.Map
 										bd.EffectsController:PlaySound(blockpos)
 										bd.Entity.LocalEntity:RemoveTool('Blocks', 1)
 	
 										task.spawn(function()
-											local suc, block = bd.Blink.item_action.place_block.invoke(blockpos)
+											local suc, block = bd.Blink.item_action.place_block.invoke({
+												position = blockpos,
+												block_type = 'Clay',
+												rizz = '\226\128\139'
+											})
 											fake:Destroy()
 											if not (suc or block) then 
 												bd.Entity.LocalEntity:RemoveTool('Blocks', 1)

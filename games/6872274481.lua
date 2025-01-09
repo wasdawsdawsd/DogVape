@@ -2382,7 +2382,7 @@ run(function()
 									store.KillauraTarget = v
 									if not Swing.Enabled and AnimDelay <= tick() and not LegitAura.Enabled then
 										pcall(function()
-											AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or 0.14)
+											AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or (Sync.Enabled and 0.24 or 0.14))
 											bedwars.SwordController:playSwordEffect(meta, 0)
 											if meta.displayName:find(' Scythe') then 
 												bedwars.ScytheController:playLocalAnimation() 
@@ -2684,6 +2684,10 @@ run(function()
 		Name = 'Swing only',
 		Tooltip = 'Only attacks while swinging manually'
 	})
+	Sync = Killaura:CreateToggle({
+		Name = 'Synced Animation',
+		Tooltip = 'Plays animation with hit attempt'
+	})
 end)
 	
 run(function()
@@ -2756,6 +2760,23 @@ run(function()
 					end)
 				end
 			end)
+		end,
+		cat = function()
+			LongJump:Clean(vapeEvents.CatPounce.Event:Connect(function()
+				local vec = entitylib.character.RootPart.CFrame.LookVector
+				JumpSpeed = 4.5 * Value.Value
+				JumpTick = tick() + 2.5
+				Direction = Vector3.new(vec.X, 0, vec.Z).Unit
+				entitylib.character.RootPart.Velocity = Vector3.zero
+			end))
+	
+			if not bedwars.AbilityController:canUseAbility('CAT_POUNCE') then
+				repeat task.wait() until bedwars.AbilityController:canUseAbility('CAT_POUNCE') or not LongJump.Enabled
+			end
+	
+			if bedwars.AbilityController:canUseAbility('CAT_POUNCE') and LongJump.Enabled then
+				bedwars.AbilityController:useAbility('CAT_POUNCE')
+			end
 		end,
 		fireball = function(item, pos)
 			launchProjectile(item, pos, 'fireball', 60)
@@ -2879,7 +2900,7 @@ run(function()
 	
 				for i, v in LongJumpMethods do
 					local item = getItem(i)
-					if item then
+					if item or store.equippedKit == i then
 						task.spawn(v, item, start)
 						break
 					end
@@ -2972,7 +2993,7 @@ run(function()
 						Players = Targets.Players.Enabled,
 						NPCs = Targets.NPCs.Enabled,
 						Wallcheck = Targets.Walls.Enabled,
-						Origin = entitylib.isAlive and entitylib.character.RootPart.Position or Vector3.zero
+						Origin = entitylib.isAlive and (shootpos or entitylib.character.RootPart.Position) or Vector3.zero
 					})
 					
 					if plr then
@@ -4089,6 +4110,26 @@ run(function()
 				end
 			end, 12, false)
 		end,
+		cat = function()
+			local old = bedwars.CatController.leap
+			bedwars.CatController.leap = function(...)
+				vapeEvents.CatPounce:Fire()
+				old(...)
+			end
+	
+			AutoKit:Clean(function()
+				bedwars.CatController.leap = old
+			end)
+		end,
+		dragon_slayer = function()
+			kitCollection('KaliyahPunchInteraction', function(v)
+				bedwars.DragonSlayerController:deleteEmblem(v)
+				bedwars.DragonSlayerController:playPunchAnimation(Vector3.zero)
+				bedwars.Client:Get(remotes.KaliyahPunch):SendToServer({
+					target = v
+				})
+			end, 18, true)
+		end,
 		farmer_cletus = function()
 			kitCollection('HarvestableCrop', function(v)
 				if bedwars.Client:Get(remotes.HarvestCrop):CallServer({position = bedwars.BlockController:getBlockPosition(v.Position)}) then
@@ -4106,12 +4147,35 @@ run(function()
 				bedwars.FishermanController.startMinigame = old
 			end)
 		end,
+		gingerbread_man = function()
+			local old = bedwars.LaunchPadController.attemptLaunch
+			bedwars.LaunchPadController.attemptLaunch = function(...)
+				local res = {old(...)}
+				local self, block = ...
+	
+				if (workspace:GetServerTimeNow() - self.lastLaunch) < 0.4 then
+					if block:GetAttribute('PlacedByUserId') == lplr.UserId and (block.Position - entitylib.character.RootPart.Position).Magnitude < 30 then
+						task.spawn(bedwars.breakBlock, block, false, nil, true)
+					end
+				end
+	
+				return unpack(res)
+			end
+	
+			AutoKit:Clean(function()
+				bedwars.LaunchPadController.attemptLaunch = old
+			end)
+		end,
 		hannah = function()
 			kitCollection('HannahExecuteInteraction', function(v)
-				bedwars.Client:Get(remotes.HannahKill):CallServer({
+				local billboard = bedwars.Client:Get(remotes.HannahKill):CallServer({
 					user = lplr,
 					victimEntity = v
-				})
+				}) and v:FindFirstChild('Hannah Execution Icon')
+				
+				if billboard then
+					billboard:Destroy()
+				end
 			end, 30, true)
 		end,
 		grim_reaper = function()
@@ -4229,7 +4293,39 @@ run(function()
 				end
 				task.wait(0.1)
 			until not AutoKit.Enabled
-		end
+		end,
+		summoner = function()
+			AutoKit:Clean(bedwars.Client:Get('SummonerClawAttackFromServer'):Connect(function(data)
+				if data.player == lplr then
+					bedwars.SummonerKitController:clawAttack(data.player, data.position, data.direction)
+				end
+			end))
+	
+			repeat
+				local plr = entitylib.EntityPosition({
+					Range = 22,
+					Range = 31,
+					Part = 'RootPart',
+					Players = true
+				})
+
+				if plr then
+					local localPosition = entitylib.character.RootPart.Position
+					local shootDir = CFrame.lookAt(localPosition, plr.RootPart.Position).LookVector
+					localPosition += shootDir * math.max((localPosition - plr.RootPart.Position).Magnitude - 16, 0)
+	
+	
+					bedwars.Client:Get(remotes.SummonerClawAttack):SendToServer({
+						position = localPosition,
+						direction = CFrame.lookAt(localPosition, plr.RootPart.Position).LookVector,
+						direction = shootDir,
+						clientTime = workspace:GetServerTimeNow()
+					})
+				end
+	
+				task.wait(0.1)
+			until not AutoKit.Enabled
+		end,
 	}
 	
 	AutoKit = vape.Categories.Utility:CreateModule({
@@ -4793,6 +4889,7 @@ run(function()
 	local StaffDetector
 	local Mode
 	local Profile
+	local Clans
 	local Users
 	local blacklistedclans = {'gg', 'gg2', 'DV', 'DV2'}
 	local blacklisteduserids = {1502104539, 3826146717, 4531785383, 1049767300, 4926350670, 653085195, 184655415, 2752307430, 5087196317, 5744061325, 1536265275}
@@ -4889,7 +4986,7 @@ run(function()
 			if not plr:GetAttribute('ClanTag') then
 				plr:GetAttributeChangedSignal('ClanTag'):Wait()
 			end
-			if table.find(blacklistedclans, plr:GetAttribute('ClanTag')) and vape.Loaded then
+			if table.find(blacklistedclans, plr:GetAttribute('ClanTag')) and vape.Loaded and Clans.Enabled then
 				connection:Disconnect()
 				staffFunction(plr, 'blacklisted_clan_'..plr:GetAttribute('ClanTag'):lower())
 			end
@@ -4918,6 +5015,10 @@ run(function()
 				Profile.Object.Visible = val == 'Profile'
 			end
 		end
+	})
+	Clans = StaffDetector:CreateToggle({
+		Name = 'Blacklist clans',
+		Default = true
 	})
 	Profile = StaffDetector:CreateTextBox({
 		Name = 'Profile',
@@ -5389,6 +5490,90 @@ run(function()
 			for _, v in parts do 
 				v.Transparency = val 
 			end
+		end
+	})
+end)
+
+run(function()
+	local ArmorSwitch
+	local Mode
+	local Targets
+	local Range
+	
+	local function getBestArmor(slot)
+		local closest, mag = nil, 0
+	
+		for _, item in store.inventory.inventory.items do
+			local meta = item and bedwars.ItemMeta[item.itemType] or {}
+	
+			if meta.armor and meta.armor.slot == slot then
+				local newmag = (meta.armor.damageReductionMultiplier or 0)
+	
+				if newmag > mag then
+					closest, mag = item, newmag
+				end
+			end
+		end
+	
+		return closest
+	end
+	
+	ArmorSwitch = vape.Categories.Inventory:CreateModule({
+		Name = 'ArmorSwitch',
+		Function = function(callback)
+			if callback then
+				if Mode.Value == 'Toggle' then
+					repeat
+						local state = entitylib.EntityPosition({
+							Part = 'RootPart',
+							Range = Range.Value,
+							Players = Targets.Players.Enabled,
+							NPCs = Targets.NPCs.Enabled,
+							Wallcheck = Targets.Walls.Enabled
+						}) and true or false
+	
+						for i = 0, 2 do
+							if (store.inventory.inventory.armor[i + 1] ~= 'empty') ~= state and ArmorSwitch.Enabled then
+								bedwars.Store:dispatch({
+									type = 'InventorySetArmorItem',
+									item = store.inventory.inventory.armor[i + 1] == 'empty' and state and getBestArmor(i) or nil,
+									armorSlot = i
+								})
+								vapeEvents.InventoryChanged.Event:Wait()
+							end
+						end
+						task.wait(0.1)
+					until not ArmorSwitch.Enabled
+				else
+					ArmorSwitch:Toggle()
+					for i = 0, 2 do
+						bedwars.Store:dispatch({
+							type = 'InventorySetArmorItem',
+							item = store.inventory.inventory.armor[i + 1] == 'empty' and getBestArmor(i) or nil,
+							armorSlot = i
+						})
+						vapeEvents.InventoryChanged.Event:Wait()
+					end
+				end
+			end
+		end,
+		Tooltip = 'Puts on / takes off armor when toggled for baiting.'
+	})
+	Mode = ArmorSwitch:CreateDropdown({
+		Name = 'Mode',
+		List = {'Toggle', 'On Key'}
+	})
+	Targets = ArmorSwitch:CreateTargets({
+		Players = true,
+		NPCs = true
+	})
+	Range = ArmorSwitch:CreateSlider({
+		Name = 'Range',
+		Min = 1,
+		Max = 30,
+		Default = 30,
+		Suffix = function(val)
+			return val == 1 and 'stud' or 'studs'
 		end
 	})
 end)

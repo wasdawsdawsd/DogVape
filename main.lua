@@ -15,6 +15,10 @@ getgenv().run = function(func)
 	end
 end
 
+if identifyexecutor and identifyexecutor and table.find({'Argon', 'Wave'}, ({identifyexecutor()})[1]) then
+	getgenv().setthreadidentity = nil
+end
+
 local vape
 local loadstring = function(...)
 	local res, err = loadstring(...)
