@@ -5100,29 +5100,19 @@ run(function()
 		local chestitems = chest and chest:GetChildren() or {}
 		if #chestitems > 1 and (Delays[chest] == nil or Delays[chest] < tick()) then
 			Delays[chest] = tick() + 0.3
-			if badexecutor then
-				replicatedStorage.rbxts_include.node_modules['@rbxts'].net.out._NetManaged['Inventory/SetObservedChest']:FireServer(chest)
-				bedwars.Client:Get('Inventory/SetObservedChest'):SendToServer(chest)
-			else
-				bedwars.Client:GetNamespace('Inventory'):Get('SetObservedChest'):SendToServer(chest)
-			end
+			bedwars.Client:GetNamespace('Inventory'):Get('SetObservedChest'):SendToServer(chest)
+	
 			for _, v in chestitems do
 				if v:IsA('Accessory') then
-					print('sigma?')
-					if not badexecutor then 
-						bedwars.Client:Get('Inventory/ChestGetItem'):SendToServer(chest, v) 
-					else 
-						replicatedStorage.rbxts_include.node_modules['@rbxts'].net.out._NetManaged['Inventory/ChestGetItem']:InvokeServer(chest, v)
-					end
-					print('sigmaness +9e9')
+					task.spawn(function()
+						pcall(function()
+							bedwars.Client:GetNamespace('Inventory'):Get('ChestGetItem'):CallServer(chest, v)
+						end)
+					end)
 				end
 			end
 	
-			if badexecutor then
-				replicatedStorage.rbxts_include.node_modules['@rbxts'].net.out._NetManaged['Inventory/SetObservedChest']:FireServer(nil)
-			else
-				bedwars.Client:GetNamespace('Inventory'):Get('SetObservedChest'):SendToServer(nil) 
-			end
+			bedwars.Client:GetNamespace('Inventory'):Get('SetObservedChest'):SendToServer(nil)
 		end
 	end
 	
@@ -5131,8 +5121,8 @@ run(function()
 		Function = function(callback)
 			if callback then
 				local chests = collection('chest', ChestSteal)
-				repeat task.wait() until store.queueType ~= 'bedwars_test' or badexecutor
-				if (not badexecutor and (not Skywars.Enabled) or store.queueType:find('skywars')) or true then
+				repeat task.wait() until store.queueType ~= 'bedwars_test'
+				if (not Skywars.Enabled) or store.queueType:find('skywars') then
 					repeat
 						if entitylib.isAlive and store.matchState ~= 2 then
 							if Open.Enabled then
