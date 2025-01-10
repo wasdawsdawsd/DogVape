@@ -203,7 +203,7 @@ end
 
 local hash = loadstring(downloadFile('newcatvape/libraries/hash.lua'), 'hash')()
 local prediction = loadstring(downloadFile('newcatvape/libraries/prediction.lua'), 'prediction')()
-entitylib = loadstring(downloadFile('newcatvape/libraries/entity.lua'), 'entitylibrary')()
+entitylib = loadfile('newcatvape/libraries/entity.lua')()
 local whitelist = {
 	alreadychecked = {},
 	customtags = {},
