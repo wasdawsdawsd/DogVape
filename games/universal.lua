@@ -2757,6 +2757,7 @@ run(function()
 	local overlapCheck = OverlapParams.new()
 	overlapCheck.MaxParts = 9e9
 	local modified, fflag = {}
+	local teleported
 	
 	local function grabClosestNormal(ray)
 		local partCF, mag, closest = ray.Instance.CFrame, 0, Enum.NormalId.Top
@@ -2820,6 +2821,7 @@ run(function()
 			end
 		end,
 		FFlag = function()
+			if teleported then return end
 			setfflag('AssemblyExtentsExpansionStudHundredth', '-10000')
 			fflag = true
 		end
@@ -2834,6 +2836,12 @@ run(function()
 						Functions[Mode.Value]()
 					end
 				end))
+				if Mode.Value == 'FFlag' then
+					Phase:Clean(lplr.OnTeleport:Connect(function()
+						teleported = true
+						setfflag('AssemblyExtentsExpansionStudHundreth', '30')
+					end))
+				end
 			else
 				if fflag then
 					setfflag('AssemblyExtentsExpansionStudHundredth', '30')
