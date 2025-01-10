@@ -194,7 +194,7 @@ entitylib.AllPosition = function(entitysettings)
 			if not entitysettings.Players and v.Player then continue end
 			if not entitysettings.NPCs and v.NPC then continue end
 			if not v.Targetable then continue end
-			local funnypos = Vector3.new(v[entitysettings.Part].Position.X, v[entitysettings.Part].Position.Y, v[entitysettings.Part].Position.Z)
+			local funnypos = Vector3.new(v[entitysettings.Part].Position.X, localPosition.Y, v[entitysettings.Part].Position.Z)
 			local mag = (funnypos - localPosition).Magnitude
 			if mag > entitysettings.Range then continue end
 			if entitylib.isVulnerable(v) then
