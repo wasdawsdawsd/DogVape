@@ -3,7 +3,7 @@ getgenv().request = request or http.request or function() end
 getgenv().keypress = keypress or function() end
 getgenv().initcatvape = true
 
-local httpservice = game:GetService('HttpService')
+local httpService = game:GetService('HttpService')
 
 if not isfile('catvape_reset') then
 	pcall(function()
@@ -23,7 +23,7 @@ local function getcommit(sub)
 		end
 	end)
 	if res == nil then
-		res = {sha = 'main'}
+		res = {sha = 'main', files = {}}
 	end
 	return res
 end
@@ -43,8 +43,9 @@ local function downloadFile(path, func)
 	local suc, res = pcall(function()
 		return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
 	end)
-	if (not suc or res == '404: Not Found') and shared.catvapedev then
-		task.spawn(error, path.. ' | '.. res)
+	if (not suc or res == '404: Not Found') 
+	then
+		return --task.spawn(error, path.. ' | '.. res)
 	end
 	writefile(path, res)
 	return (func or readfile)(path)
