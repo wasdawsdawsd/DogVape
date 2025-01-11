@@ -269,9 +269,7 @@ function bedwars.controllers.SprintController:getMovementStatusModifier()
     }
 end
 
-local finishedremotes = {
-
-}
+local finishedremotes = {}
 function bedwars.controllers.Client:Get(inst)
     if type(inst) == 'string' then
         if finishedremotes[inst] then
@@ -280,31 +278,30 @@ function bedwars.controllers.Client:Get(inst)
         for i,v in game:GetDescendants() do
             if tostring(v) == inst then
                 local sendserver = function(...)
-                    local args = {...}
                     if v.ClassName == 'RemoteFunction' then
-                        v:InvokeServer(unpack(args))
+                        v:InvokeServer(unpack({...}))
                     elseif v.ClassName == 'RemoteEvent' then
-                        v:FireServer(unpack(args))
+                        v:FireServer(unpack({...}))
                     end
                 end
                 finishedremotes[inst] = {
-                    SendToServer = function(...)
-                        sendserver(...)
-                    end,
-                    CallServerAsync = function(...)
-                        sendserver(...)
-                    end,
-                    FireServer = function(...)
-                        sendserver(...)
-                    end,
-                    CallServer = function(...)
-                        sendserver(...)
-                    end
+                    SendToServer = sendserver,
+                    FireServer = sendserver,
+                    CallServer = sendserver,
+                    CallServerAsync = sendserver
                 }
                 return finishedremotes[inst]
             end
         end
     end
+end
+
+function bedwars.controllers.Client:GetNamespace(a)
+    local b = {}
+    function b:Get(qweqwe)
+        return bedwars.controllers.Client:Get(qweqwe)
+    end
+    return b 
 end
 
 return bedwars

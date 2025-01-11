@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -203,7 +203,7 @@ end
 
 local hash = loadstring(downloadFile('newcatvape/libraries/hash.lua'), 'hash')()
 local prediction = loadstring(downloadFile('newcatvape/libraries/prediction.lua'), 'prediction')()
-entitylib = loadfile('newcatvape/libraries/entity.lua')()
+entitylib = loadstring(downloadFile('newcatvape/libraries/entity.lua'), 'entity')()
 local whitelist = {
 	alreadychecked = {},
 	customtags = {},
