@@ -26,7 +26,7 @@ local function getcommit(sub)
 		end
 	end)
 	if res == nil then
-		res = 'main'
+		res = {sha = 'main'}
 	end
 	return res
 end
@@ -46,7 +46,7 @@ local function downloadFile(path, func)
 	local suc, res = pcall(function()
 		return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
 	end)
-	if not suc or res == '404: Not Found' then
+	if (not suc or res == '404: Not Found') and shared.catvapedev then
 		task.spawn(error, path.. ' | '.. res)
 	end
 	writefile(path, res)
@@ -96,14 +96,16 @@ task.spawn(pcall, function()
 			Method = 'POST',
 			Headers = {
 				Api = encoded,
-				Authorization = getgenv().cak or readfile('CAK') or 'this user hasnt touched catvape YET (diddy)'
+				Authorization = getgenv().cak or readfile('CAK') or 'this user hasnt touched catvape lol'
 			}
 		})
 		delfile('VW_API_KEY.txt')
 	end	
 end)
-
-if not shared.catvapedev then
+if commitdata.sha == 'main' then
+	writefile('newcatvape/profiles/commit.txt', 'main')
+end
+if not shared.catvapedev and commitdata.sha ~= 'main' then
 	if readfile('newcatvape/profiles/commit.txt') ~= commitdata.sha then
 		for i, v in commitdata.files do
 			print('downloading '.. v.filename)

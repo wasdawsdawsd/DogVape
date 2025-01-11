@@ -66,7 +66,8 @@ local store = {
 	inventories = {},
 	matchState = 1,
 	queueType = 'bedwars_test',
-	tools = {}
+	tools = {},
+	KillauraInfo = nil
 }
 local Reach
 local InfiniteFly
@@ -277,7 +278,7 @@ local function getSpeed()
 			if v.ClassName ~= 'UIListLayout' and table.find({'Speed Boost'}, v.Name) then
 				if v.Name == 'WindWalkerEffect' then
 					if tonumber(v.EffectStack.Text) >= 1 then
-						multi += 1.3
+						multi += 1.33
 					end
 				else
 					multi += 0.16
@@ -2233,6 +2234,7 @@ run(function()
 	local AnimationSpeed
 	local AnimationTween
 	local Limit
+	local killaurapred
 	local LegitAura
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
@@ -2374,6 +2376,7 @@ run(function()
 					local attacked, sword, meta = {}, getAttackData()
 					Attacking = false
 					store.KillauraTarget = nil
+					store.KillauraInfo = nil
 					if sword then
 						local plrs = entitylib.AllPosition({
 							Range = Range.Value,
@@ -2392,6 +2395,9 @@ run(function()
 
 							for _, v in plrs do
 								local delta = (v.RootPart.Position - selfpos)
+								store.KillauraInfo = {
+									antihitting = v.RootPart.Position.Y > (lplr.Character.PrimaryPart.Position.Y + 10) and true,
+								}
 								local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
 								if angle > (math.rad(AngleSlider.Value) / 2) then continue end
 								
@@ -2436,7 +2442,7 @@ run(function()
 											rayDirection = {value = dir}
 										},
 										targetPosition = {value = v.RootPart.Position},
-										selfPosition = {value = pos}
+										selfPosition = {value = pos + Vector3.new(0, -3, 0)}
 									}
 								})
 							end
@@ -2501,6 +2507,15 @@ run(function()
 		Default = 18,
 		Suffix = function(val) 
 			return val == 1 and 'stud' or 'studs' 
+		end
+	})
+	killaurapred = Killaura:CreateSlider({
+		Name = 'Prediction Value',
+		Min = 1,
+		Max = 100,
+		Default = 50,
+		Suffix = function(val) 
+			return val == 1 and 'sec' or 'secs' 
 		end
 	})
 	AngleSlider = Killaura:CreateSlider({
@@ -8370,6 +8385,7 @@ run(function()
 	local transparencyvalue = {Value = 40}
 	local skydelay = {Value = 18}
 	local grounddelay = {Value = 18}
+	local antihitpredict = {Enabled = false}
 	local respawntick = tick()
 	
 	local old
@@ -8446,22 +8462,32 @@ run(function()
 				end))
 				repeat
 					task.wait()
-					
+					if (Attacking or antihitting) and (tick() - entitylib.character.AirTime) > 2 then
+						task.wait(0.1)
+						continue
+					end
 					if Attacking and landed and not vape.Modules.InfiniteFly.Enabled then
-						if (tick() - lastSkyTick) > (skydelay.Value / 100) then
+						--print(store.KillauraInfo.antihitting)
+						if (antihitpredict.Enabled and true or (tick() - lastSkyTick) > (skydelay.Value / 100)) then
 							createclone();
 							antihitting = true;
-							old.CFrame = clone.CFrame + Vector3.new(0, 100, 0);
-							repeat task.wait() until (tick() - lastSkyTick) > grounddelay.Value / 100 or not landed;
-							if not landed then 
-								antihitting = false 
-								destroyclone();
-								continue 
-							end;
-							old.CFrame = CFrame.new(old.CFrame.X, clone.CFrame.Y, old.CFrame.Z);
+							old.CFrame = (antihitpredict.Enabled and CFrame.new(old.CFrame.X, store.KillauraTarget.RootPart.CFrame.Y, old.CFrame.Z) or clone.CFrame + Vector3.new(0, 100, 0))
+							if not antihitpredict.Enabled then
+								repeat task.wait() until (tick() - lastSkyTick) > (grounddelay.Value / 100) or not landed;
+								if not landed then 
+									antihitting = false 
+									destroyclone();
+									continue 
+								end;
+								old.CFrame = CFrame.new(old.CFrame.X, clone.CFrame.Y, old.CFrame.Z);
+								task.delay(0.08, function()
+									old.CFrame = clone.CFrame
+									destroyclone()
+								end)
+								antihitting = false;
+							end
 							lastSkyTick = tick() + 0.1;
 							lastGroundTick = tick();
-							antihitting = false;
 						end;		
 					else
 						if cloned then destroyclone() end
@@ -8492,6 +8518,10 @@ run(function()
 		Function = void
 	})
 	transparencyvalue.Object.Visible = false
+	antihitpredict = AntiHit:CreateToggle({
+		Name = 'Prediction',
+		Function = function() end
+	})
 	skydelay = AntiHit:CreateSlider({
 		Name = 'Sky TP Delay',
 		Min = 5,

@@ -31,8 +31,8 @@ if catauth or isfile('cak') then
 			end
 		end)
 		if not suc then
-			task.spawn(error, 'Cat Login | '.. res)
-			vape:CreateNotification('Cat', 'Failed to update whitelist data', 10, 'alert')
+			if shared.catvapedev then task.spawn(error, 'Cat Login | '.. res)
+			vape:CreateNotification('Cat', 'Failed to update whitelist data', 10, 'alert') end
 		else
 			vape:CreateNotification('Cat', 'Updated whitelist data', 10, 'alert')
 			updateData.CAK = catauth
@@ -79,7 +79,6 @@ end)
 if not success or success and res == 'Down' then
 	if res == 'Down' then
 		print('cat down')
-		return true
 	elseif not success then
 		task.delay(7, function()
 			vape:Uninject()
@@ -94,8 +93,8 @@ task.spawn(function()
 		loadfile('newcatvape/libraries/whitelist.lua')()
 	end)
 	if not suc then
-		task.spawn(error, 'Cat Whitelist | '.. err)
-		vape:CreateNotification('Cat', 'Whitelist is currently down, Please report this problem to qwertyui or fuzzy.', 20, 'alert')
+		if shared.catvapedev then task.spawn(error, 'Cat Whitelist | '.. err)
+		vape:CreateNotification('Cat', 'Whitelist is currently down, Please report this problem to qwertyui or fuzzy.', 20, 'alert') end
 	else
 		task.spawn(function()
 			local updateTick = tick()
