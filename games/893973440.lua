@@ -732,158 +732,160 @@ run(function()
 			if callback then
                 AutoWin:Clean(game:GetService("GuiService").ErrorMessageChanged:Connect(function() -- credits to Infinite Yield
                     if not AutoRejoin.Enabled then return end
-                    game:FindService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lplr)
+                    repeat game:FindService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lplr) task.wait(0.5) until false
                 end))
 				repeat
-					if store.Escaped or not store.Beast or store.Status:find("GAME OVER") or store.Status:find("INTERMISSION") then
-						lplr.Character.HumanoidRootPart.CFrame = CFrame.new(103.5, 8.207777976989746, -417)
-						if twn then twn:Cancel() twn = nil end
-					else
-						local mag = store.Status:find("15 SEC") and 5000 or (store.Beast.Character.HumanoidRootPart.Position - lplr.Character.HumanoidRootPart.Position).magnitude
-						replicatedStorage.RemoteEvent:FireServer("Input", "Action", true)
-						if store.Beast ~= lplr then -- SURVIVOR
-							lplr.Character.HumanoidRootPart.Velocity = Vector3.zero
-							if mag <= 25 and (not store.Escaped and not store.Status:find("GAME OVER")) then
-								--tween:Cancel()
-								
-								lplr.Character.HumanoidRootPart.CFrame *= CFrame.new(0,100,0)
-								if twn then twn:Cancel() twn = nil end
-								jumpTick = 0
-							else
-								task.wait(0)
-								if #playersService:GetPlayers() <= 3 and AutoServerhop.Enabled then
-									vape.Modules.Serverhop:Toggle()
-									task.wait(0.1)
-								end
-								replicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
-								jumpTick += 1
-								local pods = getAllPods()
-								local captured
-								for i, v in pods do
-									local plr = getPlayerInPod(v)
-									if plr then
-										captured = plr
-									end
-								end
-								local mag2 = 500
-								if captured then
-									mag2 = (captured.Position - store.Beast.Character.HumanoidRootPart.Position).magnitude
-								end
-								if (captured and SaveCaptured.Enabled) and mag2 >= 30 then
-									lplr.Character.HumanoidRootPart.CFrame = captured.CFrame * CFrame.new(0,-2,4)
-									if twn then
-										twn:Cancel()
-										tweening = false
-										twn = nil
-									else
-										computers = 0
-									end
+					pcall(function()
+						if store.Escaped or not store.Beast or store.Status:find("GAME OVER") or store.Status:find("INTERMISSION") then
+							lplr.Character.HumanoidRootPart.CFrame = CFrame.new(103.5, 8.207777976989746, -417)
+							if twn then twn:Cancel() twn = nil end
+						else
+							local mag = store.Status:find("15 SEC") and 5000 or (store.Beast.Character.HumanoidRootPart.Position - lplr.Character.HumanoidRootPart.Position).magnitude
+							replicatedStorage.RemoteEvent:FireServer("Input", "Action", true)
+							if store.Beast ~= lplr then -- SURVIVOR
+								lplr.Character.HumanoidRootPart.Velocity = Vector3.zero
+								if mag <= 25 and (not store.Escaped and not store.Status:find("GAME OVER")) then
+									--tween:Cancel()
+									
+									lplr.Character.HumanoidRootPart.CFrame *= CFrame.new(0,100,0)
+									if twn then twn:Cancel() twn = nil end
+									jumpTick = 0
 								else
-									if store.Status:find("COMPUTER") then -- COMPUTERS
-										local pos = lplr.Character.HumanoidRootPart.Position
-										if not computer or not computer.Object or not computer.Object:FindFirstChild("Screen") or computer.Object.Screen.BrickColor == BrickColor.new("Dark green") or mag <= 30 then
-											if mag <= 30 then
-												notif("Cat", "The beast is near!", 3, "alert")
+									task.wait(0)
+									if #playersService:GetPlayers() <= 3 and AutoServerhop.Enabled then
+										vape.Modules.Serverhop:Toggle()
+										task.wait(0.1)
+									end
+									replicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
+									jumpTick += 1
+									local pods = getAllPods()
+									local captured
+									for i, v in pods do
+										local plr = getPlayerInPod(v)
+										if plr then
+											captured = plr
+										end
+									end
+									local mag2 = 500
+									if captured then
+										mag2 = (captured.Position - store.Beast.Character.HumanoidRootPart.Position).magnitude
+									end
+									if (captured and SaveCaptured.Enabled) and mag2 >= 30 then
+										lplr.Character.HumanoidRootPart.CFrame = captured.CFrame * CFrame.new(0,-2,4)
+										if twn then
+											twn:Cancel()
+											tweening = false
+											twn = nil
+										else
+											computers = 0
+										end
+									else
+										if store.Status:find("COMPUTER") then -- COMPUTERS
+											local pos = lplr.Character.HumanoidRootPart.Position
+											if not computer or not computer.Object or not computer.Object:FindFirstChild("Screen") or computer.Object.Screen.BrickColor == BrickColor.new("Dark green") or mag <= 30 then
+												if mag <= 30 then
+													notif("Cat", "The beast is near!", 3, "alert")
+												end
+												if computer then
+													if computer.Object:FindFirstChild("Screen") and computer.Object.Screen.BrickColor == BrickColor.new("Dark green") then
+														notif("Cat", "Computer successfully hacked!", 3)
+													end
+												end
+												notif("Cat", "Finding new computer...", 1)
+												computer = getComputer()
 											end
-											if computer then
-												if computer.Object:FindFirstChild("Screen") and computer.Object.Screen.BrickColor == BrickColor.new("Dark green") then
-													notif("Cat", "Computer successfully hacked!", 3)
+											if not tweening and computer then
+												if pos.X ~= computer.Position.X or pos.Z ~= computer.Position.Z then
+													--cloneTween(computer.CFrame, 5)
+													if not store.Status:find("FIND") then
+														local tme = math.random(11, 13)
+														tween(computer.CFrame, tme, true)
+														notif("Cat", "Found! Arriving in "..tme.." seconds...", tme - 0.3)
+													end
 												end
 											end
-											notif("Cat", "Finding new computer...", 1)
-											computer = getComputer()
-										end
-										if not tweening and computer then
-											if pos.X ~= computer.Position.X or pos.Z ~= computer.Position.Z then
-												--cloneTween(computer.CFrame, 5)
-												if not store.Status:find("FIND") then
-													local tme = math.random(11, 13)
-													tween(computer.CFrame, tme, true)
-													notif("Cat", "Found! Arriving in "..tme.." seconds...", tme - 0.3)
+											for i2, v2 in pairs(playersService:GetChildren()) do
+												if computer and v2.Character and v2.Character.HumanoidRootPart then
+													local mag2 = (v2.Character.HumanoidRootPart.Position - computer.Position).magnitude
+													if mag2 < 1.15 and v2 ~= lplr then
+														computer = getComputer()
+													end
 												end
 											end
-										end
-										for i2, v2 in pairs(playersService:GetChildren()) do
-											if computer and v2.Character and v2.Character.HumanoidRootPart then
-												local mag2 = (v2.Character.HumanoidRootPart.Position - computer.Position).magnitude
-												if mag2 < 1.15 and v2 ~= lplr then
-													computer = getComputer()
-												end
+											if tweening then
+												jumpTick = 0
 											end
-										end
-										if tweening then
+											if jumpTick == 80 then
+												lplr.Character.HumanoidRootPart.CFrame += Vector3.new(0, 3, 0)
+												task.wait(0.01)
+												jumpTick = 0
+												if not store.Status:find("FIND") then tween(computer.CFrame, 0, true) end
+											end
+										elseif store.Status:find("FIND") then -- EXITS
+											if not vape.Modules.Phase.Enabled then
+												vape.Modules.Phase:Toggle()
+											end
+											local pos = lplr.Character.HumanoidRootPart.Position
 											jumpTick = 0
+											if twn then twn:Cancel() twn = nil end
+											local additionalPos = CFrame.new(0,0,0)
+											if not exit or mag <= 15 then
+												if mag <= 15 then
+													notif("Cat", "The beast is near!", 3, "alert")
+												end
+												exit = getExit()
+											end
+											local partTP = exit.ExitArea
+											local speed = 3
+											
+											if exit.Door.Hinge.Rotation.Y == 0 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == 90 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == 180 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == 270 and exit:FindFirstChild("ExitDoorTrigger") then
+												partTP = exit.ExitDoorTrigger
+												speed = 0.65
+											end
+											if exit.Door.Hinge.Rotation.Y == -90 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == -180 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == -270 and exit:FindFirstChild("ExitDoorTrigger") then
+												partTP = exit.ExitDoorTrigger
+												speed = 0.65
+											end
+											if mag >= 15 then
+												if not tweening then
+													if pos.X ~= partTP.Position.X or pos.Z ~= partTP.Position.Z then
+														tween(partTP.CFrame, speed, false)
+													end
+												end
+											else
+												exit = getExit()
+											end
 										end
-										if jumpTick == 80 then
-											lplr.Character.HumanoidRootPart.CFrame += Vector3.new(0, 3, 0)
-											task.wait(0.01)
-											jumpTick = 0
-											if not store.Status:find("FIND") then tween(computer.CFrame, 0, true) end
-										end
-									elseif store.Status:find("FIND") then -- EXITS
-										if not vape.Modules.Phase.Enabled then
-											vape.Modules.Phase:Toggle()
-										end
-										local pos = lplr.Character.HumanoidRootPart.Position
-										jumpTick = 0
-										if twn then twn:Cancel() twn = nil end
-										local additionalPos = CFrame.new(0,0,0)
-                                        if not exit or mag <= 15 then
-                                            if mag <= 15 then
-                                                notif("Cat", "The beast is near!", 3, "alert")
-                                            end
-                                            exit = getExit()
-                                        end
-                                        local partTP = exit.ExitArea
-                                        local speed = 3
-										
-                                        if exit.Door.Hinge.Rotation.Y == 0 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == 90 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == 180 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == 270 and exit:FindFirstChild("ExitDoorTrigger") then
-                                            partTP = exit.ExitDoorTrigger
-                                            speed = 0.65
-                                        end
-                                        if exit.Door.Hinge.Rotation.Y == -90 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == -180 and exit:FindFirstChild("ExitDoorTrigger") or exit.Door.Hinge.Rotation.Y == -270 and exit:FindFirstChild("ExitDoorTrigger") then
-                                            partTP = exit.ExitDoorTrigger
-                                            speed = 0.65
-                                        end
-										if mag >= 15 then
-                                        	if not tweening then
-	                                            if pos.X ~= partTP.Position.X or pos.Z ~= partTP.Position.Z then
-	                                            	tween(partTP.CFrame, speed, false)
-                                            	end
-	                                        end
-                                        else
-                                            exit = getExit()
-                                        end
 									end
 								end
-							end
-						else -- BEAST
-							lplr.Character.HumanoidRootPart.Velocity = Vector3.zero
-							if lplr.Character:FindFirstChild("Part") and lplr.Character.Part:FindFirstChild("RopeConstraint") then
-								local pod = getEmptyPod()
-								lplr.Character.HumanoidRootPart.CFrame = pod.PodTrigger.CFrame
-							else
-								--print("beast")
-								target = nil
-								for i, v in entitylib.AllPosition({
-									Range = 300,
-									Wallcheck = false,
-									Part = 'RootPart',
-									Players = true,
-									NPCs = false,
-									Limit = 10
-								}) do
-									target = v
-									--print("targets")
-									if target ~= nil then
-										--print("go!!!")
-										if not vape.Modules.Killaura.Enabled then vape.Modules.Killaura:Toggle() end
-										lplr.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0,0,4)
+							else -- BEAST
+								lplr.Character.HumanoidRootPart.Velocity = Vector3.zero
+								if lplr.Character:FindFirstChild("Part") and lplr.Character.Part:FindFirstChild("RopeConstraint") then
+									local pod = getEmptyPod()
+									lplr.Character.HumanoidRootPart.CFrame = pod.PodTrigger.CFrame
+								else
+									--print("beast")
+									target = nil
+									for i, v in entitylib.AllPosition({
+										Range = 300,
+										Wallcheck = false,
+										Part = 'RootPart',
+										Players = true,
+										NPCs = false,
+										Limit = 10
+									}) do
+										target = v
+										--print("targets")
+										if target ~= nil then
+											--print("go!!!")
+											if not vape.Modules.Killaura.Enabled then vape.Modules.Killaura:Toggle() end
+											lplr.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0,0,4)
+										end
 									end
 								end
 							end
 						end
-					end
+					end)
 					task.wait()
 				until not AutoWin.Enabled
 			end
