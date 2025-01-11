@@ -3,6 +3,8 @@ getgenv().request = request or http.request or function() end
 getgenv().keypress = keypress or function() end
 getgenv().initcatvape = true
 
+local httpservice = game:GetService('HttpService')
+
 if not isfile('catvape_reset') then
 	pcall(function()
 		delfolder('newcatvape')
