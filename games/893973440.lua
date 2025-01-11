@@ -119,20 +119,6 @@ task.spawn(function()
         store.Captured = lplr.TempPlayerStatsModule.Captured.Value
         store.Progress = lplr.TempPlayerStatsModule.ActionProgress.Value * 100
 
-		for i, v in store.Computers.Objects do
-			local trigger1 = v.ComputerTrigger1
-			local trigger2 = v.ComputerTrigger2
-			local trigger3 = v.ComputerTrigger3
-			if lplr.Character then
-				local pos = lplr.Character.HumanoidRootPart.Position
-				if pos == trigger1.Position or pos == trigger2.Position or pos == trigger3.Position then
-					if tostring(v.Screen.BrickColor) == "Dark green" then
-						-- hacked
-					end
-				end
-			end
-		end
-
         for i, v in playersService:GetPlayers() do
             pcall(function()
                 if store.Timer > 0 then
