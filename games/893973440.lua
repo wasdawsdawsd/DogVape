@@ -822,9 +822,6 @@ run(function()
 												if not store.Status:find("FIND") then tween(computer.CFrame, 0, true) end
 											end
 										elseif store.Status:find("FIND") then -- EXITS
-											if not vape.Modules.Phase.Enabled then
-												vape.Modules.Phase:Toggle()
-											end
 											local pos = lplr.Character.HumanoidRootPart.Position
 											jumpTick = 0
 											if twn then twn:Cancel() twn = nil end
