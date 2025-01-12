@@ -16,6 +16,8 @@ local vapeEvents = setmetatable({}, {
 	end
 })
 
+local Lighting = game:GetService('Lighting')
+local lightingService = Lighting
 local playersService = cloneref(game:GetService('Players'))
 local replicatedStorage = cloneref(game:GetService('ReplicatedStorage'))
 local runService = cloneref(game:GetService('RunService'))
@@ -8523,10 +8525,6 @@ run(function()
 				end))
 				repeat
 					task.wait()
-					if (Attacking or antihitting) and (tick() - entitylib.character.AirTime) > 2 then
-						task.wait(0.1)
-						continue
-					end
 					if Attacking and landed and not vape.Modules.InfiniteFly.Enabled then
 						if (tick() - lastSkyTick) > (skydelay.Value / 100) then
 							createclone();

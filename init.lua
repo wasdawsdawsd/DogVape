@@ -39,17 +39,15 @@ local delfile = delfile or function(file)
 end
 
 local commitdata = getcommit()
-local function downloadFile(path, func)
-	if not isfile(path) then
-		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
-		end)
-		if (not suc or res == '404: Not Found') and shared.catvapedev then
-			task.spawn(error, path.. ' | '.. res)
-		end
-		writefile(path, res)
+local function downloadFile(path)
+	local suc, res = pcall(function()
+		return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
+	end)
+	if (not suc or res == '404: Not Found') then
+		return 
 	end
-	return (func or readfile)(path)
+	writefile(path, res)
+	return readfile(path)
 end
 
 local isfolderv2 = function(filename)
