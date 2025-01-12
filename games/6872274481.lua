@@ -1056,16 +1056,15 @@ run(function()
 		updateStore(bedwars.Store:getState(), {})
 	end
 
-	for _, event in {'MatchEndEvent', 'EntityDeathEvent', 'EntityDamageEvent', 'BedwarsBedBreak', 'BalloonPopped', 'AngelProgress', 'GrapplingHookFunctions'} do
-		if not vape.Connections then return end
-		bedwars.Client:WaitFor(event):andThen(function(connection)
-			vape:Clean(connection:Connect(function(...)
-				vapeEvents[event]:Fire(...)
-			end))
-		end)
-	end
-
 	pcall(function()
+		for _, event in {'MatchEndEvent', 'EntityDeathEvent', 'EntityDamageEvent', 'BedwarsBedBreak', 'BalloonPopped', 'AngelProgress', 'GrapplingHookFunctions'} do
+			if not vape.Connections then return end
+			bedwars.Client:WaitFor(event):andThen(function(connection)
+				vape:Clean(connection:Connect(function(...)
+					vapeEvents[event]:Fire(...)
+				end))
+			end)
+		end
 		for _, event in {'PlaceBlockEvent', 'BreakBlockEvent'} do
 			bedwars.ClientDamageBlock:WaitFor(event):andThen(function(connection)
 				if not vape.Connections then return end
@@ -1130,27 +1129,29 @@ run(function()
 		end)
 	end)
 
-	vape:Clean(vapeEvents.BedwarsBedBreak.Event:Connect(function(bedTable)
-		if bedTable.player and bedTable.player.UserId == lplr.UserId then
-			beds:Increment()
-		end
-	end))
-
-	vape:Clean(vapeEvents.MatchEndEvent.Event:Connect(function(winTable)
-		if (bedwars.Store:getState().Game.myTeam or {}).id == winTable.winningTeamId or lplr.Neutral then
-			wins:Increment()
-		end
-	end))
-
-	vape:Clean(vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
-		local killer = playersService:GetPlayerFromCharacter(deathTable.fromEntity)
-		local killed = playersService:GetPlayerFromCharacter(deathTable.entityInstance)
-		if not killed or not killer then return end
-
-		if killed ~= lplr and killer == lplr then
-			kills:Increment()
-		end
-	end))
+	pcall(function()
+		vape:Clean(vapeEvents.BedwarsBedBreak.Event:Connect(function(bedTable)
+			if bedTable.player and bedTable.player.UserId == lplr.UserId then
+				beds:Increment()
+			end
+		end))
+	
+		vape:Clean(vapeEvents.MatchEndEvent.Event:Connect(function(winTable)
+			if (bedwars.Store:getState().Game.myTeam or {}).id == winTable.winningTeamId or lplr.Neutral then
+				wins:Increment()
+			end
+		end))
+	
+		vape:Clean(vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
+			local killer = playersService:GetPlayerFromCharacter(deathTable.fromEntity)
+			local killed = playersService:GetPlayerFromCharacter(deathTable.entityInstance)
+			if not killed or not killer then return end
+	
+			if killed ~= lplr and killer == lplr then
+				kills:Increment()
+			end
+		end))
+	end)
 
 	task.spawn(function()
 		repeat
