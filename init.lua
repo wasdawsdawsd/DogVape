@@ -109,15 +109,7 @@ if not shared.catvapedev and commitdata.sha ~= 'main' then
 			if isfolderv2(v.filename) then
 				makefolder('newcatvape/'.. v.filename)
 			else
-				local name = v.filename
-				if v.filename:find('pc/') or v.filename:find('mob/') then
-					local ismob = v.filename:find('mob/')
-					local spliited = v.filename:split(ismob and 'mob/' or 'pc/')
-					name = spliited[1]..spliited[2]
-					writefile('newcatvape/'.. name, game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'.. v.filename))
-				else
-					downloadFile('newcatvape/'.. name)
-				end
+				downloadFile('newcatvape/'.. v.filename)
 			end
 			print('downloaded '.. v.filename)
 		end
