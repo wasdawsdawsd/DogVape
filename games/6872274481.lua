@@ -8533,7 +8533,7 @@ run(function()
 						if (tick() - lastSkyTick) > (skydelay.Value / 100) then
 							createclone();
 							antihitting = true;
-							old.CFrame = (clone.CFrame + Vector3.new(0, 100, 0))
+							old.CFrame = (clone.CFrame + Vector3.new(0, 200, 0))
 							repeat task.wait() until (tick() - lastSkyTick) > (grounddelay.Value / 100) or not landed;
 							if not landed then 
 								antihitting = false 
