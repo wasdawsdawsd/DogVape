@@ -40,12 +40,6 @@ end
 
 local commitdata = getcommit()
 local function downloadFile(path, func)
-	local suc, res = pcall(function()
-		return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
-	end)
-	if (not suc or res == '404: Not Found') 
-	then
-		return --task.spawn(error, path.. ' | '.. res)
 	if not isfile(path) then
 		local suc, res = pcall(function()
 			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
