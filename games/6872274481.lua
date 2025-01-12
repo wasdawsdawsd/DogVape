@@ -728,7 +728,6 @@ run(function()
 
 	local remoteNames = ({pcall(function()
 		return {
-			SummonerClawAttack = debug.getconstants(Knit.Controllers.SummonerClawController.attack),
 			AckKnockback = debug.getproto(debug.getproto(Knit.Controllers.KnockbackController.KnitStart, 1), 1),
 			AfkStatus = debug.getproto(Knit.Controllers.AfkController.KnitStart, 1),
 			AttackEntity = Knit.Controllers.SwordController.sendServerRequest,
@@ -758,7 +757,8 @@ run(function()
 			SpawnRaven = Knit.Controllers.RavenController.spawnRaven,
 			SummonerClawAttack = Knit.Controllers.SummonerClawController.attack
 		}
-	end)})[2]
+	end)})
+	remoteNames = remoteNames[1] and remoteNames[2] or {}
 	local function dumpRemote(tab)
 		local ind
 		for i, v in tab do
