@@ -8,10 +8,12 @@ getgenv().request = request --> lmao
 getgenv().run = function(func)
 	local a, b = pcall(func)
 	if not a then
-		if shared.vape then
-			shared.vape:CreateNotification('Vape', b, 12, 'alert')
+		if shared.catvapedev then
+			if shared.vape then
+				shared.vape:CreateNotification('Vape', b, 12, 'alert')
+			end
+			task.spawn(error, `Vape | {b}`);
 		end
-		task.spawn(error, `Vape | {b}`);
 	end
 end
 
