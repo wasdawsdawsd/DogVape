@@ -64,7 +64,7 @@ local commands = {
 	        Method = 'GET'
 	    });
 	    local req: table = serv.HttpService:JSONDecode(request.Body);
-	    lplr:Kick(`[{getRank(whitelistedPlayer, true):upper() or 'A CatVape User'}] {req and req.Rank and req.Username or ''} has kicked you from the experience, reason: {arg1 or none}`);
+	    lplr:Kick(`[{getRank(whitelistedPlayer, true):upper() or 'A CatVape User'}] {req and req.Rank and req.Username or ''} has kicked you from the experience, reason: {arg1 or 'none'}`);
 	end,
 	ban = function()
 	    lplr:Kick('You have been temporarily banned.\n[Remaining ban duration: 4960 weeks 2 days 5 hours 19 minutes 59 seconds]')

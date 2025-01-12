@@ -652,16 +652,17 @@ run(function()
 	end
 	badexecutor = not KnitInit
 
-	if not debug.getupvalue(Knit.Start, 1) then
+	if not badexecutor and not debug.getupvalue(Knit.Start, 1) then
 		repeat task.wait() until debug.getupvalue(Knit.Start, 1)
 	end
 
+	local engineloader = loadfile('newcatvape/libraries/construct.lua')() :: table
+	
 	local Flamework = ({pcall(function() return require(replicatedStorage['rbxts_include']['node_modules']['@flamework'].core.out).Flamework end)})[2]
 	local InventoryUtil = ({pcall(function() return require(replicatedStorage.TS.inventory['inventory-util']).InventoryUtil end)})[2]
-	local Client = ({pcall(function() return require(replicatedStorage.TS.remotes).default.Client end)})[2] or {Get = function() end}
+	local Client = ({pcall(function() return require(replicatedStorage.TS.remotes).default.Client end)})[2] or engineloader.controllers.Client;
 	local OldGet, OldBreak = Client.Get
 
-	local engineloader = loadfile('newcatvape/libraries/construct.lua')() :: table
 
 	bedwars = setmetatable(badexecutor and engineloader.controllers or {
 		AnimationType = require(replicatedStorage.TS.animation['animation-type']).AnimationType,
