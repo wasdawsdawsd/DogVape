@@ -2509,15 +2509,6 @@ run(function()
 			return val == 1 and 'stud' or 'studs' 
 		end
 	})
-	killaurapred = Killaura:CreateSlider({
-		Name = 'Prediction Value',
-		Min = 1,
-		Max = 100,
-		Default = 50,
-		Suffix = function(val) 
-			return val == 1 and 'sec' or 'secs' 
-		end
-	})
 	AngleSlider = Killaura:CreateSlider({
 		Name = 'Max angle',
 		Min = 1,
@@ -8467,25 +8458,21 @@ run(function()
 						continue
 					end
 					if Attacking and landed and not vape.Modules.InfiniteFly.Enabled then
-						--print(store.KillauraInfo.antihitting)
-						if (antihitpredict.Enabled and true or (tick() - lastSkyTick) > (skydelay.Value / 100)) then
+						if (tick() - lastSkyTick) > (skydelay.Value / 100) then
 							createclone();
 							antihitting = true;
-							old.CFrame = (antihitpredict.Enabled and CFrame.new(old.CFrame.X, store.KillauraTarget.RootPart.CFrame.Y, old.CFrame.Z) or clone.CFrame + Vector3.new(0, 100, 0))
-							if not antihitpredict.Enabled then
-								repeat task.wait() until (tick() - lastSkyTick) > (grounddelay.Value / 100) or not landed;
-								if not landed then 
-									antihitting = false 
-									destroyclone();
-									continue 
-								end;
-								old.CFrame = CFrame.new(old.CFrame.X, clone.CFrame.Y, old.CFrame.Z);
-								task.delay(0.08, function()
-									old.CFrame = clone.CFrame
-									destroyclone()
-								end)
-								antihitting = false;
-							end
+							old.CFrame = (clone.CFrame + Vector3.new(0, 100, 0))
+							repeat task.wait() until (tick() - lastSkyTick) > (grounddelay.Value / 100) or not landed;
+							if not landed then 
+								antihitting = false 
+								destroyclone();
+								continue 
+							end;
+							old.CFrame = CFrame.new(old.CFrame.X, clone.CFrame.Y, old.CFrame.Z);
+							task.delay(0.08, function()
+								old.CFrame = clone.CFrame
+							end)
+							antihitting = false;
 							lastSkyTick = tick() + 0.1;
 							lastGroundTick = tick();
 						end;		
@@ -8518,10 +8505,6 @@ run(function()
 		Function = void
 	})
 	transparencyvalue.Object.Visible = false
-	antihitpredict = AntiHit:CreateToggle({
-		Name = 'Prediction',
-		Function = function() end
-	})
 	skydelay = AntiHit:CreateSlider({
 		Name = 'Sky TP Delay',
 		Min = 5,
