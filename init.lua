@@ -4,9 +4,6 @@ getgenv().keypress = keypress or function() end
 getgenv().initcatvape = true
 
 local httpService = game:GetService('HttpService')
-local httpasync = function(...)
-	return game:HttpGet(...)
-end
 
 if not isfile('catvape_reset') then
 	pcall(function()
@@ -18,15 +15,15 @@ end
 local function getcommit(sub)
 	sub = sub or 7
 	local suc, res = pcall(function()
-		local commitinfo = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/commits'))[1]
+		local commitinfo = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/commits'))[1]
 		if commitinfo and type(commitinfo) == 'table' then
-			local fullinfo = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/commits/'.. commitinfo.sha))
+			local fullinfo = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/commits/'.. commitinfo.sha))
 			fullinfo.hash = commitinfo.sha:sub(1, sub)
 			return fullinfo
 		end
 	end)
 	if res == nil then
-		res = {sha = 'main'}
+		res = {sha = 'main', files = {}}
 	end
 	return res
 end
@@ -43,19 +40,21 @@ end
 
 local commitdata = getcommit()
 local function downloadFile(path, func)
-	local suc, res = pcall(function()
-		return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
-	end)
-	if (not suc or res == '404: Not Found') and shared.catvapedev then
-		task.spawn(error, path.. ' | '.. res)
+	if not isfile(path) then
+		local suc, res = pcall(function()
+			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
+		end)
+		if (not suc or res == '404: Not Found') and shared.catvapedev then
+			task.spawn(error, path.. ' | '.. res)
+		end
+		writefile(path, res)
 	end
-	writefile(path, res)
 	return (func or readfile)(path)
 end
 
 local isfolderv2 = function(filename)
 	local a, b = pcall(function()
-		return httpasync('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha .. '/' .. filename)
+		return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha .. '/' .. filename)
 	end)
 	return not a or b == '404: Not Found'
 end
@@ -67,7 +66,7 @@ if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 then
 		end
 	end
 	writefile('newcatvape/profiles/commit.txt', commitdata.sha)
-	local files = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents', true))
+	local files = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/contents', true))
 	for i,v in files do
 		if v.path == 'assets' or v.path:find('assets') or v.path == 'profiles' or v.path:find('profiles') then continue end
 		if not isfolderv2(v.name) then
@@ -76,7 +75,7 @@ if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 then
 			print('new file downloaded '.. v.path)
 		else
 			makefolder('newcatvape/'.. v.path)
-			local files2 = httpService:JSONDecode(httpasync('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/' .. v.path, true))
+			local files2 = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/qwertyui-is-back/CatV5/contents/' .. v.path, true))
 			for i2 ,v2 in files2 do
 				if not isfolderv2(v2.path) then
 					print('downloading '.. v.path)
@@ -117,7 +116,7 @@ if not shared.catvapedev and commitdata.sha ~= 'main' then
 					local ismob = v.filename:find('mob/')
 					local spliited = v.filename:split(ismob and 'mob/' or 'pc/')
 					name = spliited[1]..spliited[2]
-					writefile('newcatvape/'.. name, httpasync('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'.. v.filename))
+					writefile('newcatvape/'.. name, game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..commitdata.sha..'/'.. v.filename))
 				else
 					downloadFile('newcatvape/'.. name)
 				end

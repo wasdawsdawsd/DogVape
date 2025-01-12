@@ -7266,6 +7266,7 @@ run(function()
 	local FPSBoost
 	local Kill
 	local Visualizer
+	local Part
 	local effects, util = {}, {}
 	
 	FPSBoost = vape.Legit:CreateModule({
@@ -7295,6 +7296,65 @@ run(function()
 						util[i] = v
 						bedwars.VisualizerUtils[i] = function() end
 					end
+				end
+				
+				-- Huge thanks to Infinite Yield, Toon gave me permission to use this code!
+				if Part.Enabled then
+					local Terrain = workspace:FindFirstChildOfClass('Terrain')
+					Terrain.WaterWaveSize = 0
+					Terrain.WaterWaveSpeed = 0
+					Terrain.WaterReflectance = 0
+					Terrain.WaterTransparency = 0
+					lightingService.GlobalShadows = false
+					lightingService.FogEnd = 9e9
+					settings().Rendering.QualityLevel = 1
+					for i,v in pairs(game:GetDescendants()) do
+						runService.Heartbeat:Wait()
+						if v:IsA("Part") or v:IsA("UnionOperation") or v:IsA("MeshPart") or v:IsA("CornerWedgePart") or v:IsA("TrussPart") then
+							v.Material = "Plastic"
+							v.Reflectance = 0
+						elseif v:IsA("Decal") then
+							v.Transparency = 1
+						elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+							v.Lifetime = NumberRange.new(0)
+						elseif v:IsA("Explosion") then
+							v.BlastPressure = 1
+							v.BlastRadius = 1
+						end
+					end
+					for i,v in pairs(lightingService:GetDescendants()) do
+						if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("BloomEffect") or v:IsA("DepthOfFieldEffect") then
+							v.Enabled = false
+						end
+					end
+					FPSBoost:Clean(workspace.DescendantAdded:Connect(function(child)
+						task.spawn(function()
+							if child:IsA("Part") or child:IsA("UnionOperation") or child:IsA("MeshPart") or child:IsA("CornerWedgePart") or child:IsA("TrussPart") then
+								runService.Heartbeat:Wait()
+								child.Material = "Plastic"
+								child.Reflectance = 0
+							elseif child:IsA("Decal") then
+								runService.Heartbeat:Wait()
+								child.Transparency = 1
+							elseif child:IsA("ParticleEmitter") or child:IsA("Trail") then
+								runService.Heartbeat:Wait()
+								child.Lifetime = NumberRange.new(0)
+							elseif child:IsA("Explosion") then
+								runService.Heartbeat:Wait()
+								child.BlastPressure = 1
+								child.BlastRadius = 1
+							elseif child:IsA('ForceField') then
+								runService.Heartbeat:Wait()
+								child:Destroy()
+							elseif child:IsA('Sparkles') then
+								runService.Heartbeat:Wait()
+								child:Destroy()
+							elseif child:IsA('Smoke') or child:IsA('Fire') then
+								runService.Heartbeat:Wait()
+								child:Destroy()
+							end
+						end)
+					end))
 				end
 	
 				repeat task.wait() until store.matchState ~= 0
@@ -7330,6 +7390,16 @@ run(function()
 	})
 	Visualizer = FPSBoost:CreateToggle({
 		Name = 'Visualizer',
+		Function = function()
+			if FPSBoost.Enabled then
+				FPSBoost:Toggle()
+				FPSBoost:Toggle()
+			end
+		end,
+		Default = true
+	})
+	Part = FPSBoost:CreateToggle({
+		Name = 'Parts',
 		Function = function()
 			if FPSBoost.Enabled then
 				FPSBoost:Toggle()

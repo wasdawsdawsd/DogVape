@@ -11,6 +11,7 @@ local lplr = playersService.LocalPlayer
 local vape = shared.vape
 local entitylib = vape.Libraries.entity
 local targetinfo = vape.Libraries.targetinfo
+local sessioninfo = vape.Libraries.sessioninfo
 
 local store = {
 	Beast = nil,
@@ -25,7 +26,12 @@ local store = {
     Timer = "",
     Escaped = false,
     Captured = false,
-    Progress = 0
+    Progress = 0,
+	Kills = 0,
+	GameStarted = Instance.new("BindableEvent"),
+	GameWon = Instance.new("BindableEvent"),
+	ComputerHacked = Instance.new("BindableEvent"),
+	PlayerFrozen = Instance.new("BindableEvent")
 }
 local ViewmodelTool
 local ViewmodelMotor
@@ -73,6 +79,33 @@ task.spawn(function()
 			end
 		end
 	end)
+	local oldescaped = false
+	vape:Clean(replicatedStorage.GameStatus:GetPropertyChangedSignal("Value"):Connect(function()
+		if replicatedStorage.GameStatus.Value:find("GAME STARTING") then
+			store.GameStarted:Fire()
+		elseif replicatedStorage.GameStatus.Value:find("GAME OVER") and store.Beast == lplr then
+			store.GameWon:Fire()
+		end
+	end))
+	vape:Clean(lplr.TempPlayerStatsModule.Escaped:GetPropertyChangedSignal("Value"):Connect(function()
+		if lplr.TempPlayerStatsModule.Escaped.Value and oldescaped ~= lplr.TempPlayerStatsModule.Escaped.Value then
+			store.GameWon:Fire()
+		end
+		oldescaped = lplr.TempPlayerStatsModule.Escaped.Value
+	end))
+    local old
+    old = hookmetamethod(game, "__namecall", function(self, ...)
+        if getnamecallmethod() == "FireClient" and checkcaller() then
+			print("HEyyyyy")
+            local args = {...}
+            if args[2]:find("is frozen") and store.Beast == lplr then
+                store.PlayerFrozen:Fire()
+				print("hey")
+            end
+            return old(self, ...)
+        end
+        return old(self, ...)
+    end)
     vape:Clean(runService.PreSimulation:Connect(function()
 		if replicatedStorage.CurrentMap.Value.Name ~= store.Map.Name then
 			table.clear(store.Computers.Objects)
@@ -85,20 +118,6 @@ task.spawn(function()
         store.Captured = lplr.TempPlayerStatsModule.Captured.Value
         store.Progress = lplr.TempPlayerStatsModule.ActionProgress.Value * 100
 
-		for i, v in store.Computers.Objects do
-			local trigger1 = v.ComputerTrigger1
-			local trigger2 = v.ComputerTrigger2
-			local trigger3 = v.ComputerTrigger3
-			if lplr.Character then
-				local pos = lplr.Character.HumanoidRootPart.Position
-				if pos == trigger1.Position or pos == trigger2.Position or pos == trigger3.Position then
-					if tostring(v.Screen.BrickColor) == "Dark green" then
-						-- hacked
-					end
-				end
-			end
-		end
-
         for i, v in playersService:GetPlayers() do
             pcall(function()
                 if store.Timer > 0 then
@@ -110,9 +129,6 @@ task.spawn(function()
                         if v.Character:FindFirstChild("WarningNotifDetector") == nil then
                             local p = Instance.new("Part", v.Character)
                             p.Name = "WarningNotifDetector"
-                            if v ~= lplr then
-                                notif("Cat", v.Name.." is the beast!",10)
-                            end
                         end
                     end
                 else
@@ -123,6 +139,49 @@ task.spawn(function()
         end
     end))
 end)
+
+local kills = sessioninfo:AddItem('Kills')
+local comps = sessioninfo:AddItem('Computers')
+local wins = sessioninfo:AddItem('Wins')
+local games = sessioninfo:AddItem('Games')
+local credits = sessioninfo:AddItem('Credits gained')
+local levels = sessioninfo:AddItem('Levels gained')
+
+sessioninfo:AddItem('Map', 0, function()
+	return store.Map and string.split(tostring(store.Map):gsub("By", "by"), " by ")[1] or 'Camp Lapis'
+end, false)
+
+local oldcredits = lplr.SavedPlayerStatsModule.Credits.Value
+vape:Clean(lplr.SavedPlayerStatsModule.Credits:GetPropertyChangedSignal("Value"):Connect(function()
+	oldcredits = lplr.SavedPlayerStatsModule.Credits.Value
+	if lplr.SavedPlayerStatsModule.Credits.Value > oldcredits then
+		credits:Increment(lplr.SavedPlayerStatsModule.Credits.Value - oldcredits)
+	end
+end))
+
+local oldlevel = lplr.SavedPlayerStatsModule.Level.Value
+vape:Clean(lplr.SavedPlayerStatsModule.Level:GetPropertyChangedSignal("Value"):Connect(function()
+	oldlevel = lplr.SavedPlayerStatsModule.Level.Value
+	if lplr.SavedPlayerStatsModule.Level.Value > oldlevel then
+		levels:Increment(lplr.SavedPlayerStatsModule.Level.Value - oldlevel)
+	end
+end))
+
+vape:Clean(store.GameStarted.Event:Connect(function()
+	games:Increment()
+end))
+vape:Clean(store.GameWon.Event:Connect(function()
+	wins:Increment()
+	if sessioninfo.Objects['Games'].Value < sessioninfo.Objects['Wins'].Value then
+		games:Increment(sessioninfo.Objects['Wins'].Value - sessioninfo.Objects['Games'].Value)
+	end
+end))
+vape:Clean(store.ComputerHacked.Event:Connect(function()
+	comps:Increment()
+end))
+vape:Clean(store.PlayerFrozen.Event:Connect(function()
+	kills:Increment()
+end))
 
 run(function()
 	local Killaura
@@ -184,15 +243,15 @@ run(function()
 
 								local tool = getAttackData()
 								
-								if not Swing.Enabled and SwingDelay < tick() and not v.Head.Parent.Torso.Anchored then
+								if not Swing.Enabled and SwingDelay < tick() and not target.Player.TempPlayerStatsModule.Ragdoll.Value and tool then
 									SwingDelay = tick() + 0.7
 									entitylib.character.Humanoid.Animator:LoadAnimation(tool.AnimSwing):Play()
 								end
 
 								if delta.Magnitude > AttackRange.Value then continue end
-								if AttackDelay < tick() then
+								if AttackDelay < tick() and tool then
 									AttackDelay = tick() + (0.1 / CPS.GetRandomValue())
-									tool.HammerEvent:FireServer("HammerHit", v.Head)
+									if not target.Player.TempPlayerStatsModule.Ragdoll.Value then tool.HammerEvent:FireServer("HammerHit", v.Head) end
 									if Rope.Enabled then tool.HammerEvent:FireServer("HammerTieUp", v.Head, lplr.Character.HumanoidRootPart.Position) end
 									if FaceTarget.Enabled then
 										lplr.Character:SetPrimaryPartCFrame(CFrame.new(lplr.Character.PrimaryPart.Position, Vector3.new(v.HumanoidRootPart.Position.X, lplr.Character.PrimaryPart.Position.Y, v.HumanoidRootPart.Position.Z)))
@@ -415,17 +474,31 @@ end)
 
 run(function()
 	local AutoComputer
+	local Mode
 	AutoComputer = vape.Categories.Minigames:CreateModule({
 		Name = "AutoComputer",
 		Tooltip = "Automatically complete the computer minigame.",
 		Function = function(callback: boolean)
 			if callback then
 				repeat
-					replicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
+					if Mode.Value == "Blatant" then
+						replicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
+					else
+						if lplr.TempPlayerStatsModule.TimingPinPosition.Value == lplr.TempPlayerStatsModule.TimingGoalPosition.Value then
+							replicatedStorage.RemoteEvent:FireServer("Input", "Action", true)
+							replicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
+						end
+					end
 					task.wait()
 				until not AutoComputer.Enabled
 			end
-		end
+		end,
+		ExtraText = function() return Mode.Value end
+	})
+	Mode = AutoComputer:CreateDropdown({
+		Name = "Mode",
+		List = {"Blatant", "Legit"},
+		Functon = void
 	})
 end)
 
@@ -476,14 +549,25 @@ run(function()
 end)
 
 run(function()
+	local GUIFixer
+	GUIFixer = vape.Legit:CreateModule({
+		Name = "GuiFixer",
+		Tooltip = "Fixes the gui being invisible.",
+		Function = function(callback: boolean)
+			lplr.PlayerGui.ScreenGui.MenusTabFrame.Visible = true
+		end
+	})
+end)
+
+run(function()
 	local Viewmodel
 	local oldtool
 	
 	local function newCharacter(char)
 		Viewmodel:Clean(char.Character.ChildAdded:Connect(function(obj)
-			if obj:IsA("Model") and obj:FindFirstChild("AnimSwing") then 
+			if obj.Name == "Hammer" then 
 				oldtool = obj
-				ViewmodelTool = oldtool.Handle:Clone()
+				ViewmodelTool = oldtool:WaitForChild("Handle"):Clone()
 				ViewmodelTool.CanCollide = false
 				ViewmodelTool.Massless = true
 				ViewmodelTool.Anchored = true
@@ -536,6 +620,7 @@ run(function()
 	local AutoRejoin
 	local AutoServerhop
 	local function getComputer()
+		if store.Status:find("FIND") then return nil end
 		for i, v in store.Map:GetChildren() do
 			if v.Name == "ComputerTable" then
 				if v.Screen.BrickColor ~= BrickColor.new("Dark green") then
@@ -564,10 +649,10 @@ run(function()
         return nil
 	end
 	local function getExit()
-        for i, v in pairs(store.Map:GetChildren()) do
+        for i, v in store.Map:GetChildren() do
             if v.Name == "ExitDoor" then
                 local mag = (store.Beast.Character.HumanoidRootPart.Position - v.ExitArea.Position).magnitude
-                if mag >= 15 then
+                if mag > 15 then
                     return v
                 end
             end
@@ -644,13 +729,16 @@ run(function()
 	end
 
 	local computer
+	local oldcomputer
 	local exit
 	local pod
 	local tweening = false
 	local twn
 	local computers = 0
 	local jumpTick = 0
+	local saving = false
 	local function tween(pos, time, safe)
+		if store.Escaped then return end
 		safe = safe or false
 		time = time or 0
         local comp = computer or {CFrame = 0, Position = 0}
@@ -677,6 +765,7 @@ run(function()
 				lplr.Character.HumanoidRootPart.CFrame = pos
 				lplr.Character.Humanoid.CameraOffset = Vector3.new(0,0,0)
 			end
+			twn = nil
             tweening = false
         end)
 	end
@@ -690,6 +779,11 @@ run(function()
 		lplr.Character.HumanoidRootPart.CFrame = pos - Vector3.new(0, 5, 0)
 	end
 
+	local function getSpeed(pos1, pos2, walkspeed)
+		local distance = (pos1 - pos2).magnitude
+		return distance / walkspeed
+	end
+
 	AutoWin = vape.Categories.Minigames:CreateModule({
 		Name = "AutoWin",
 		Tooltip = "Automatically wins the game for you.",
@@ -698,12 +792,19 @@ run(function()
 			if callback then
                 AutoWin:Clean(game:GetService("GuiService").ErrorMessageChanged:Connect(function() -- credits to Infinite Yield
                     if not AutoRejoin.Enabled then return end
-                    repeat game:FindService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lplr) task.wait(0.5) until false
+                    repeat 
+						vape.Modules.ServerHop:Toggle()
+						task.wait(1)
+					until false
                 end))
 				repeat
 					pcall(function()
 						if store.Escaped or not store.Beast or store.Status:find("GAME OVER") or store.Status:find("INTERMISSION") then
 							lplr.Character.HumanoidRootPart.CFrame = CFrame.new(103.5, 8.207777976989746, -417)
+							if #playersService:GetPlayers() < 3 and AutoServerhop.Enabled then
+								vape.Modules.ServerHop:Toggle()
+								task.wait(0.1)
+							end
 							if twn then twn:Cancel() twn = nil end
 						else
 							local mag = store.Status:find("15 SEC") and 5000 or (store.Beast.Character.HumanoidRootPart.Position - lplr.Character.HumanoidRootPart.Position).magnitude
@@ -718,10 +819,6 @@ run(function()
 									jumpTick = 0
 								else
 									task.wait(0)
-									if #playersService:GetPlayers() <= 3 and AutoServerhop.Enabled then
-										vape.Modules.Serverhop:Toggle()
-										task.wait(0.1)
-									end
 									replicatedStorage.RemoteEvent:FireServer("SetPlayerMinigameResult", true)
 									jumpTick += 1
 									local pods = getAllPods()
@@ -736,25 +833,32 @@ run(function()
 									if captured then
 										mag2 = (captured.Position - store.Beast.Character.HumanoidRootPart.Position).magnitude
 									end
-									if (captured and SaveCaptured.Enabled) and mag2 >= 30 then
+									if (captured and SaveCaptured.Enabled) and mag2 >= 20 then
+										oldcomputer = computer
 										lplr.Character.HumanoidRootPart.CFrame = captured.CFrame * CFrame.new(0,-2,4)
 										if twn then
 											twn:Cancel()
 											tweening = false
 											twn = nil
 										else
-											computers = 0
+											if not saving then
+												computers = 0
+												computer = oldcomputer
+											end
 										end
+										saving = true
 									else
+										saving = false
 										if store.Status:find("COMPUTER") then -- COMPUTERS
 											local pos = lplr.Character.HumanoidRootPart.Position
 											if not computer or not computer.Object or not computer.Object:FindFirstChild("Screen") or computer.Object.Screen.BrickColor == BrickColor.new("Dark green") or mag <= 30 then
-												if mag <= 30 then
+												if mag <= 20 then
 													notif("Cat", "The beast is near!", 3, "alert")
 												end
 												if computer then
 													if computer.Object:FindFirstChild("Screen") and computer.Object.Screen.BrickColor == BrickColor.new("Dark green") then
 														notif("Cat", "Computer successfully hacked!", 3)
+														store.ComputerHacked:Fire()
 													end
 												end
 												notif("Cat", "Finding new computer...", 1)
@@ -764,9 +868,10 @@ run(function()
 												if pos.X ~= computer.Position.X or pos.Z ~= computer.Position.Z then
 													--cloneTween(computer.CFrame, 5)
 													if not store.Status:find("FIND") then
-														local tme = math.random(11, 13)
+														local tme = getSpeed(pos, computer.Position, 16)
+														if tme > 13 then tme = 13 end
 														tween(computer.CFrame, tme, true)
-														notif("Cat", "Found! Arriving in "..tme.." seconds...", tme - 0.3)
+														notif("Cat", "Found! Arriving in "..math.floor(tme).." seconds...", tme - 0.3)
 													end
 												end
 											end
@@ -781,22 +886,19 @@ run(function()
 											if tweening then
 												jumpTick = 0
 											end
-											if jumpTick == 80 then
+											if jumpTick == 50 then
 												lplr.Character.HumanoidRootPart.CFrame += Vector3.new(0, 3, 0)
 												task.wait(0.01)
 												jumpTick = 0
 												if not store.Status:find("FIND") then tween(computer.CFrame, 0, true) end
 											end
-										elseif store.Status:find("FIND") then -- EXITS
-											if not vape.Modules.Phase.Enabled then
-												vape.Modules.Phase:Toggle()
-											end
+										elseif store.Status:find("FIND") and not store.Escaped then -- EXITS
 											local pos = lplr.Character.HumanoidRootPart.Position
 											jumpTick = 0
 											if twn then twn:Cancel() twn = nil end
 											local additionalPos = CFrame.new(0,0,0)
-											if not exit or mag <= 15 then
-												if mag <= 15 then
+											if not exit or mag <= 25 then
+												if mag <= 25 then
 													notif("Cat", "The beast is near!", 3, "alert")
 												end
 												exit = getExit()
@@ -829,6 +931,7 @@ run(function()
 								if lplr.Character:FindFirstChild("Part") and lplr.Character.Part:FindFirstChild("RopeConstraint") then
 									local pod = getEmptyPod()
 									lplr.Character.HumanoidRootPart.CFrame = pod.PodTrigger.CFrame
+									store.Kills += 1
 								else
 									--print("beast")
 									target = nil
@@ -842,7 +945,7 @@ run(function()
 									}) do
 										target = v
 										--print("targets")
-										if target ~= nil then
+										if target ~= nil and not target.Player.TempPlayerStatsModule.Captured.Value then
 											--print("go!!!")
 											if not vape.Modules.Killaura.Enabled then vape.Modules.Killaura:Toggle() end
 											lplr.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0,0,4)
@@ -860,4 +963,34 @@ run(function()
 	SaveCaptured = AutoWin:CreateToggle({Name = "Save captured players", Default = true})
 	AutoRejoin = AutoWin:CreateToggle({Name = "Auto rejoin", Default = true})
 	AutoServerhop = AutoWin:CreateToggle({Name = "Auto ServerHop", Default = true})
+end)
+
+run(function()
+	local AlwaysCrawl
+	AlwaysCrawl = vape.Categories.Blatant:CreateModule({
+		Name = "AlwaysCrawl",
+		Tooltip = "Always be able to crawl, even as beast.",
+		Function = function(callback: boolean)
+			if callback then
+				repeat
+					if store.Beast == lplr then
+						if lplr.TempPlayerStatsModule.DisableCrawl.Value then
+							lplr.TempPlayerStatsModule.DisableCrawl.Value = false
+						end
+						if lplr.Character then
+							 if lplr.Character.CrawlScript.Disabled then
+								lplr.Character.CrawlScript.Enabled = true
+							 end
+						end
+						for i, v in store.Map:GetChildren() do
+							if v.Name == "Vent" then
+								v.VentBlock.CanCollie = false
+							end
+						end
+					end
+					task.wait()
+				until not AlwaysCrawl.Enabled
+			end
+		end
+	})
 end)
