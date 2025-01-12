@@ -27,7 +27,6 @@ local whitelistdata = setmetatable({
     end
 })
 local getRank = function(self, string)
-    print("get rank")
     local request = request({
         Url = `https://api.catvape.info/auth/whitelist/getWhitelistData?name={self.Name}`,
         Method = 'GET'
@@ -36,7 +35,6 @@ local getRank = function(self, string)
     if body.Rank then
         for i, v in whitelistdata.lists do
             if body.Rank == i then
-                print("func end with return")
                 return string and body.Rank or v
             end
         end
@@ -98,7 +96,7 @@ local commands = {
         end)
 	end
 }
-print("add new players")
+
 local addplayer = function(v)
     local plr = whitelistdata.players[v.Name]
     if plr and plr.Rank then
