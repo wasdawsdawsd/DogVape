@@ -279,9 +279,9 @@ function bedwars.controllers.Client:Get(inst)
             if tostring(v) == inst then
                 local sendserver = function(...)
                     if v.ClassName == 'RemoteFunction' then
-                        v:InvokeServer(unpack({...}))
+                        v:InvokeServer(...)
                     elseif v.ClassName == 'RemoteEvent' then
-                        v:FireServer(unpack({...}))
+                        v:FireServer(...)
                     end
                 end
                 finishedremotes[inst] = {
