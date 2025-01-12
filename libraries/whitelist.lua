@@ -31,14 +31,15 @@ local getRank = function(self, string)
         Url = `https://api.catvape.info/auth/whitelist/getWhitelistData?name={self.Name}`,
         Method = 'GET'
     })
-    local body = serv.HttpService:JSONDecode(request.Body)
+    local body = request.Body:find("FUNCTION_INVOCATION_TIMEOUT") and {} or serv.HttpService:JSONDecode(request.Body)
     if body.Rank then
-        for i,v in whitelistdata.lists do
+        for i, v in whitelistdata.lists do
             if body.Rank == i then
                 return string and body.Rank or v
             end
         end
     end
+    return string and "" or 1
 end
 whitelistdata.selfrank.lvl = getRank(lplr)
 whitelistdata.selfrank.rank = getRank(lplr, true)
@@ -53,7 +54,7 @@ local bulkrequest = request({
     Url = `https://api.catvape.info/auth/whitelist/getBulkWhitelistData?names={table.concat(bulkplrs, '//', nil)}`,
     Method = 'GET'
 })
-whitelistdata.players = serv.HttpService:JSONDecode(whitelistdata.Body)
+whitelistdata.players = serv.HttpService:JSONDecode(bulkrequest.Body)
 
 local whitelistedPlayer = nil
 local commands = {
