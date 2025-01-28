@@ -319,24 +319,28 @@ local init: () -> table = function()
 		if not isfile(path) then
 			createDownloader(path)
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+				return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
 			end)
 			if not suc or res == '404: Not Found' then
 				error(res)
-			end
-			if path:find('.lua') then
-				res = '--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.\n'..res
 			end
 			writefile(path, res)
 		end
 		return (func or readfile)(isfile(path) and path or 'newcatvape/'..path)
 	end
+
+	customassetfunction = function(path)
+		if not isfile(path) then
+			return downloadFile(path, assetfunction)
+		end
+		return assetfunction(path)
+	end
 	
-	getcustomasset = getexecutor():find("AWP") and assetfunction
-	or getexecutor():find("Wave") and assetfunction
-	or getexecutor():find("Nihon") and assetfunction
-	or getexecutor():find("Salad") and assetfunction
-	or getexecutor():find("Delta") and assetfunction
+	getcustomasset = getexecutor():find("AWP") and customassetfunction
+	or getexecutor():find("Wave") and customassetfunction
+	or getexecutor():find("Nihon") and customassetfunction
+	or getexecutor():find("Salad") and customassetfunction
+	or getexecutor():find("Delta") and customassetfunction
 	or function(path)
 		return getcustomassets[path] or ''
 	end
