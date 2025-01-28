@@ -74,7 +74,6 @@ local store = {
 local Reach
 local InfiniteFly
 local HitBoxes
-local StoreDamage
 local TrapDisabler
 local bedwars, remotes, sides, oldinvrender = {}, {}, {}
 
@@ -789,15 +788,7 @@ run(function()
 				return {
 					instance = call.instance,
 					SendToServer = function(_, knockback)
-						if not StoreDamage.Enabled then
-							return call:SendToServer(knockback)
-						end
-	
-						local damage = debug.getstack(3, 3)
-						if damage.knockbackId and (not damage.knockbackMultiplier or not damage.knockbackMultiplier.disabled) then
-							table.insert(store.damage, damage)
-							vapeEvents.KnockbackReceived:Fire()
-						end
+						return call:SendToServer(knockback)
 					end
 				}
 			elseif remoteName == remotes.AttackEntity then
@@ -1080,10 +1071,6 @@ run(function()
 				end))
 			end)
 		end
-	
-		vape:Clean(vapeEvents.KnockbackReceived.Event:Connect(function()
-			notif('StoreDamage', 'Added damage packet: '..#store.damage, 3)
-		end))
 	
 		store.blocks = collection('block', gui)
 		store.shop = collection({'BedwarsItemShop', 'TeamUpgradeShopkeeper'}, gui, function(tab, obj)
@@ -2876,24 +2863,9 @@ run(function()
 							local pos = damageTable.fromPosition and Vector3.new(damageTable.fromPosition.X, damageTable.fromPosition.Y, damageTable.fromPosition.Z) or damageTable.fromEntity and damageTable.fromEntity.PrimaryPart.Position
 							if not pos then return end
 							local vec = (entitylib.character.RootPart.Position - pos)
-							Extend = StoreDamage.Enabled
 							JumpSpeed = knockbackBoost
-							JumpTick = tick() + (StoreDamage.Enabled and 4.3 or 2.5)
+							JumpTick = tick() + 2.5
 							Direction = Vector3.new(vec.X, 0, vec.Z).Unit
-							if not StoreDamage.Enabled then return end
-							task.delay(0.1, function()
-								for i, v in store.damage do
-									if v.knockbackId == damageTable.knockbackId then
-										table.remove(store.damage, i)
-										break
-									end
-								end
-							end)
-							task.wait(1.6)
-							knockbackRemote:FireServer({
-								knockbackId = damageTable.knockbackId,
-								playerPosition = entitylib.character.RootPart.Position
-							})
 						end
 					end
 				end))
@@ -5074,13 +5046,6 @@ run(function()
 			StaffDetector:Toggle()
 		end
 	end)
-end)
-	
-run(function()
-	StoreDamage = vape.Categories.Utility:CreateModule({
-		Name = 'StoreDamage',
-		Tooltip = 'Store damage knockback packets for certain modules.'
-	})
 end)
 	
 run(function()
