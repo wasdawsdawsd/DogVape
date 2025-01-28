@@ -1,7 +1,16 @@
+local license = ({...})[1] or {}
+
+getgenv().CAK = license.CAK or getgenv().CAK or ""
+shared.catvapedev = license.Developer or shared.catvapedev or nil
+
 getgenv().void = function() end
 getgenv().request = request or http.request or function() end
 getgenv().keypress = keypress or function() end
 getgenv().initcatvape = true
+getgenv().getexecutor = function()
+    local executor = identifyexecutor()
+    return string.split(executor, " ")[1]
+end
 
 local httpService = game:GetService('HttpService')
 
