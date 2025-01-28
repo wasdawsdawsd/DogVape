@@ -332,7 +332,12 @@ local init: () -> table = function()
 		return (func or readfile)(isfile(path) and path or 'newcatvape/'..path)
 	end
 	
-	getcustomasset = function(path)
+	getcustomasset = getexecutor():find("AWP") and assetfunction
+	or getexecutor():find("Wave") and assetfunction
+	or getexecutor():find("Nihon") and assetfunction
+	or getexecutor():find("Salad") and assetfunction
+	or getexecutor():find("Delta") and assetfunction
+	or function(path)
 		return getcustomassets[path] or ''
 	end
 	
