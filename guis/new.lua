@@ -319,7 +319,7 @@ local init: () -> table = function()
 		if not isfile(path) then
 			createDownloader(path)
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+				return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
 			end)
 			if not suc or res == '404: Not Found' then
 				error(res)
@@ -334,14 +334,8 @@ local init: () -> table = function()
 			return downloadFile(path, assetfunction)
 		end
 		return assetfunction(path)
-	end
-	
-	getcustomasset = getexecutor():find("AWP") and customassetfunction
-	or getexecutor():find("Wave") and customassetfunction
-	or getexecutor():find("Nihon") and customassetfunction
-	or getexecutor():find("Salad") and customassetfunction
-	or getexecutor():find("Delta") and customassetfunction
-	or function(path)
+	end	
+	getcustomasset = function(path)
 		return getcustomassets[path] or ''
 	end
 	

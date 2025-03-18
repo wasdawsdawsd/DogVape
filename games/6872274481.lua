@@ -69,7 +69,8 @@ local store = {
 	matchState = 1,
 	queueType = 'bedwars_test',
 	tools = {},
-	KillauraInfo = nil
+	KillauraInfo = nil,
+	antifallpart = nil
 }
 local Reach
 local InfiniteFly
@@ -730,14 +731,15 @@ run(function()
 			AckKnockback = debug.getproto(debug.getproto(Knit.Controllers.KnockbackController.KnitStart, 1), 1),
 			AfkStatus = debug.getproto(Knit.Controllers.AfkController.KnitStart, 1),
 			AttackEntity = Knit.Controllers.SwordController.sendServerRequest,
-			ConsumeBattery = debug.getproto(debug.getproto(Knit.Controllers.BatteryController.KnitStart, 1), 1),
+			BeePickup = Knit.Controllers.BeeNetController.trigger,
+			ConsumeBattery = debug.getproto(Knit.Controllers.BatteryController.KnitStart, 1),
 			CannonAim = debug.getproto(Knit.Controllers.CannonController.startAiming, 5),
 			CannonLaunch = Knit.Controllers.CannonHandController.launchSelf,
 			ConsumeItem = debug.getproto(Knit.Controllers.ConsumeController.onEnable, 1),
 			ConsumeSoul = Knit.Controllers.GrimReaperController.consumeSoul,
 			ConsumeTreeOrb = debug.getproto(Knit.Controllers.EldertreeController.createTreeOrbInteraction, 1),
 			DepositPinata = debug.getproto(debug.getproto(Knit.Controllers.PiggyBankController.KnitStart, 2), 5),
-			DragonBreath = debug.getproto(Knit.Controllers.VoidDragonController.KnitStart, 4),
+			--DragonBreath = if (identifyexecutor() == 'Salad' or identifyexecutor() == 'Delta') then function() end else debug.getproto(Knit.Controllers.VoidDragonController.KnitStart, 4),
 			DragonEndFly = debug.getproto(Knit.Controllers.VoidDragonController.flapWings, 1),
 			DragonFly = Knit.Controllers.VoidDragonController.flapWings,
 			DropItem = Knit.Controllers.ItemDropController.dropItemInHand,
@@ -745,8 +747,9 @@ run(function()
 			FireProjectile = debug.getupvalue(Knit.Controllers.ProjectileController.launchProjectileWithValues, 2),
 			GroundHit = Knit.Controllers.FallDamageController.KnitStart,
 			GuitarHeal = Knit.Controllers.GuitarController.performHeal,
-			HannahKill = debug.getproto(debug.getproto(Knit.Controllers.HannahController.KnitStart, 2), 1),
-			HarvestCrop = Knit.Controllers.CropController.KnitStart,
+			HannahKill = debug.getproto(Knit.Controllers.HannahController.KnitStart, 2),
+			HarvestCrop = debug.getproto(debug.getproto(Knit.Controllers.CropController.KnitStart, 4), 1),
+			--KaliyahPunch = if (identifyexecutor() == 'Salad' or identifyexecutor() == 'Delta') then function() end else debug.getproto(debug.getproto(Knit.Controllers.DragonSlayerController.KnitStart, 2), 1),
 			MageSelect = debug.getproto(Knit.Controllers.MageController.registerTomeInteraction, 1),
 			MinerDig = debug.getproto(Knit.Controllers.MinerController.setupMinerPrompts, 1),
 			PickupItem = Knit.Controllers.ItemDropController.checkForPickup,
@@ -754,7 +757,8 @@ run(function()
 			ReportPlayer = require(lplr.PlayerScripts.TS.controllers.global.report['report-controller']).default.reportPlayer,
 			ResetCharacter = debug.getproto(Knit.Controllers.ResetController.createBindable, 1),
 			SpawnRaven = Knit.Controllers.RavenController.spawnRaven,
-			SummonerClawAttack = Knit.Controllers.SummonerClawController.attack
+			SummonerClawAttack = Knit.Controllers.SummonerClawController.attack,
+			WarlockTarget = debug.getproto(Knit.Controllers.WarlockStaffController.KnitStart, 3)
 		}
 	end)})
 	remoteNames = remoteNames[1] and remoteNames[2] or {}
@@ -916,7 +920,7 @@ run(function()
 		end
 	
 		bedwars.breakBlock = function(block, effects, anim, customHealthbar)
-			if lplr:GetAttribute('DenyBlockBreak') or not entitylib.isAlive or InfiniteFly.Enabled then return end
+			if lplr:GetAttribute('DenyBlockBreak') or not entitylib.isAlive then return end
 			local handler = bedwars.BlockController:getHandlerRegistry():getHandler(block.Name)
 			local cost, pos, target, path = math.huge
 	
@@ -1640,7 +1644,7 @@ run(function()
 					rayCheck.FilterDescendantsInstances = {workspace:FindFirstChild('Map')}
 					repeat
 						task.wait(0);
-						if vape.Modules.Fly.Enabled or vape.Modules.InfiniteFly.Enabled then continue end
+						if vape.Modules.Fly.Enabled then continue end
 						if not detected and not workspace:Raycast(lplr.Character.PrimaryPart.Position, Vector3.new(0, -entitylib.character.HipHeight, 0), rayCheck) then 
 							detected = true;
 							groundTick = tick() + 0.1;
@@ -1664,6 +1668,7 @@ run(function()
 					part.Anchored = true
 					part.CanQuery = false
 					part.Parent = workspace
+					store.antifallpart = part
 					AntiFall:Clean(part)
 					AntiFall:Clean(part.Touched:Connect(function(touchedpart)
 						if touchedpart.Parent == lplr.Character and entitylib.isAlive and debounce < tick() then
@@ -1674,7 +1679,7 @@ run(function()
 									local lastTeleport = lplr:GetAttribute('LastTeleported')
 									local connection
 									connection = runService.PreSimulation:Connect(function()
-										if vape.Modules.Fly.Enabled or vape.Modules.InfiniteFly.Enabled or vape.Modules.LongJump.Enabled then
+										if vape.Modules.Fly.Enabled or vape.Modules.LongJump.Enabled then
 											connection:Disconnect()
 											AntiFallDirection = nil
 											return
@@ -1802,7 +1807,7 @@ run(function()
 					end
 				end))
 				Fly:Clean(runService.PreSimulation:Connect(function(dt)
-					if entitylib.isAlive and not InfiniteFly.Enabled and isnetworkowner(entitylib.character.RootPart) then
+					if entitylib.isAlive and isnetworkowner(entitylib.character.RootPart) then
 						local flyAllowed = (lplr.Character:GetAttribute('InflatedBalloons') and lplr.Character:GetAttribute('InflatedBalloons') > 0) or store.matchState == 2
 						local mass = (1.95 + (flyAllowed and 6 or 0) * (tick() % 0.4 < 0.2 and -1 or 1)) + ((up + down) * VerticalValue.Value)
 						local root, moveDirection = entitylib.character.RootPart, entitylib.character.Humanoid.MoveDirection
@@ -1821,28 +1826,14 @@ run(function()
 						if not flyAllowed then
 							if tpToggle then
 								local airleft = (tick() - entitylib.character.AirTime)
-								if airleft > 2 then
+								if airleft > 1.7 then
 									if not oldy then
 										local ray = workspace:Raycast(root.Position, Vector3.new(0, -500, 0), rayCheck)
 										if ray and TP.Enabled then
 											tpTick = tick() + 0.11
 											tpToggle = false
 											oldy = root.Position.Y
-											root.CFrame = CFrame.lookAlong(Vector3.new(root.Position.X, ray.Position.Y + entitylib.character.HipHeight, root.Position.Z), root.CFrame.LookVector)
-										elseif airleft > 2 then
-											local packet = store.damage[1]
-											if packet then
-												entitylib.character.AirTime = tick()
-												table.remove(store.damage, 1)
-												notif('Fly', 'Damage packets left: '..#store.damage, 2)
-												knockbackRemote:FireServer({
-													knockbackId = packet.knockbackId,
-													playerPosition = entitylib.character.RootPart.Position
-												})
-												if DamageBoost.Enabled then
-													boostTick, boostAmount = tick() + 0.4, 36 * (packet.knockbackMultiplier and packet.knockbackMultiplier.horizontal or 1)
-												end
-											end
+											root.CFrame = CFrame.lookAlong(Vector3.new(root.Position.X, (ray.Position.Y + entitylib.character.HipHeight) + Vector3.new(0, 5, 0), root.Position.Z), root.CFrame.LookVector)
 										end
 									end
 								end
@@ -1966,232 +1957,6 @@ local oldroot;
 local clone
 local landed = true
 local cloned = false
-run(function()
-	local Value
-	local VerticalValue
-	local WallCheck
-	local rayCheck = RaycastParams.new()
-	rayCheck.RespectCanCollide = true
-	local overlapCheck = OverlapParams.new()
-	overlapCheck.RespectCanCollide = true
-	local up, down = 0, 0
-	local success, proper = false, true
-	local clone, hip, valid
-	
-	local function doClone()
-		if entitylib.isAlive and entitylib.character.Humanoid.Health > 0 then
-			hip = entitylib.character.Humanoid.HipHeight
-			oldroot = entitylib.character.HumanoidRootPart
-			if not lplr.Character.Parent then return false end
-			lplr.Character.Parent = replicatedStorage
-			clone = oldroot:Clone()
-			clone.Parent = lplr.Character
-			oldroot.Parent = gameCamera
-			bedwars.QueryUtil:setQueryIgnored(oldroot, true)
-			clone.CFrame = oldroot.CFrame
-			lplr.Character.PrimaryPart = clone
-			lplr.Character.Parent = workspace
-			for _, v in lplr.Character:GetDescendants() do
-				if v:IsA('Weld') or v:IsA('Motor6D') then
-					if v.Part0 == oldroot then v.Part0 = clone end
-					if v.Part1 == oldroot then v.Part1 = clone end
-				end
-			end
-			return true
-		end
-		return false
-	end
-	
-	local function revertClone()
-		if not oldroot or not oldroot.Parent or not entitylib.isAlive then return false end
-		lplr.Character.Parent = replicatedStorage
-		oldroot.Parent = lplr.Character
-		lplr.Character.PrimaryPart = oldroot
-		lplr.Character.Parent = workspace
-		oldroot.CanCollide = true
-		for _, v in lplr.Character:GetDescendants() do
-			if v:IsA('Weld') or v:IsA('Motor6D') then
-				if v.Part0 == clone then v.Part0 = oldroot end
-				if v.Part1 == clone then v.Part1 = oldroot end
-			end
-		end
-		local oldclonepos = clone.Position.Y
-		if clone then
-			clone:Destroy()
-			clone = nil
-		end
-		local origcf = {oldroot.CFrame:GetComponents()}
-		if valid then origcf[2] = oldclonepos end
-		oldroot.CFrame = CFrame.new(unpack(origcf))
-		oldroot.Transparency = 1
-		oldroot = nil
-		entitylib.character.Humanoid.HipHeight = hip or 2
-	end
-
-	lplr.CharacterAdded:Connect(function()
-		proper = true;
-	end);
-	
-	InfiniteFly = vape.Categories.Blatant:CreateModule({
-		Name = 'InfiniteFly',
-		Function = function(callback)
-			frictionTable.InfiniteFly = callback or nil
-			updateVelocity()
-			if callback then
-				if not proper then
-					notif('InfiniteFly', 'Broken state detected', 3, 'alert')
-					InfiniteFly:Toggle()
-					return
-				end
-				if cloned then
-					notif('InfiniteFly', 'Broken state detected', 3, 'alert')
-					repeat task.wait() until not cloned or not InfiniteFly.Enabled;
-					task.wait();
-				end;
-				if not InfiniteFly.Enabled then return end
-				success = doClone()
-				if not success then
-					InfiniteFly:Toggle()
-					return
-				end
-	
-				InfiniteFly:Clean(runService.PreSimulation:Connect(function(dt)
-					if entitylib.isAlive then
-						local mass = 1.95 + ((up + down) * VerticalValue.Value)
-						local root = entitylib.character.RootPart
-						local moveDirection = entitylib.character.Humanoid.MoveDirection
-						local velo = getSpeed()
-						local destination = (moveDirection * math.max(Value.Value - velo, 0) * dt)
-						rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
-						if WallCheck.Enabled then
-							local ray = workspace:Raycast(root.Position, destination, rayCheck)
-							if ray then 
-								destination = ((ray.Position + ray.Normal) - root.Position) 
-							end
-						end
-						root.CFrame += destination
-						root.AssemblyLinearVelocity = (moveDirection * velo) + Vector3.new(0, mass, 0)
-	
-						local speedCFrame = {oldroot.CFrame:GetComponents()}
-						if isnetworkowner(oldroot) then
-							speedCFrame[1] = clone.CFrame.X
-							speedCFrame[3] = clone.CFrame.Z
-							if speedCFrame[2] < 2000 then speedCFrame[2] = 100000 end
-							oldroot.CFrame = CFrame.new(unpack(speedCFrame))
-							oldroot.Velocity = Vector3.new(clone.Velocity.X, oldroot.Velocity.Y, clone.Velocity.Z)
-						else
-							speedCFrame[2] = clone.CFrame.Y
-							clone.CFrame = CFrame.new(unpack(speedCFrame))
-						end
-					end
-				end))
-				up, down = 0, 0
-				InfiniteFly:Clean(inputService.InputBegan:Connect(function(input)
-					if not inputService:GetFocusedTextBox() then
-						if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
-							up = 1
-						elseif input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.ButtonL2 then
-							down = -1
-						end
-					end
-				end))
-				InfiniteFly:Clean(inputService.InputEnded:Connect(function(input)
-					if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
-						up = 0
-					elseif input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.ButtonL2 then
-						down = 0
-					end
-				end))
-				landed = false
-				if inputService.TouchEnabled then
-					pcall(function()
-						local jumpButton = lplr.PlayerGui.TouchGui.TouchControlFrame.JumpButton
-						InfiniteFly:Clean(jumpButton:GetPropertyChangedSignal('ImageRectOffset'):Connect(function()
-							up = jumpButton.ImageRectOffset.X == 146 and 1 or 0
-						end))
-					end)
-				end
-			else
-				if success and clone and oldroot and proper then
-					proper = false
-					overlapCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
-					overlapCheck.CollisionGroup = oldroot.CollisionGroup
-					local ray = workspace:Blockcast(CFrame.new(oldroot.Position.X, clone.CFrame.p.Y, oldroot.Position.Z), Vector3.new(3, entitylib.character.HipHeight, 3), Vector3.new(0, -1000, 0), rayCheck)
-					local origcf = {clone.CFrame:GetComponents()}
-					origcf[1] = oldroot.Position.X
-					origcf[2] = ray and ray.Position.Y + entitylib.character.HipHeight or clone.CFrame.p.Y
-					origcf[3] = oldroot.Position.Z
-					oldroot.CanCollide = true
-					--oldroot.Transparency = 0
-					oldroot.Velocity = clone.Velocity * Vector3.new(1, 0, 1)
-					oldroot.CFrame = CFrame.new(unpack(origcf))
-	
-					local failraycast = false
-					local ylevel = 1
-					local connection = runService.PreSimulation:Connect(function()
-						if oldroot then
-							valid = false
-							local cf = {clone.CFrame:GetComponents()}
-							cf[2] = oldroot.CFrame.Y
-							local newcf = CFrame.new(unpack(cf))
-							local raycast = workspace:Raycast(newcf.Position, Vector3.new(0, -9e9, 0), rayCheck)
-							local cloneray = workspace:Raycast(clone.Position, Vector3.new(0, -9e9, 0), rayCheck)
-							if not raycast then 
-								failraycast = true
-								oldroot.CFrame = CFrame.new(clone.CFrame.X, oldroot.CFrame.Y, clone.CFrame.Z)
-								return 
-							end
-							oldroot.Velocity = Vector3.zero
-							oldroot.CFrame = ylevel ~= newcf.Y and CFrame.new(newcf.X, cloneray.Position.Y + entitylib.character.HipHeight, newcf.Z) or CFrame.new(newcf.X, raycast.Position.Y + entitylib.character.HipHeight, newcf.Z)
-							ylevel = newcf.Y
-							failraycast = false;
-							oldroot.Velocity = (clone.Velocity * Vector3.new(1, 0, 1))
-							valid = true
-						end
-					end)
-	
-					notif('InfiniteFly', 'Waiting 1.1s to land', 1.1)
-					task.delay(1.1, function()
-						notif('InfiniteFly', 'Landed!', 1)
-						connection:Disconnect()
-						proper = true
-						if oldroot and clone then 
-							oldroot.CFrame = CFrame.new(oldroot.CFrame.X, clone.CFrame.Y, oldroot.CFrame.Z)
-							revertClone() 
-						end
-						landed = true
-					end)
-				end
-			end
-		end,
-		ExtraText = function() 
-			return 'Heatseeker' 
-		end,
-		Tooltip = 'Makes you go zoom.'
-	})
-	Value = InfiniteFly:CreateSlider({
-		Name = 'Speed',
-		Min = 1,
-		Max = 23,
-		Default = 23,
-		Suffix = function(val) 
-			return val == 1 and 'stud' or 'studs' 
-		end
-	})
-	VerticalValue = InfiniteFly:CreateSlider({
-		Name = 'Vertical Speed',
-		Min = 1,
-		Max = 150,
-		Default = 50,
-		Suffix = function(val) 
-			return val == 1 and 'stud' or 'studs' 
-		end
-	})
-	WallCheck = InfiniteFly:CreateToggle({
-		Name = 'Wall Check',
-		Default = true
-	})
-end)
 	
 run(function()
 	vape.Categories.Blatant:CreateModule({
@@ -2205,6 +1970,7 @@ run(function()
 end)
 	
 local Attacking
+local antihitting
 run(function()
 	local Killaura
 	local Targets
@@ -2425,6 +2191,9 @@ run(function()
 								bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 								store.attackReach = (delta.Magnitude * 100) // 1 / 100
 								store.attackReachUpdate = tick() + 1
+								if not antihitting then
+									store.lastattack = tick() + (vape.Modules.AntiHit.Enabled and antihitregtime.Value or 0)
+								end
 								AttackRemote:FireServer({
 									weapon = sword.tool,
 									chargedAttack = {chargeRatio = badexecutor and 0.999 or (meta.sword.chargedAttack and not meta.sword.chargedAttack.disableOnGrounded and 0.999 or 0)},
@@ -2934,11 +2703,29 @@ run(function()
 end)
 	
 run(function()
-	vape.Categories.Blatant:CreateModule({
+	local nofall = nil
+	local params = RaycastParams.new()
+
+	local nofalltick = tick()
+
+	nofall = vape.Categories.Blatant:CreateModule({
 		Name = 'NoFall',
-		Function = function(callback)
-			if callback then 
-				bedwars.Client:Get(badexecutor and 'GroundHit' or remotes.GroundHit):SendToServer() 
+		Function = function(call)
+			if call then 
+				nofall:Clean(runService.PreSimulation:Connect(function()
+					if entitylib.isAlive then
+						params.FilterDescendantsInstances = {store.antifallpart}
+						local ray = workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -16, 0), params)
+						local ray2 = workspace:Raycast(entitylib.character.HumanoidRootPart.Position, Vector3.new(0, -12, 0), params)
+						if ray and not ray2 and tick() > nofalltick then
+							nofalltick = tick() + 0.8
+							for i = 1, 15 do
+								entitylib.character.HumanoidRootPart.Velocity = Vector3.zero
+								task.wait(0.01)
+							end
+						end
+					end
+				end))
 			end
 		end,
 		Tooltip = 'Prevents taking fall damage.'
@@ -3206,7 +2993,7 @@ run(function()
 			if callback then
 				Speed:Clean(runService.PreSimulation:Connect(function(dt)
 					pcall(function() bedwars.StatefulEntityKnockbackController.lastImpulseTime = callback and math.huge or time() end)
-					if entitylib.isAlive and not Fly.Enabled and not InfiniteFly.Enabled and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) then
+					if entitylib.isAlive and not Fly.Enabled  and not LongJump.Enabled and isnetworkowner(entitylib.character.RootPart) then
 						local state = entitylib.character.Humanoid:GetState()
 						if state == Enum.HumanoidStateType.Climbing then return end
 	
@@ -4080,7 +3867,7 @@ run(function()
 			if entitylib.isAlive then
 				local localPosition = entitylib.character.RootPart.Position
 				for _, v in objs do
-					if InfiniteFly.Enabled or not AutoKit.Enabled then break end
+					if not AutoKit.Enabled then break end
 					local part = not v:IsA('Model') and v or v.PrimaryPart
 					if part and (part.Position - localPosition).Magnitude <= (not Legit.Enabled and specific and math.huge or range) then
 						func(v)
@@ -4632,10 +4419,6 @@ run(function()
 	local Lower
 	
 	local pickupRemote = replicatedStorage.rbxts_include.node_modules['@rbxts'].net.out._NetManaged.PickupItemDrop
-
-	task.spawn(function()
-		pickupRemote = bedwars.Client:Get(remotes.PickupItem)
-	end)
 	
 	PickupRange = vape.Categories.Utility:CreateModule({
 		Name = 'PickupRange',
@@ -4654,28 +4437,9 @@ run(function()
 							
 							if (localPosition - v.Position).Magnitude <= Range.Value then
 								if Lower.Enabled and (localPosition.Y - v.Position.Y) < (entitylib.character.HipHeight - 1) then continue end
-								task.spawn(function()
-									if type(pickupRemote) == 'Instance' and pickupRemote:IsA('RemoteFunction') then
-										pickupRemote:FireServer({
-											itemDrop = v
-										})
-									else
-										pickupRemote:CallServerAsync({
-											itemDrop = v
-										}):andThen(function(suc)
-											if suc and bedwars.SoundList then
-												bedwars.SoundManager:playSound(bedwars.SoundList.PICKUP_ITEM_DROP)
-												local sound = bedwars.ItemMeta[v.Name].pickUpOverlaySound
-												if sound then
-													bedwars.SoundManager:playSound(sound, {
-														position = v.Position,
-														volumeMultiplier = 0.9
-													})
-												end
-											end
-										end)
-									end
-								end)
+								pickupRemote:FireServer({
+									itemDrop = v
+								})
 							end
 						end
 					end
@@ -8163,7 +7927,7 @@ run(function()
 		Tooltip = 'Changes your items with new textures',
 		Function = function(callback: boolean)
 			if callback then
-				loadstring(game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/TexturePacks/refs/heads/main/'..Mode.Value..'.lua'))()
+				loadstring(game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/TexturePacks/refs/heads/main/'..Mode.Value..'.lua'))()
 				repeat
 					for i, v in lplr.Character:GetDescendants() do
 						if v.Name:find('Sword') then
@@ -8200,361 +7964,129 @@ local function getBed()
 		end
 	end
 end;
+
+
+
 run(function()
-	local bedtp;
-	local bedtpautospeed;
-	local bedtpspeed
-	local bedtpmode;
-	local bedtppackets;
-	
-	local bedtpmodes = {
-		Reset = function(res)
-			bedwars.Client:Get('ResetCharacter'):SendToServer()
-			lplr.CharacterAdded:Wait();
-			task.wait(0.2)
-			local speed: number = bedtpautospeed.Enabled and (entitylib.character.RootPart.Position - res.Position).Magnitude / 800 or bedtpspeed.Value;
-			tweenService:Create(lplr.Character.PrimaryPart, TweenInfo.new(speed), {CFrame = res.CFrame + Vector3.new(0, 15, 0)}):Play();
-		end
-	}
-	local tween;
-	bedtp = vape.Categories.Utility:CreateModule({
-		Name = 'BedTP',
-		Tooltip = 'Teleports your character to enemy\'s bed',
-		Function = function(call: boolean): ()
-			if call then
-				if store.matchState == 0 then
-					notif('BedTP', 'Waiting until the game starts.', 6, 'alert')
-					repeat task.wait() until store.matchState ~= 0 or not bedtp.Enabled
-					if not bedtp.Enabled then return end;
+	local antihit = nil :: table
+	local antihitrange = nil :: table
+	local antihitgroundtime = nil :: table
+	local antihitincludenpc = nil :: table
+	local antihitsettings = nil :: table
+
+	local oldroot
+	local clone
+
+	local function createClone()
+		if entitylib.isAlive and entitylib.character.Humanoid.Health > 0 and (not oldroot or not oldroot.Parent) then
+			hip = entitylib.character.Humanoid.HipHeight
+			oldroot = entitylib.character.HumanoidRootPart
+			if not lplr.Character.Parent then return false end
+			lplr.Character.Parent = game
+			clone = oldroot:Clone()
+			clone.Parent = lplr.Character
+			oldroot.Parent = gameCamera
+			bedwars.QueryUtil:setQueryIgnored(oldroot, true)
+			clone.CFrame = oldroot.CFrame
+			lplr.Character.PrimaryPart = clone
+			lplr.Character.Parent = workspace
+			for _, v in lplr.Character:GetDescendants() do
+				if v:IsA('Weld') or v:IsA('Motor6D') then
+					if v.Part0 == oldroot then v.Part0 = clone end
+					if v.Part1 == oldroot then v.Part1 = clone end
 				end
-				bedtp:Toggle();
-				local suc, res = pcall(getBed)
-				if suc and res then
-					bedtpmodes[bedtpmode.Value](res);
-				elseif suc and not res then
-					notif('BedTP', 'No beds available.', 6)
-				end;
-			end;
-		end
-	});
-	bedtpmode = bedtp:CreateDropdown({
-		Name = 'Mode',
-		List = {'Reset'},
-		Function = function(val: string): ()
-			bedtppackets.Object.Visible = val == 'Packet';
-		end
-	});
-	bedtpautospeed = bedtp:CreateToggle({
-		Name = 'AutoSpeed',
-		Function = function(call: boolean): ()
-			bedtpspeed.Object.Visible = not call;
-		end
-	});
-	bedtpspeed = bedtp:CreateSlider({
-		Name = 'Speed',
-		Min = 0.1,
-		Max = 5,
-		Decimal = 30,
-		Function = void,
-		Default = 0.85,
-		Darker = true
-	});
-	bedtpspeed.Object.Visible = bedtpautospeed.Enabled and false or true;
-end);
-
-local bettertween = function(self, info, pos, instance, speed)
-	local speed = speed
-	local tween;
-	tween = tweenService:Create(self, info, pos)
-	tween:Play()
-	task.spawn(function()
-		repeat
-			speed -= 0.1;
-			task.wait(0.1)
-		until speed <= 0
-	end)
-	local con = instance:GetPropertyChangedSignal('Position'):Connect(function()
-		tween:Cancel();
-		tween = tweenService:Create(self, TweenInfo.new(speed, Enum.EasingStyle.Linear), pos);
-		tween:Play();
-	end)
-	tween.Completed:Wait();
-	con:Disconnect();
-end
-run(function()
-	local playertp;
-	local playertpautospeed;
-	local playertpspeed
-	local playertpmode;
-	
-	local playermodes = {
-		Reset = function(plr)
-			bedwars.Client:Get('ResetCharacter'):SendToServer()
-			lplr.CharacterAdded:Wait();
-			task.wait(0.2)
-			local speed: number = playertpautospeed.Enabled and (entitylib.character.RootPart.Position - plr.RootPart.Position).Magnitude / 800 or playertpspeed.Value;
-			--tweenService:Create(lplr.Character.PrimaryPart, TweenInfo.new(speed), {CFrame = plr.RootPart.CFrame}):Play();
-			bettertween(lplr.Character.PrimaryPart, TweenInfo.new(speed), {CFrame = plr.RootPart.CFrame}, plr.RootPart, speed)
-		end
-	}
-	local tween;
-	playertp = vape.Categories.Utility:CreateModule({
-		Name = 'PlayerTP',
-		Tooltip = 'Teleports your character to enemy\'s bed',
-		Function = function(call: boolean): ()
-			if call then
-				if store.matchState == 0 then
-					notif('PlayerTP', 'Waiting until the game starts.', 6, 'alert')
-					repeat task.wait() until store.matchState ~= 0 or not playertp.Enabled
-					if not playertp.Enabled then return end;
-				end
-				playertp:Toggle();
-				local plr = entitylib.AllPosition({
-					Range = math.huge,
-					Wallcheck = false,
-					Part = 'RootPart',
-					Players = true,
-					Limit = 2,
-					Sort = sortmethods.Distance
-				})[1]
-				if plr then
-					playermodes[playertpmode.Value](plr)
-				end;
-			end;
-		end
-	});
-	playertpmode = playertp:CreateDropdown({
-		Name = 'Mode',
-		List = {'Reset'},
-		Function = void
-	});
-	playertpautospeed = playertp:CreateToggle({
-		Name = 'AutoSpeed',
-		Function = function(call: boolean): ()
-			playertpspeed.Object.Visible = not call;
-		end
-	});
-	playertpspeed = playertp:CreateSlider({
-		Name = 'Speed',
-		Min = 0.1,
-		Max = 5,
-		Decimal = 30,
-		Function = void,
-		Default = 0.85,
-		Darker = true
-	});
-	playertpspeed.Object.Visible = playertpautospeed.Enabled and false or true;
-end);
-
-run(function() -- thank you SystemXVoid for letting me use this
-	local invis = {};
-	local invisbaseparts = {};
-	local invisroot = {};
-	local invisrootcolor = {};
-	local invishumanim
-	local invisanim = Instance.new('Animation');
-	local invisrenderstep;
-	local invistask;
-	local invshumanim;
-	local invisFunction = function()
-		pcall(task.wait(1))
-		pcall(task.cancel, invistask);
-		table.clear(invisbaseparts);
-		pcall(function() invisrenderstep:Disconnect() end);
-		repeat task.wait() until entitylib.isAlive;
-		for i,v in lplr.Character:GetDescendants() do
-			pcall(function() 
-				if (v:IsA('Part') or v:IsA('BasePart')) and v.CanCollide and v ~= lplr.Character.PrimaryPart then 
-					v.CanCollide = false;
-					table.insert(invisbaseparts, v);
-				end 
-			end)
-		end
-		invisrenderstep = runService.Stepped:Connect(function()
-			for i,v in invisbaseparts do 
-				v.CanCollide = false;
 			end
-		end);
-		table.insert(invis.Connections, invisrenderstep);
-		invisanim.AnimationId = 'rbxassetid://11335949902';
-		local anim = lplr.Character.Humanoid.Animator:LoadAnimation(invisanim);
-		invishumanim = anim;
-		repeat 
-			task.wait()
-			if entitylib.isAlive == false or not isnetworkowner(lplr.Character.PrimaryPart) or not invis.Enabled then 
-				pcall(function() 
-					anim:AdjustSpeed(0);
-					anim:Stop() 
-				end);
-				continue
-			end
-			lplr.Character.PrimaryPart.Transparency = 0.6;
-			anim:Play(0.1, 9e9, 0.1);
-		until (not invis.Enabled)
-	end;
-	invis = vape.Categories.Blatant:CreateModule({
-		Name = 'Invisible',
-		Tooltip = 'Plays an animation which makes it harder\nfor targets to see you.',
-		Function = function(callback: boolean)
-			if callback then 
-				invistask = task.spawn(invisFunction);
-				table.insert(invis.Connections, lplr.CharacterAdded:Connect(invisFunction))
-			else 
-				pcall(function()
-					invishumanim:AdjustSpeed(0);
-					invishumanim:Stop();
-				end);
-				pcall(task.cancel, invistask)
-			end
+			return true
 		end
-	})
-end)
-
-
-run(function()
-	local AntiHit = {Enabled = false}
-	local hrptransparency = {Enabled = false}
-	local transparencyvalue = {Value = 40}
-	local skydelay = {Value = 18}
-	local grounddelay = {Value = 18}
-	local antihitpredict = {Enabled = false}
-	local respawntick = tick()
-	
-	local old
-	local createclone = function()
-		if cloned then return end
-		if not entitylib.isAlive then
-			return
-		end
-		cloned = true
-		--warningNotification('Cat', 'added clone', 5)
-		lplr.Character.Parent = replicatedStorage
-		lplr.Character.HumanoidRootPart.Archivable = true
-		old = lplr.Character.HumanoidRootPart 
-		old.Anchored = false
-		clone = old:Clone()
-		clone.Parent = lplr.Character
-		old.Parent = workspace
-		lplr.Character.PrimaryPart = clone
-		entitylib.character.HumanoidRootPart = clone
-		lplr.Character.Parent = workspace
-		old.Transparency = hrptransparency.Enabled and transparencyvalue.Value / 100 or 1
+		return false
 	end
-	local destroyclone = function()
-		if not cloned then return end
-		--warningNotification('Cat', 'removed clone', 5)
-		cloned = false
-		old.CFrame = clone.CFrame
-		old.Transparency = 1
-		lplr.Character.Parent = replicatedStorage
-		old.Parent = lplr.Character
-		clone.Parent = workspace
-		lplr.Character.PrimaryPart = old
+	
+	local function destroyClone()
+		if not oldroot or not oldroot.Parent or not entitylib.isAlive then return false end
+		lplr.Character.Parent = game
+		oldroot.Parent = lplr.Character
+		lplr.Character.PrimaryPart = oldroot
 		lplr.Character.Parent = workspace
-		entitylib.character.HumanoidRootPart = old
+		oldroot.CanCollide = true
+		for _, v in lplr.Character:GetDescendants() do
+			if v:IsA('Weld') or v:IsA('Motor6D') then
+				if v.Part0 == clone then v.Part0 = oldroot end
+				if v.Part1 == clone then v.Part1 = oldroot end
+			end
+		end
+		local oldcf = clone.CFrame
+		if clone then
+			clone:Destroy()
+			clone = nil
+		end
+		oldroot.Transparency = 1
+		oldroot = nil
+		entitylib.character.Humanoid.HipHeight = hip or 2
 	end
-	local antihitting = false
-	local flagged = false
 
-	local lastSkyTick = tick();
-	local lastGroundTick = tick();
-
-	AntiHit = vape.Categories.Blatant:CreateModule({
+	antihit = vape.Categories.Blatant:CreateModule({
 		Name = 'AntiHit',
-		Tooltip = 'Prevents people from being able to hit you',
-		Function = function(callback: boolean)
-			if callback then
-				if store.matchState == 0 then
-					repeat task.wait() until store.matchState ~= 0 or not AntiHit.Enabled
-					if AntiHit.Enabled then return end
-					task.wait(0.25)
-				end
-				table.insert(AntiHit.Connections, runService.Heartbeat:Connect(function()
-					if not landed then return end
-					if oldroot then return end
-					if entitylib.isAlive and cloned then
-						if hrptransparency.Enabled then
-							clone.Transparency = 1
-							old.Transparency = transparencyvalue.Value / 100
-						else
-							clone.Transparency = 1
-							old.Transparency = 1
-						end
-						if clone.Parent == lplr.Character and not antihitting then
-							old.Velocity = Vector3.zero
-							old.CFrame = clone.CFrame
-						end
-					elseif entitylib.isAlive and not cloned then
-						if hrptransparency.Enabled then
-							lplr.Character.HumanoidRootPart.Transparency = transparencyvalue.Value / 100
-						else
-							lplr.Character.HumanoidRootPart.Transparency = 1
-						end
+		Function = function(call)
+			if call then
+				antihit:Clean(runService.PreSimulation:Connect(function()
+					local cf = clone and clone.Parent and {clone.CFrame:GetComponents()} or {entitylib.character.HumanoidRootPart.CFrame:GetComponents()}
+					if store.KillauraTarget and not antihitting then
+						cf[2] = store.KillauraTarget.Character.PrimaryPart.CFrame.Y
+					end
+					if oldroot and oldroot.Parent then
+						oldroot.CFrame = antihitting and (tick() - entitylib.character.AirTime) < 2 and CFrame.new(clone.CFrame.X, oldroot.CFrame.Y, clone.CFrame.Z) or CFrame.new(unpack(cf))
 					end
 				end))
 				repeat
-					task.wait()
-					if Attacking and landed and not vape.Modules.InfiniteFly.Enabled then
-						if (tick() - lastSkyTick) > (skydelay.Value / 100) then
-							createclone();
-							antihitting = true;
-							old.CFrame = (clone.CFrame + Vector3.new(0, 200, 0))
-							repeat task.wait() until (tick() - lastSkyTick) > (grounddelay.Value / 100) or not landed;
-							if not landed then 
-								antihitting = false 
-								destroyclone();
-								continue 
-							end;
-							old.CFrame = CFrame.new(old.CFrame.X, clone.CFrame.Y, old.CFrame.Z);
-							task.delay(0.08, function()
-								old.CFrame = clone.CFrame
-							end)
-							antihitting = false;
-							lastSkyTick = tick() + 0.1;
-							lastGroundTick = tick();
-						end;		
+				  if store.matchState == 0 then task.wait() continue end
+					local plr = entitylib.AllPosition({
+						Range = antihitrange.Value,
+						Part = 'RootPart',
+						Players = antihitsettings.Players.Enabled,
+						NPCs = antihitsettings.NPCs.Enabled,
+						Limit = 1
+					})[1]
+					local hittable = tick() < store.lastattack
+					if plr and (tick() - entitylib.character.AirTime) < 2 then
+						createClone()
+						antihitting = hittable
+						if hittable then
+							oldroot.CFrame += Vector3.new(0, -20, 0)
+						end
 					else
-						if cloned then destroyclone() end
 						antihitting = false
+						destroyClone()
 					end
-				until (not AntiHit.Enabled)
+					task.wait(0.1 + antihitgroundtime.Value)
+				until not antihit.Enabled
 			else
-				if cloned then 
-					destroyclone() 
-				end
-				lplr.Character.HumanoidRootPart.Transparency = 1
+				destroyClone()
 			end
-		end,
-		ExtraText = function()
-			return 'Decent'
 		end
 	})
-	hrptransparency = AntiHit:CreateToggle({
-		Name = 'Custom Root Transparency',
-		Function = function(callback: boolean)
-			pcall(function() transparencyvalue.Object.Visible = callback end)
-		end
+	antihitsettings = antihit:CreateTargets({
+		Players = true, 
+		NPCs = false
 	})
-	transparencyvalue = AntiHit:CreateSlider({
-		Name = 'Root Transparency',
+	antihitrange = antihit:CreateSlider({
+		Name = 'Range',
+		Min = 1,
+		Max = 40,
+		Default = 25
+	})
+	antihitregtime = antihit:CreateSlider({
+		Name = 'Register Time',
+		Decimal = 10,
+		Min = 0.1,
+		Max = 1,
+		Default = 0.15
+	})
+	antihitgroundtime = antihit:CreateSlider({
+		Name = 'Ground Time',
+		Decimal = 10,
 		Min = 0,
-		Max = 100,
-		Function = void
-	})
-	transparencyvalue.Object.Visible = false
-	skydelay = AntiHit:CreateSlider({
-		Name = 'Sky TP Delay',
-		Min = 5,
-		Max = 40,
-		Default = 18,
-		Function = void
-	})
-	grounddelay = AntiHit:CreateSlider({
-		Name = 'Ground TP Delay',
-		Min = 5,
-		Max = 40,
-		Default = 18,
-		Function = void
+		Max = 2,
+		Default = 0.2
 	})
 end)
 
@@ -8726,54 +8258,6 @@ run(function()
 		end,
 		Tooltip = 'Automatically store items so you don\'t lose them.'
 	})
-end) --p
-
-run(function()
-	local AntiDeath
-	local HealthLimit
-	local Mode
-	local saved = false
-	AntiDeath = vape.Categories.Blatant:CreateModule({
-		Name = 'AntiDeath',
-		Tooltip = 'Prevents you from dying.',
-		Function = function(callback: boolean)
-			if callback then
-				saved = false
-				task.spawn(function()
-					repeat task.wait() until lplr.Character.Humanoid
-					AntiDeath:Clean(lplr.Character.Humanoid.HealthChanged:Connect(function(health)
-						if health <= HealthLimit.Value and not saved then
-							if Mode.Value == 'Infinite Fly' then
-								vape.Modules.InfiniteFly:Toggle()
-							elseif Mode.Value == 'Teleport' then
-								lplr.Character.HumanoidRootPart.CFrame *= CFrame.new(0, 400, 0)
-							end
-							notif('AntiDeath', 'You have low HP! ('..health..'hp)', 3, 'alert')
-							saved = true
-						end
-						if health > HealthLimit.Value then
-							saved = false
-						end
-					end))
-				end)
-			end
-		end,
-		ExtraText = function() return Mode.Value end
-	})
-	Mode = AntiDeath:CreateDropdown({
-		Name = 'Mode',
-		List = {'Infinite Fly', 'Teleport'},
-		Function = void
-	})
-	HealthLimit = AntiDeath:CreateSlider({
-		Name = 'Health',
-		Min = 1,
-		Max = 50,
-		Default = 30,
-		Suffix = function() 
-			return 'HP'
-		end
-	})
 end)
 
 run(function()
@@ -8797,7 +8281,7 @@ run(function()
 	
 				repeat
 					local physicsrate, senderrate = '0', Type.Value == 'All' and '-1' or '60'
-					if (vape.Modules.Fly.Enabled or vape.Modules.InfiniteFly.Enabled) and NoFly.Enabled then
+					if (vape.Modules.Fly.Enabled) and NoFly.Enabled then
 						setfflag('S2PhysicsSenderRate', '15')
 						setfflag('DataSenderRate', '60')
 						oldphys, oldsend = nil, nil
