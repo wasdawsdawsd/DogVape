@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function() 
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true) 
+			return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true) 
 		end)
 		if not suc or res == '404: Not Found' then 
 			error(res) 
@@ -1148,8 +1148,8 @@ run(function()
 	local aimtable = {}
 	local maxy = frontlines.Main.consts.fpv_sol_movement.MAX_ATT_X
 	local yaw, pitch = 0, 90
-	for i = 1, 40 do 
-		table.insert(aimtable, Vector3.zero) 
+	for i = 1, 40 do
+		table.insert(aimtable, Vector3.zero)
 	end
 	
 	SpinBot = vape.Categories.Blatant:CreateModule({
@@ -1171,6 +1171,9 @@ run(function()
 					aimtable = table.clone(frontlines.Main.globals.sol_attitudes)
 					aimtable[frontlines.Main.globals.cli_state.fpv_sol_id] = Vector3.new(math.clamp(math.rad(pitch), -maxy, maxy), math.rad(yaw))
 					yaw += task.wait() * (Yaw.Value == 'Clockwise' and (Speed.Value or 0) or -(Speed.Value or 0)) * 1000
+					if Pitch.Value == 'Sine' then
+						pitch = math.sin(math.rad(yaw)) * 90
+					end
 				until not SpinBot.Enabled
 			else
 				yaw = 0
@@ -1197,7 +1200,7 @@ run(function()
 	})
 	Pitch = SpinBot:CreateDropdown({
 		Name = 'Pitch Direction',
-		List = {'Up', 'Down', 'Forward'},
+		List = {'Up', 'Down', 'Forward', 'Sine'},
 		Function = function(val)
 			pitch = val == 'Up' and 90 or val == 'Down' and -90 or 0
 		end

@@ -1,3 +1,4 @@
+local run = function(func) func() end
 local cloneref = cloneref or function(obj) return obj end
 
 local playersService = cloneref(game:GetService('Players'))
@@ -21,11 +22,11 @@ run(function()
 	end
 
 	local KnitInit, Knit
-	for _ = 1, 7 do
+	repeat
 		KnitInit, Knit = pcall(function() return debug.getupvalue(require(lplr.PlayerScripts.TS.knit).setup, 6) end)
 		if KnitInit then break end
 		task.wait()
-	end
+	until KnitInit
 	if not debug.getupvalue(Knit.Start, 1) then
 		repeat task.wait() until debug.getupvalue(Knit.Start, 1)
 	end

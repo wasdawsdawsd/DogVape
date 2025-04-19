@@ -9,7 +9,7 @@ local isfile = isfile or function(file)
 end
 local function downloadFile(path, func)
 	if not isfile(path) then
-		local suc, res = pcall(function() return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true) end)
+		local suc, res = pcall(function() return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true) end)
 		if not suc or res == '404: Not Found' then error(res) end
 		if path:find('.lua') then res = '--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.\n'..res end
 		writefile(path, res)
@@ -213,7 +213,7 @@ run(function()
 			end
 		end
 
-		for i, v in returned do
+		for i, v in table.clone(returned) do
 			if renamed[i] then
 				returned[i] = nil
 				returned[renamed[i]] = v
@@ -742,11 +742,10 @@ run(function()
 end)
 	
 run(function()
-	local InfiniteNitro
 	local nitrotable = debug.getupvalue(jb.VehicleController.NitroShopVisible, 1)
 	local oldnitro
 	
-	InfiniteNitro = vape.Categories.Utility:CreateModule({
+	InfNitro = vape.Categories.Utility:CreateModule({
 		Name = 'InfiniteNitro',
 		Function = function(callback)
 			if callback then
@@ -755,7 +754,7 @@ run(function()
 				repeat
 					nitrotable.Nitro = 250
 					task.wait(0.1)
-				until not InfiniteNitro.Enabled
+				until not InfNitro.Enabled
 			else
 				nitrotable.Nitro = oldnitro
 				jb.VehicleController.updateSpdBarRatio(oldnitro / 250)

@@ -22,8 +22,8 @@ local function getTool()
 	return lplr.Character and lplr.Character:FindFirstChildWhichIsA('Tool', true) or nil
 end
 
-local function notif(...) 
-	return vape:CreateNotification(...) 
+local function notif(...)
+	return vape:CreateNotification(...)
 end
 
 local function parsePositions(v, func)
@@ -64,23 +64,23 @@ run(function()
 
 	task.spawn(function()
 		local map = workspace:WaitForChild('Map', 99999)
-		if map and vape.Loaded ~= nil then 
+		if map and vape.Loaded ~= nil then
 			vape:Clean(map.DescendantAdded:Connect(function(v)
-				parsePositions(v, function(pos) 
-					store.blocks[pos] = v 
+				parsePositions(v, function(pos)
+					store.blocks[pos] = v
 				end)
 			end))
 			vape:Clean(map.DescendantRemoving:Connect(function(v)
-				parsePositions(v, function(pos) 
+				parsePositions(v, function(pos)
 					if store.blocks[pos] == v then
-						store.blocks[pos] = nil 
-						store.serverBlocks[pos] = nil 
+						store.blocks[pos] = nil
+						store.serverBlocks[pos] = nil
 					end
 				end)
 			end))
 			for _, v in map:GetDescendants() do
-				parsePositions(v, function(pos) 
-					store.blocks[pos] = v 
+				parsePositions(v, function(pos)
+					store.blocks[pos] = v
 					store.serverBlocks[pos] = v
 				end)
 			end
@@ -248,7 +248,6 @@ run(function()
 	local Targets
 	local CPS
 	local SwingRange
-	local FaceTarget
 	local AttackRange
 	local AngleSlider
 	local Max
@@ -268,10 +267,10 @@ run(function()
 		if Mouse.Enabled then
 			if not inputService:IsMouseButtonPressed(0) then return false end
 		end
-		if LegitAura.Enabled then 
+		if LegitAura.Enabled then
 			if ClickDelay < tick() then return false end
 		end
-		
+	
 		return getTool()
 	end
 	
@@ -279,9 +278,9 @@ run(function()
 		Name = 'Killaura',
 		Function = function(callback)
 			if callback then
-				if LegitAura.Enabled then 
+				if LegitAura.Enabled then
 					Killaura:Clean(inputService.InputBegan:Connect(function(input)
-						if input.UserInputType == Enum.UserInputType.MouseButton1 then 
+						if input.UserInputType == Enum.UserInputType.MouseButton1 then
 							ClickDelay = tick() + 0.1
 						end
 					end))
@@ -290,7 +289,7 @@ run(function()
 				repeat
 					local tool = getAttackData()
 					local attacked = {}
-					if tool and rawget(bd.CombatConstants.DAMAGE, tool.Name) then
+					if tool and tool:HasTag('Sword') then
 						local plrs = entitylib.AllPosition({
 							Range = SwingRange.Value,
 							Wallcheck = Targets.Walls.Enabled or nil,
@@ -316,11 +315,11 @@ run(function()
 								if Block.Enabled then
 									if bd.Entity.LocalEntity.IsBlocking then continue end
 								end
-								
+	
 								if not Swing.Enabled and SwingDelay < tick() then
 									SwingDelay = tick() + 0.25
 									entitylib.character.Humanoid.Animator:LoadAnimation(tool.Animations.Swing):Play()
-									
+	
 									if vape.ThreadFix then
 										setthreadidentity(2)
 									end
@@ -334,14 +333,17 @@ run(function()
 								if AttackDelay < tick() then
 									AttackDelay = tick() + (1 / CPS.GetRandomValue())
 									local bdent = bd.Entity.FindByCharacter(v.Character)
-									if bdent then 
+									if bdent then
 										bd.Blink.item_action.attack_entity.fire({
 											target_entity_id = bdent.Id,
 											is_crit = entitylib.character.RootPart.AssemblyLinearVelocity.Y < 0,
 											weapon_name = tool.Name,
-											rizz = '\226\128\139'
+											extra = {
+												rizz = 'No.',
+												sigma = 'The...',
+												those = workspace.Name == 'Ok'
+											}
 										})
-										if FaceTarget.Enabled then lplr.Character:SetPrimaryPartCFrame(CFrame.new(lplr.Character.PrimaryPart.Position, Vector3.new(v.HumanoidRootPart.Position.X, lplr.Character.PrimaryPart.Position.Y, v.HumanoidRootPart.Position.Z))) end
 									end
 								end
 							end
@@ -487,16 +489,12 @@ run(function()
 					Particles[i] = part
 				end
 			else
-				for _, v in Particles do 
-					v:Destroy() 
+				for _, v in Particles do
+					v:Destroy()
 				end
 				table.clear(Particles)
 			end
 		end
-	})
-	FaceTarget = Killaura:CreateToggle({
-		Name = "Face Target",
-		Function = void,
 	})
 	ParticleTexture = Killaura:CreateTextBox({
 		Name = 'Texture',
@@ -552,7 +550,7 @@ run(function()
 	LegitAura = Killaura:CreateToggle({
 		Name = 'Swing only',
 		Function = function()
-			if Killaura.Enabled then 
+			if Killaura.Enabled then
 				Killaura:Toggle()
 				Killaura:Toggle()
 			end
@@ -637,7 +635,7 @@ run(function()
 					continue
 				end
 	
-				if vec ~= Vector3.zero then 
+				if vec ~= Vector3.zero then
 					table.insert(adjacent, vec)
 				end
 			end
@@ -708,11 +706,11 @@ run(function()
 				repeat
 					if entitylib.isAlive then
 						local tool = true
-						if LimitItem.Enabled then 
+						if LimitItem.Enabled then
 							tool = getTool()
 							tool = tool and tool.Name:find('Block')
 						end
-						
+	
 						if tool then
 							local root = entitylib.character.RootPart
 							if Tower.Enabled and inputService:IsKeyDown(Enum.KeyCode.Space) and (not inputService:GetFocusedTextBox()) then
@@ -744,16 +742,20 @@ run(function()
 										fake:AddTag('Block')
 										fake.Parent = workspace.Map
 										bd.EffectsController:PlaySound(blockpos)
-										bd.Entity.LocalEntity:RemoveTool('Blocks', 1)
+										--bd.Entity.LocalEntity:RemoveTool('Blocks', 1)
 	
-										task.spawn(function()
+										task.delay(0.2, function()
 											local suc, block = bd.Blink.item_action.place_block.invoke({
 												position = blockpos,
 												block_type = 'Clay',
-												rizz = '\226\128\139'
+												extra = {
+													rizz = 'No.',
+													sigma = 'The...',
+													those = workspace.Name == 'Ok'
+												}
 											})
 											fake:Destroy()
-											if not (suc or block) then 
+											if not (suc or block) then
 												bd.Entity.LocalEntity:RemoveTool('Blocks', 1)
 											end
 										end)
@@ -787,5 +789,86 @@ run(function()
 		Default = true
 	})
 	LimitItem = Scaffold:CreateToggle({Name = 'Limit to items'})
+end)
+	
+run(function()
+	local Breaker
+	local Value
+	local OnlyPlayer
+	
+	local function getBlocksInPoints(s, e)
+		local list = {}
+		for x = s.X, e.X, 3 do
+			for y = s.Y, e.Y, 3 do
+				for z = s.Z, e.Z, 3 do
+					local vec = Vector3.new(x, y, z)
+					if store.blocks[vec] then
+						list[vec] = store.blocks[vec]
+					end
+				end
+			end
+		end
+		return list
+	end
+	
+	local function getPickaxe()
+		for name in bd.Entity.LocalEntity.Inventory do
+			if name:find('Pickaxe') then
+				return name
+			end
+		end
+	end
+	
+	Breaker = vape.Categories.Minigames:CreateModule({
+		Name = 'Breaker',
+		Function = function(callback)
+			if callback then
+				local breakPosition
+				local lastBreak
+	
+				repeat
+					breakPosition = nil
+					if entitylib.isAlive then
+						local pickaxe = getPickaxe()
+	
+						if pickaxe then
+							local pos = (entitylib.character.RootPart.Position // 3) * 3
+							local rvec = Vector3.new(3, 3, 3) * Range.Value
+	
+							for blockpos, block in getBlocksInPoints(pos - rvec, pos + rvec) do
+								if block.Name == 'Block' and (block.Parent.Name == 'Bed' and lplr.Team and block.Parent:GetAttribute('Team') ~= lplr.Team.Name) then
+									breakPosition = block.Position
+									break
+								end
+							end
+	
+							if breakPosition ~= lastBreak then
+								if breakPosition then
+									bd.Blink.item_action.start_break_block.fire({
+										position = breakPosition,
+										pickaxe_name = pickaxe
+									})
+								else
+									bd.Blink.item_action.stop_break_block.fire()
+								end
+								lastBreak = breakPosition
+							end
+						end
+					end
+					task.wait(1 / 60)
+				until not Breaker.Enabled
+			end
+		end,
+		Tooltip = 'Breaks enemy blocks around you'
+	})
+	Range = Breaker:CreateSlider({
+		Name = 'Break range',
+		Min = 1,
+		Max = 5,
+		Default = 5,
+		Suffix = function(val)
+			return val == 1 and 'stud' or 'studs'
+		end
+	})
 end)
 	

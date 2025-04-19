@@ -161,7 +161,6 @@ end)
 local Attacking
 run(function()
 	local Killaura
-	local FaceTarget
 	local Targets
 	local Range
 	local AngleSlider
@@ -345,8 +344,9 @@ run(function()
 					if vape.ThreadFix then
 						setthreadidentity(8)
 					end
+
 					for i, v in Particles do
-						v.Position = attacked[i] and attacked[i].Entity.RootPart.Position or Vector3.new(9e9, 9e9, 9e9)
+						v.Position = attacked[i] and attacked[i].RootPart.Position or Vector3.new(9e9, 9e9, 9e9)
 						v.Parent = attacked[i] and gameCamera or nil
 					end
 				end
