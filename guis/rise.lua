@@ -33,7 +33,6 @@ local inputService = cloneref(game:GetService('UserInputService'))
 local textService = cloneref(game:GetService('TextService'))
 local guiService = cloneref(game:GetService('GuiService'))
 local httpService = cloneref(game:GetService('HttpService'))
-local fpsmode = inputService.TouchEnabled
 
 local fontsize = Instance.new('GetTextBoundsParams')
 fontsize.Width = math.huge
@@ -49,6 +48,7 @@ local categoryholder
 local categoryhighlight
 local lastSelected
 local guiTween
+local guiTween2
 local scale
 local gui
 
@@ -214,48 +214,6 @@ local function createDownloader(text)
 	end
 end
 
-local function createMobileButton(buttonapi, position)
-	if not inputService.TouchEnabled then return end
-	local heldbutton = false
-	local button = Instance.new('TextButton')
-	button.Size = UDim2.fromOffset(40, 40)
-	button.Position = UDim2.fromOffset(position.X, position.Y)
-	button.AnchorPoint = Vector2.new(0.5, 0.5)
-	button.BackgroundColor3 = buttonapi.Enabled and Color3.new(0, 0.7, 0) or Color3.new()
-	button.BackgroundTransparency = 0.5
-	button.Text = buttonapi.Name
-	button.TextColor3 = Color3.new(1, 1, 1)
-	button.TextScaled = true
-	button.Font = Enum.Font.Gotham
-	button.Parent = mainapi.gui
-	local buttonconstraint = Instance.new('UITextSizeConstraint')
-	buttonconstraint.MaxTextSize = 16
-	buttonconstraint.Parent = button
-	addCorner(button, UDim.new(1, 0))
-
-	button.MouseButton1Down:Connect(function()
-		heldbutton = true
-		local holdtime, holdpos = tick(), inputService:GetMouseLocation()
-		repeat
-			heldbutton = (inputService:GetMouseLocation() - holdpos).Magnitude < 6
-			task.wait()
-		until (tick() - holdtime) > 1 or not heldbutton
-		if heldbutton then
-			buttonapi.Bind = {}
-			button:Destroy()
-		end
-	end)
-	button.MouseButton1Up:Connect(function()
-		heldbutton = false
-	end)
-	button.MouseButton1Click:Connect(function()
-		buttonapi:Toggle()
-		button.BackgroundColor3 = buttonapi.Enabled and Color3.new(0, 0.7, 0) or Color3.new()
-	end)
-
-	buttonapi.Bind = {Button = button}
-end
-
 local function createHighlight(size, pos)
 	local old = categoryhighlight
 	local info = TweenInfo.new(0.3)
@@ -286,7 +244,7 @@ local function downloadFile(path, func)
 	if not isfile(path) then
 		createDownloader(path)
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -300,8 +258,6 @@ local function downloadFile(path, func)
 end
 
 getcustomasset = not inputService.TouchEnabled and assetfunction and function(path)
-	return downloadFile(path, assetfunction)
-end or identifyexecutor():lower():find("delta") and assetfunction and function(path)
 	return downloadFile(path, assetfunction)
 end or function(path)
 	return getcustomassets[path] or ''
@@ -387,7 +343,8 @@ local function writeFont()
 end
 
 if inputService.TouchEnabled then
-	--writefile('newcatvape/profiles/gui.txt', 'new')
+	writefile('newcatvape/profiles/gui.txt', 'new')
+	return
 end
 
 do
@@ -479,25 +436,23 @@ do
 		tab = tab or self.tweens
 		if tab[obj] then
 			tab[obj]:Cancel()
+			tab[obj] = nil
 		end
-		if inputService.TouchEnabled then
-		    tweenService:Create(obj, fpsmode and TweenInfo.new(0) or tweeninfo, goal):Play()
+
+		if bypass or obj.Parent and obj.Visible then
+			tab[obj] = tweenService:Create(obj, tweeninfo, goal)
+			tab[obj].Completed:Once(function()
+				if tab then
+					tab[obj] = nil
+					tab = nil
+				end
+			end)
+			tab[obj]:Play()
 		else
-    		if bypass or obj.Parent and obj.Visible then
-    			tab[obj] = tweenService:Create(obj, fpsmode and TweenInfo.new(0) or tweeninfo, goal)
-    			tab[obj].Completed:Once(function()
-    				if tab then
-    					tab[obj] = nil
-    					tab = nil
-    				end
-    			end)
-    			tab[obj]:Play()
-    		else
-    			for i, v in goal do
-    				obj[i] = v
-    			end
-    		end
-    	end
+			for i, v in goal do
+				obj[i] = v
+			end
+		end
 	end
 
 	function tween:Cancel(obj)
@@ -1802,7 +1757,6 @@ function mainapi:CreateCategory(categorysettings)
 		modulechildren.BackgroundTransparency = 1
 		modulechildren.BorderSizePixel = 0
 		modulechildren.Visible = false
-		modulechildren.Name = "ModuleOptions"
 		modulechildren.Parent = modulebutton
 		local mwindowlist = Instance.new('UIListLayout')
 		mwindowlist.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1815,7 +1769,6 @@ function mainapi:CreateCategory(categorysettings)
 
 		function moduleapi:SetBind(tab)
 			if tab.Mobile then
-			    createMobileButton(moduleapi, Vector2.new(tab.X, tab.Y))
 				return
 			end
 
@@ -1884,94 +1837,6 @@ function mainapi:CreateCategory(categorysettings)
 				Size = UDim2.fromOffset(566, height)
 			})
 		end)
-    	if inputService.TouchEnabled then
-            local optionbutton = Instance.new("TextButton", modulebutton)
-            optionbutton.Size = UDim2.fromScale(0.09, 0.09)
-            optionbutton.Position = UDim2.fromScale(0.85, 0.15)
-            optionbutton.BackgroundColor3 = Color3.new(1,1,1)
-            optionbutton.BackgroundTransparency = 0.9
-            optionbutton.Text = ""
-            optionbutton.SizeConstraint = "RelativeXX"
-            addCorner(optionbutton, UDim.new(0, 500))
-            
-            optionbutton.MouseButton1Click:Connect(function()
-                modulechildren.Visible = not modulechildren.Visible
-    			local height = modulechildren.Visible and (modulechildren.Size.Y.Offset / scale.Scale) + 66 or 76
-    			tween:Tween(modulebutton, TweenInfo.new(math.min(height * 3, 450) / 1000, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-    				Size = UDim2.fromOffset(566, height)
-    			})
-            end)
-            
-			local heldbutton = false
-			modulebutton.MouseButton1Down:Connect(function()
-				heldbutton = true
-				local holdtime, holdpos = tick(), inputService:GetMouseLocation()
-				repeat
-					heldbutton = (inputService:GetMouseLocation() - holdpos).Magnitude < 3
-					task.wait()
-				until (tick() - holdtime) > 1 or not heldbutton or not clickgui.Visible
-				if heldbutton and clickgui.Visible then
-					if mainapi.ThreadFix then
-						setthreadidentity(8)
-					end
-					if guiTween then
-        				guiTween:Cancel()
-        			end
-        			mainapi.Visible = not mainapi.Visible
-        			guiTween = tweenService:Create(mainscale, TweenInfo.new(fpsmode and 0 or 0.3, mainapi.Visible and Enum.EasingStyle.Exponential or Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
-        				Scale = mainapi.Visible and 1 or 0
-        			})
-        			guiTween:Play()
-        			if mainapi.Visible then
-        				clickgui.Visible = mainapi.Visible
-        			else
-        				guiTween.Completed:Connect(function()
-        					clickgui.Visible = mainapi.Visible
-        				end)
-        			end
-					--tooltip.Visible = false
-					--mainapi:BlurCheck()
-					for _, mobileButton in mainapi.Modules do
-						if mobileButton.Bind.Button then
-							mobileButton.Bind.Button.Visible = true
-						end
-					end
-
-					local touchconnection
-					touchconnection = inputService.InputBegan:Connect(function(inputType)
-						if inputType.UserInputType == Enum.UserInputType.Touch then
-							if self.ThreadFix then setthreadidentity(8) end
-							createMobileButton(moduleapi, inputType.Position + Vector3.new(0, guiService:GetGuiInset().Y, 0))
-							if guiTween then
-                				guiTween:Cancel()
-                			end
-                			mainapi.Visible = not mainapi.Visible
-                			guiTween = tweenService:Create(mainscale, TweenInfo.new(fpsmode and 0 or 0.3, mainapi.Visible and Enum.EasingStyle.Exponential or Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
-                				Scale = mainapi.Visible and 1 or 0
-                			})
-                			guiTween:Play()
-                			if mainapi.Visible then
-                				clickgui.Visible = mainapi.Visible
-                			else
-                				guiTween.Completed:Connect(function()
-                					clickgui.Visible = mainapi.Visible
-                				end)
-                			end
-							--mainapi:BlurCheck()
-							for _, mobileButton in mainapi.Modules do
-								if mobileButton.Bind.Button then
-									mobileButton.Bind.Button.Visible = false
-								end
-							end
-							touchconnection:Disconnect()
-						end
-					end)
-				end
-			end)
-			modulebutton.MouseButton1Up:Connect(function()
-				heldbutton = false
-			end)
-		end
 
 
 		moduleapi.Object = modulebutton
@@ -2516,52 +2381,6 @@ function mainapi:Load(skipgui, profile)
 		self.Downloader = nil
 	end
 	self.Loaded = savecheck
-	if inputService.TouchEnabled and #self.Keybind == 1 and self.Keybind[1] == 'RightShift' then
-		local button = Instance.new('TextButton')
-		button.Size = UDim2.fromOffset(32, 32)
-		button.Position = UDim2.new(1, -90, 0, 4)
-		button.BackgroundColor3 = Color3.new()
-		button.BackgroundTransparency = 0.5
-		button.Text = ''
-		button.Parent = gui
-		local image = Instance.new('ImageLabel')
-		image.Size = UDim2.fromOffset(26, 26)
-		image.Position = UDim2.fromOffset(3, 3)
-		image.BackgroundTransparency = 1
-		image.Image = getcustomasset('newcatvape/assets/new/vape.png')
-		image.Parent = button
-		local buttoncorner = Instance.new('UICorner')
-		buttoncorner.Parent = button
-		self.VapeButton = button
-		button.MouseButton1Click:Connect(function()
-			if self.ThreadFix then
-				setthreadidentity(8)
-			end
-			for _, mobileButton in self.Modules do
-				if mobileButton.Bind.Button then
-					mobileButton.Bind.Button.Visible = mainapi.Visible
-				end
-			end
-			if guiTween then
-				guiTween:Cancel()
-			end
-			mainapi.Visible = not mainapi.Visible
-			mainapi:CreateNotification('Toggled', 'Toggled Click GUI '..(mainapi.Visible and 'on' or 'off'), 1)
-			guiTween = tweenService:Create(mainscale, TweenInfo.new(fpsmode and 0 or 0.3, mainapi.Visible and Enum.EasingStyle.Exponential or Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
-				Scale = mainapi.Visible and 1 or 0
-			})
-			guiTween:Play()
-			if mainapi.Visible then
-				clickgui.Visible = mainapi.Visible
-			else
-				guiTween.Completed:Connect(function()
-					clickgui.Visible = mainapi.Visible
-				end)
-			end
-			--tooltip.Visible = false
-			--self:BlurCheck()
-		end)
-	end
 end
 
 function mainapi:LoadOptions(object, savedoptions)
@@ -2618,7 +2437,7 @@ function mainapi:Save(newprofile)
 	for i, v in self.Modules do
 		savedata.Modules[i] = {
 			Enabled = v.Enabled,
-			Bind = v.Bind.Button and {Mobile = true, X = v.Bind.Button.Position.X.Offset, Y = v.Bind.Button.Position.Y.Offset} or v.Bind,
+			Bind = typeof(v.Bind) == 'Instance' and {Mobile = true, X = v.Bind.Position.X.Offset, Y = v.Bind.Position.Y.Offset} or v.Bind,
 			Options = mainapi:SaveOptions(v, true)
 		}
 	end
@@ -2686,7 +2505,7 @@ end
 gui = Instance.new('ScreenGui')
 gui.Name = randomString()
 gui.DisplayOrder = 9999999
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.IgnoreGuiInset = true
 gui.OnTopOfCoreBlur = true
 if mainapi.ThreadFix then
@@ -2726,11 +2545,12 @@ scale.Scale = 1
 scale.Parent = scaledgui
 mainapi.guiscale = scale
 scaledgui.Size = UDim2.fromScale(1 / scale.Scale, 1 / scale.Scale)
-mainframe = Instance.new('Frame')
+mainframe = Instance.new('CanvasGroup')
 mainframe.Size = UDim2.fromOffset(800, 600)
 mainframe.Position = UDim2.fromScale(0.5, 0.5)
 mainframe.AnchorPoint = Vector2.new(0.5, 0.5)
 mainframe.BackgroundColor3 = uipallet.Main
+mainframe.GroupTransparency = 1
 mainframe.Parent = clickgui
 --addBlur(mainframe)
 local selected = Instance.new('TextButton')
@@ -2756,7 +2576,7 @@ local swatermark = Instance.new('TextLabel')
 swatermark.Size = UDim2.fromOffset(70, 40)
 swatermark.Position = UDim2.fromOffset(28, 22)
 swatermark.BackgroundTransparency = 1
-swatermark.Text = 'Risе'
+swatermark.Text = 'Rise'
 swatermark.TextColor3 = uipallet.Text
 swatermark.TextSize = 38
 swatermark.TextXAlignment = Enum.TextXAlignment.Left
@@ -3017,67 +2837,16 @@ scaleslider = mainapi.Categories.Main:CreateSlider({
 })
 mainapi.Categories.Main:CreateDropdown({
 	Name = 'GUI Theme',
-	List = {'rise', 'new', 'old', 'sigma'},
+	List = {'rise', 'new', 'old'},
 	Function = function(val, mouse)
 		if mouse then
 			writefile('newcatvape/profiles/gui.txt', val)
 			shared.vapereload = true
-		    loadfile("newcatvape/init.lua")()
-		end
-	end
-})
-local colors = {
-	Dark = {
-		Main = {26, 25, 26},
-		Text = {200, 200, 200}
-	},
-	Light = {
-		Main = {220, 220, 220},
-		Text = {60, 60, 60}
-	},
-	Amoled = {
-		Main = {0, 0, 0},
-		Text = {230, 230, 230}
-	},
-	Red = {
-		Main = {150, 0, 0},
-		Text = {210, 210, 210}
-	},
-	Orange = {
-		Main = {199, 107, 42},
-		Text = {210, 210, 210}
-	},
-	Yellow = {
-		Main = {199, 181, 42},
-		Text = {60, 60, 60}
-	},
-	Green = {
-		Main = {65, 156, 33},
-		Text = {210, 210, 210}
-	},
-	Blue = {
-		Main = {33, 94, 156},
-		Text = {210, 210, 210}
-	},
-	Purple = {
-		Main = {57, 29, 74},
-		Text = {210, 210, 210}
-	}
-}
-local list = {}
-for i, v in pairs(colors) do
-	table.insert(list, i)
-end
-mainapi.Categories.Main:CreateDropdown({
-	Name = "GUI Color",
-	List = list,
-	Default = 'Dark',
-	Function = function(val, mouse)
-		if mouse then
-			writefile("newcatvape/profiles/color.txt", httpService:JSONEncode(colors[val]))
-			mainapi:Save()
-			shared.vapereload = true
-			loadfile("newcatvape/main.lua")()
+			if shared.VapeDeveloper then
+				loadstring(readfile('newcatvape/loader.lua'), 'loader')()
+			else
+				loadstring(game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/loader.lua', true))()
+			end
 		end
 	end
 })
@@ -3101,7 +2870,11 @@ mainapi.Categories.Main:CreateButton({
 	Name = 'Reinject',
 	Function = function()
 		shared.vapereload = true
-		loadfile("newcatvape/init.lua")()
+		if shared.VapeDeveloper then
+			loadstring(readfile('newcatvape/loader.lua'), 'loader')()
+		else
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/loader.lua', true))()
+		end
 	end
 })
 mainapi.Categories.Main:CreateButton({
@@ -3582,12 +3355,19 @@ mainapi:Clean(inputService.InputBegan:Connect(function(inputObj)
 			if guiTween then
 				guiTween:Cancel()
 			end
+			if guiTween2 then
+				guiTween2:Cancel()
+			end
 			mainapi.Visible = not mainapi.Visible
 			mainapi:CreateNotification('Toggled', 'Toggled Click GUI '..(mainapi.Visible and 'on' or 'off'), 1)
-			guiTween = tweenService:Create(mainscale, TweenInfo.new(fpsmode and 0 or 0.3, mainapi.Visible and Enum.EasingStyle.Exponential or Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
+			guiTween = tweenService:Create(mainscale, TweenInfo.new(0.3, mainapi.Visible and Enum.EasingStyle.Exponential or Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
 				Scale = mainapi.Visible and 1 or 0
 			})
+			guiTween2 = tweenService:Create(mainframe, TweenInfo.new(0.3, mainapi.Visible and Enum.EasingStyle.Exponential or Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
+				GroupTransparency = mainapi.Visible and 0 or 1
+			})
 			guiTween:Play()
+			guiTween2:Play()
 			if mainapi.Visible then
 				clickgui.Visible = mainapi.Visible
 			else

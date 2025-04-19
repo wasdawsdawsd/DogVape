@@ -9,7 +9,7 @@ local mainapi = {
 	Keybind = {'RightShift'},
 	Loaded = false,
 	Legit = {Modules = {}},
-	Libraries = {finished = false},
+	Libraries = {},
 	Modules = {},
 	Place = game.PlaceId,
 	Profile = 'default',
@@ -77,8 +77,7 @@ local getcustomassets = {
 	['newcatvape/assets/old/textv4.png'] = 'rbxasset://textv4.png',
 	['newcatvape/assets/old/utilityicon.png'] = 'rbxasset://utilityicon.png',
 	['newcatvape/assets/old/vape.png'] = 'rbxassetid://14373395239',
-	['newcatvape/assets/old/worldicon.png'] = 'rbxasset://worldicon.png',
-	['newcatvape/assets/old/spotify.png'] = 'rbxassetid://129349257949035'
+	['newcatvape/assets/old/worldicon.png'] = 'rbxasset://worldicon.png'
 }
 
 local isfile = isfile or function(file)
@@ -222,7 +221,7 @@ local function downloadFile(path, func)
 	if not isfile(path) then
 		createDownloader(path)
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -236,8 +235,6 @@ local function downloadFile(path, func)
 end
 
 getcustomasset = not inputService.TouchEnabled and assetfunction and function(path)
-	return downloadFile(path, assetfunction)
-end or identifyexecutor():lower():find("delta") and assetfunction and function(path)
 	return downloadFile(path, assetfunction)
 end or function(path)
 	return getcustomassets[path] or ''
@@ -366,7 +363,9 @@ do
 		tab = tab or self.tweens
 		if tab[obj] then
 			tab[obj]:Cancel()
+			tab[obj] = nil
 		end
+
 		if obj.Parent and obj.Visible then
 			tab[obj] = tweenService:Create(obj, tweeninfo, goal)
 			tab[obj].Completed:Once(function()
@@ -397,9 +396,6 @@ mainapi.Libraries = {
 	getfontsize = getfontsize,
 	tween = tween,
 	uipallet = uipallet,
-	base64 = loadstring(downloadFile("newcatvape/libraries/base64.lua"), "base64")(),
-	spotify = loadstring(downloadFile("newcatvape/libraries/spotify.lua"), "spotify")(),
-	finished = true
 }
 
 local components
@@ -3725,70 +3721,19 @@ scaleslider = topbar:CreateSlider({
 })
 topbar:CreateDropdown({
 	Name = 'GUI Theme',
-	List = {'new', 'old', 'sigma', 'rise'},
+	List = inputService.TouchEnabled and {'new', 'old'} or {'new', 'old', 'rise'},
 	Function = function(val, mouse)
 		if mouse then
 			writefile('newcatvape/profiles/gui.txt', val)
 			shared.vapereload = true
-			loadfile("newcatvape/init.lua")()
+			if shared.VapeDeveloper then
+				loadstring(readfile('newcatvape/loader.lua'), 'loader')()
+			else
+				loadstring(game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/loader.lua', true))()
+			end
 		end
 	end,
-	Tooltip = 'new - The newest vape theme since v4.05\nold - The vape theme pre v4.05\nrise - Rise 6.0'
-})
-local colors = {
-	Dark = {
-		Main = {26, 25, 26},
-		Text = {200, 200, 200}
-	},
-	Light = {
-		Main = {220, 220, 220},
-		Text = {60, 60, 60}
-	},
-	Amoled = {
-		Main = {0, 0, 0},
-		Text = {230, 230, 230}
-	},
-	Red = {
-		Main = {150, 0, 0},
-		Text = {210, 210, 210}
-	},
-	Orange = {
-		Main = {199, 107, 42},
-		Text = {210, 210, 210}
-	},
-	Yellow = {
-		Main = {199, 181, 42},
-		Text = {60, 60, 60}
-	},
-	Green = {
-		Main = {65, 156, 33},
-		Text = {210, 210, 210}
-	},
-	Blue = {
-		Main = {33, 94, 156},
-		Text = {210, 210, 210}
-	},
-	Purple = {
-		Main = {57, 29, 74},
-		Text = {210, 210, 210}
-	}
-}
-local list = {}
-for i, v in pairs(colors) do
-	table.insert(list, i)
-end
-topbar:CreateDropdown({
-	Name = "GUI Color",
-	List = list,
-	Default = 'Dark',
-	Function = function(val, mouse)
-		if mouse then
-			writefile("newcatvape/profiles/color.txt", httpService:JSONEncode(colors[val]))
-			mainapi:Save()
-			shared.vapereload = true
-			loadfile("newcatvape/init.lua")()
-		end
-	end
+	Tooltip = 'new - The newest vape theme to since v4.05\nold - The vape theme pre v4.05\nrise - Rise 6.0'
 })
 mainapi.RainbowMode = topbar:CreateDropdown({
 	Name = 'Rainbow Mode',
@@ -3822,7 +3767,7 @@ topbar:CreateButton({
 		if shared.VapeDeveloper then
 			loadstring(readfile('newcatvape/loader.lua'), 'loader')()
 		else
-			loadstring(game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newcatvape/profiles/commit.txt')..'/loader.lua', true))()
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/loader.lua', true))()
 		end
 	end,
 	Tooltip = 'This will set your profile to the default settings of Vape'
@@ -3883,158 +3828,15 @@ topbar:CreateButton({
 	Name = 'REINEJCT',
 	Function = function()
 		shared.vapereload = true
-		loadfile("newcatvape/init.lua")()
+		if shared.VapeDeveloper then
+			loadstring(readfile('newcatvape/loader.lua'), 'loader')()
+		else
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/loader.lua', true))()
+		end
 	end,
 	Tooltip = 'Reloads vape for debugging purposes'
 })
 topbar:CreateBind()
-
---[[
-	Spotify Display
-]]
-
-local spotify
-local spotifyobj
-local spotifyrefreshtoken
-
-local spotifybkg = Instance.new('Frame')
-spotifybkg.Size = UDim2.fromOffset(246, 74)
-spotifybkg.BackgroundColor3 = uipallet.Main
-spotifybkg.BackgroundTransparency = 0.06
-spotifybkg.BorderSizePixel = 0
-local spotifyshot = Instance.new('ImageLabel')
-spotifyshot.Size = UDim2.fromOffset(62, 62)
-spotifyshot.Position = UDim2.fromOffset(6, 6)
-spotifyshot.BackgroundColor3 = color.Light(uipallet.Main, 0.05)
-spotifyshot.BorderColor3 = color.Light(uipallet.Main, 0.2)
-spotifyshot.Parent = spotifybkg
-local spotifyname = Instance.new('TextLabel')
-spotifyname.Size = UDim2.fromOffset(175, 18)
-spotifyname.Position = UDim2.fromOffset(73, 3)
-spotifyname.BackgroundTransparency = 1
-spotifyname.Text = 'Song name'
-spotifyname.TextXAlignment = Enum.TextXAlignment.Left
-spotifyname.TextYAlignment = Enum.TextYAlignment.Top
-spotifyname.TextScaled = true
-spotifyname.TextColor3 = uipallet.Text
-spotifyname.TextStrokeTransparency = 1
-spotifyname.FontFace = uipallet.Font
-local spotifyshadow = spotifyname:Clone()
-spotifyshadow.Position = UDim2.fromOffset(74, 4)
-spotifyshadow.TextColor3 = Color3.new()
-spotifyshadow.TextTransparency = 0.65
-spotifyshadow.Parent = spotifybkg
-spotifyname.Parent = spotifybkg
-spotifyname:GetPropertyChangedSignal('Text'):Connect(function()
-	spotifyshadow.Text = spotifyname.Text
-end)
-local spotifyartistname = Instance.new('TextLabel')
-spotifyartistname.Size = UDim2.fromOffset(175, 17)
-spotifyartistname.Position = UDim2.fromOffset(73, 21)
-spotifyartistname.BackgroundTransparency = 1
-spotifyartistname.Text = 'Artist name'
-spotifyartistname.TextXAlignment = Enum.TextXAlignment.Left
-spotifyartistname.TextYAlignment = Enum.TextYAlignment.Top
-spotifyartistname.TextScaled = true
-spotifyartistname.TextColor3 = color.Dark(uipallet.Text, 0.15)
-spotifyartistname.TextStrokeTransparency = 1
-spotifyartistname.FontFace = uipallet.Font
-local spotifyartistshadow = spotifyartistname:Clone()
-spotifyartistshadow.Position = UDim2.fromOffset(74, 22)
-spotifyartistshadow.TextColor3 = Color3.new()
-spotifyartistshadow.TextTransparency = 0.65
-spotifyartistshadow.Parent = spotifybkg
-spotifyartistname.Parent = spotifybkg
-spotifyartistname:GetPropertyChangedSignal('Text'):Connect(function()
-	spotifyartistshadow.Text = spotifyartistname.Text
-end)
-local spotifyprogressbkg = Instance.new('Frame')
-spotifyprogressbkg.Name = 'HealthBKG'
-spotifyprogressbkg.Size = UDim2.fromOffset(98, 6)
-spotifyprogressbkg.Position = UDim2.fromOffset(74, 44)
-spotifyprogressbkg.BackgroundColor3 = uipallet.Main
-spotifyprogressbkg.BorderColor3 = color.Light(uipallet.Main, 0.2)
-spotifyprogressbkg.Parent = spotifybkg
-local spotifyprogress = spotifyprogressbkg:Clone()
-spotifyprogress.Size = UDim2.fromScale(0, 1)
-spotifyprogress.Position = UDim2.new()
-spotifyprogress.BackgroundColor3 = Color3.new(0, 1, 0)
-spotifyprogress.BorderSizePixel = 0
-spotifyprogress.Parent = spotifyprogressbkg
-local spotifyprogresstime = spotifyname:Clone()
-spotifyprogresstime.Size = UDim2.fromOffset(145, 12)
-spotifyprogresstime.Position = UDim2.fromOffset(177, 42)
-spotifyprogresstime.BackgroundTransparency = 1
-spotifyprogresstime.Text = '0:00'
-local spotifyshadow2 = spotifyprogresstime:Clone()
-spotifyshadow2.Position = UDim2.fromOffset(178, 43)
-spotifyshadow2.TextColor3 = Color3.new()
-spotifyshadow2.TextTransparency = 0.65
-spotifyshadow2.Parent = spotifybkg
-spotifyprogresstime.Parent = spotifybkg
-
-spotifyobj = mainapi:CreateOverlay({
-	Name = "Spotify Display",
-	Icon = getcustomasset('newcatvape/assets/new/targetinfoicon.png'),
-	Size = UDim2.fromOffset(14, 14),
-	Position = UDim2.fromOffset(12, 12),
-	CategorySize = 246,
-	Function = function(callback: boolean)
-		if callback then
-			if #spotifyrefreshtoken.Value < 5 then
-				notif("Spotify Display", "No refresh token!", 10, "alert")
-			else
-				writefile("newcatvape/profiles/spotify.txt", spotifyrefreshtoken.Value)
-			end
-			if isfile("label.png") then
-				delfile("label.png")
-			end
-			local Spotify = mainapi.Libraries.spotify
-			local updateTick = tick()
-			local TOKEN = ""
-			spotifyobj:Clean(runService.Heartbeat:Connect(function()
-				if updateTick < tick() then
-					updateTick = tick() + 1200
-					TOKEN = Spotify:UpdateToken(spotifyrefreshtoken.Value, "9814867a949d46e8a379fa64cfbc5026", "dd7bc97681aa48379795c5aaa54fb1f3")
-					print("Token update finished")
-				end
-			end))
-			local song = ""
-			repeat
-				task.wait()
-				if TOKEN ~= "" then
-					local data = Spotify:GetData(TOKEN)
-					
-					spotifyname.Text = data.song.name
-					spotifyartistname.Text = data.song.artist
-					tweenService:Create(spotifyprogress, TweenInfo.new(0.16, Enum.EasingStyle.Linear), {Size = UDim2.new(0, spotifyprogressbkg.Size.X.Offset / (data.playback.total / data.playback.current), 0, spotifyprogressbkg.Size.Y.Offset)}):Play()
-					
-					spotifyprogresstime.Text = Spotify:ConvertTime(data.playback.current)
-					
-					if song ~= data.song.name then
-						song = data.song.name
-						local path = "newcatvape/assets/trash/"..data.song.name, data.song.artist..".png"
-						writefile("newcatvape/assets/trash/"..data.song.name..".png", game:HttpGet(data.song.cover))
-						spotifyshot.Image = getcustomasset("newcatvape/assets/trash/"..data.song.name..".png")
-					end
-				end
-			until (not enabled)
-		end
-	end
-})
-spotifybkg.Parent = spotifyobj.Children
-
-spotifyrefreshtoken = spotifyobj:CreateTextBox({
-	Name = "Refresh Token",
-	Placeholder = "Spotify Refresh Token",
-	Default = isfile("newcatvape/profiles/spotify.txt") and readfile("newcatvape/profiles/spotify.txt") or nil,
-	Function = function(b)
-		if spotifyobj.Enabled then
-			spotifyobj:Toggle()
-			spotifyobj:Toggle()
-		end
-	end
-})
 
 --[[
 	Target Info

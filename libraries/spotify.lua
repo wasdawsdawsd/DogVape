@@ -3,7 +3,7 @@ local function downloadFile(path, func)
 	if not isfile(path) then
 		createDownloader(path)
 		local suc, res = pcall(function()
-			return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/"..readfile("newcatvape/profiles/commit.txt").."/"..select(1, path:gsub("newcatvape/", "")), true)
+			return game:HttpGet("https://raw.githubusercontent.com/new-qwertyui/CatV5/"..readfile("newcatvape/profiles/commit.txt").."/"..select(1, path:gsub("newcatvape/", "")), true)
 		end)
 		if not suc or res == "404: Not Found" then
 			error(res)
@@ -57,6 +57,30 @@ function spotify:Request(url)
     return (data and body) or ""
 end
 
+function spotify:UpdateTokenDebug(token: string, clientId, clientSecret): ()
+	local encoded = base64.encode(clientId..":"..clientSecret)
+	local data = http.request({
+		Url = "https://accounts.spotify.com/api/token",
+		Method = "POST",
+		Headers = {
+			Authorization = "Basic "..encoded,
+			["Content-Type"] = "application/x-www-form-urlencoded"
+		},
+		Body = "grant_type=refresh_token&refresh_token="..token
+	})
+
+	if data.StatusCode == 200 then
+		spotify.RefreshToken = token
+		spotify.AccessToken = httpService:JSONDecode(data.Body).access_token
+	elseif data.StatusCode == 400 then
+        error(httpService:JSONDecode(data.Body).error)
+		error("client id or secret invalid")
+	else
+		error(httpService:JSONDecode(data.Body).error)
+	end
+    return spotify.AccessToken
+end
+
 function spotify:UpdateToken(refreshToken, clientId, clientSecret)
 	if not refreshToken then
 		error("string expected, got nil")
@@ -64,23 +88,8 @@ function spotify:UpdateToken(refreshToken, clientId, clientSecret)
 	
 	spotify.token = ""
 	
-	local data = http.request({
-		Url = "https://api.catvape.info/spotify/updateToken",
-		Method = "GET",
-		Headers = {
-			Token = refreshToken,
-			Id = clientId,
-			Secret = clientSecret
-		}
-	})
-
-	local body = data.Body and httpService:JSONDecode(data.Body) or {}
-	if body and body.error then
-		return error(body.error.message)
-	end
-	
-	spotify.token = body.access_token
-	return body.access_token
+	spotify.token = spotify:UpdateTokenDebug(refreshToken, clientId, clientSecret)
+	return spotify.token
 end
 
 local song = ""
