@@ -2,8 +2,9 @@ local license = ({...})[1] or {}
 
 getgenv().username = license.Username or shared.username
 getgenv().password = license.Password or shared.password
+getgenv().bundller = license.Bundle or false
 
-getgenv().CAK = license.CAK or getgenv().CAK or ""
+getgenv().CAK = license.CAK or getgenv().CAK or ''
 getgenv().catvapedev = license.Developer or shared.catvapedev or false
 
 getgenv().void = function() end
@@ -12,16 +13,16 @@ getgenv().keypress = keypress or function() end
 getgenv().initcatvape = true
 getgenv().getexecutor = function()
     local executor = identifyexecutor()
-    return string.split(executor, " ")[1]
+    return string.split(executor, ' ')[1]
 end
 
 local httpService = game:GetService('HttpService')
 
-if not isfile('catvape_reset') then
+if not isfile('catvape_reset2') then
 	pcall(function()
 		delfolder('newcatvape')
 	end)
-	writefile('catvape_reset', '')
+	writefile('catvape_reset2', '')
 end
 
 local function getcommit(sub)
@@ -86,6 +87,7 @@ local isfolderv2 = function(filename)
 end
 
 if not getgenv().catvapedev then 
+	warn('Downloading CatVape')
 	if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 then
 		for _, folder in {'newcatvape', 'newcatvape/games', 'newcatvape/profiles', 'newcatvape/assets', 'newcatvape/libraries', 'newcatvape/guis'} do
 			if not isfolder(folder) then
@@ -97,17 +99,13 @@ if not getgenv().catvapedev then
 		for i,v in files do
 			if v.path == 'assets' or v.path:find('assets') or v.path == 'profiles' or v.path:find('profiles') then continue end
 			if not isfolderv2(v.name) then
-				print('downloading new file '.. v.path)
 				writefile('newcatvape/'.. v.name, downloadFile('newcatvape/'..v.path))
-				print('new file downloaded '.. v.path)
 			else
 				makefolder('newcatvape/'.. v.path)
 				local files2 = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/contents/' .. v.path, true))
 				for i2 ,v2 in files2 do
 					if not isfolderv2(v2.path) then
-						print('downloading '.. v2.path)
 						writefile('newcatvape/'.. v2.path, downloadFile('newcatvape/'.. v2.path))
-						print('downloaded '.. v2.path)
 					end
 				end
 			end
@@ -152,5 +150,7 @@ if not getgenv().catvapedev then
 end
 
 getgenv().used_init = true
+
+warn('Successfully downloaded catvape')
 
 return loadstring(downloadFile2('newcatvape/main.lua'), 'main')(license)

@@ -64,6 +64,8 @@ local store = {
 local Reach = {}
 local HitBoxes = {}
 local InfiniteFly = {Enabled = false}
+local AutoCharge = {}
+local AutoChargeTime = {}
 local TrapDisabler
 local AntiFallPart
 local FlyLandTick = tick()
@@ -178,7 +180,7 @@ local function getSword()
 	for slot, item in store.inventory.inventory.items do
 		local swordMeta = bedwars.ItemMeta[item.itemType].sword
 		if swordMeta then
-			local swordDamage = swordMeta.baseDamage or 0
+			local swordDamage = swordMeta.damage or 0
 			if swordDamage > bestSwordDamage then
 				bestSword, bestSwordSlot, bestSwordDamage = item, slot, swordDamage
 			end
@@ -961,6 +963,7 @@ run(function()
 				if result then
 					if result == 'cancelled' then
 						store.damageBlockFail = tick() + 1
+						table.clear(cache)
 						return
 					end
 
@@ -1068,19 +1071,22 @@ run(function()
 	end))
 
 	for _, event in {'PlaceBlockEvent', 'BreakBlockEvent'} do
-		bedwars.ClientDamageBlock:WaitFor(event):andThen(function(connection)
-			if not vape.Connections then return end
-			vape:Clean(connection:Connect(function(data)
-				for i, v in cache do
-					if ((data.blockRef.blockPosition * 3) - v[1]).Magnitude <= 30 then
-						table.clear(v[3])
-						table.clear(v)
-						cache[i] = nil
-					end
+		vape:Clean(bedwars.ZapNetworking[event..'Zap'].On(function(...)
+			local data = {
+				blockRef = {
+					blockPosition = ...,
+				},
+				player = select(5, ...)
+			}
+			for i, v in cache do
+				if ((data.blockRef.blockPosition * 3) - v[1]).Magnitude <= 30 then
+					table.clear(v[3])
+					table.clear(v)
+					cache[i] = nil
 				end
-				vapeEvents[event]:Fire(data)
-			end))
-		end)
+			end
+			vapeEvents[event]:Fire(data)
+		end))
 	end
 
 	store.blocks = collection('block', gui)
@@ -1296,6 +1302,65 @@ run(function()
 	})
 	StrafeIncrease = AimAssist:CreateToggle({Name = 'Strafe increase'})
 end)
+
+
+run(function()
+	local old
+	local oldSwing
+	AutoCharge = vape.Categories.Combat:CreateModule({
+	    Name = 'Auto Charge',
+	    Function = function(callback)
+	        debug.setconstant(bedwars.SwordController.attackEntity, 58, callback and 'damage' or 'multiHitCheckDurationSec')
+	        if callback then
+	            local chargeSwingTime = 0
+	            local canSwing
+	            old = bedwars.SwordController.sendServerRequest
+	            bedwars.SwordController.sendServerRequest = function(self, ...)
+	                if (os.clock() - chargeSwingTime) < AutoChargeTime.Value then return end
+	                self.lastSwingServerTimeDelta = 0.5
+	                chargeSwingTime = os.clock()
+	                canSwing = true
+	                local item = self:getHandItem()
+	                if item and item.tool then
+	                    self:playSwordEffect(bedwars.ItemMeta[item.tool.Name], false)
+	                end
+	                return old(self, ...)
+				end
+	            oldSwing = bedwars.SwordController.playSwordEffect
+	            bedwars.SwordController.playSwordEffect = function(...)
+					local plrs = entitylib.AllPosition({
+						Range = 25,
+						Part = 'RootPart',
+						Players = true,
+						NPCs = true,
+						Limit = 10
+					})
+	                if not canSwing and #plrs > 0 then return end
+	                canSwing = false
+	                return oldSwing(...)
+	            end
+	        else
+				if old then
+	                bedwars.SwordController.sendServerRequest = old
+	                old = nil
+	            end
+	            if oldSwing then
+	                bedwars.SwordController.playSwordEffect = oldSwing
+	                oldSwing = nil
+	            end
+	        end
+	    end,
+	    Tooltip = 'Allows you to get charged hits while spam clicking.'
+	})
+ 
+	AutoChargeTime = AutoCharge:CreateSlider({
+	    Name = 'Charge Time',
+	    Min = 0,
+	    Max = 0.5,
+	    Default = 0.4,
+	    Decimal = 100
+	})
+end)
 	
 run(function()
 	local AutoClicker
@@ -1319,8 +1384,7 @@ run(function()
 								task.spawn(blockPlacer.placeBlock, blockPlacer, mouseinfo.placementPosition)
 							end
 						end
-					elseif store.hand.toolType == 'sword' and bedwars.DaoController.chargingMaid == nil then
-						bedwars.SwordController:stopCharging()
+					elseif store.hand.toolType == 'sword' then
 						bedwars.SwordController:swingSwordAtMouse(0.25 + math.random() / 8)
 					end
 				end
@@ -1402,7 +1466,7 @@ run(function()
 			if callback then
 				old = bedwars.SwordController.isClickingTooFast
 				bedwars.SwordController.isClickingTooFast = function(self)
-					self.lastSwing = tick()
+					self.lastSwing = os.clock()
 					return false
 				end
 			else
@@ -1501,7 +1565,7 @@ run(function()
 							if ray and (localPos - ray.Instance.Position).Magnitude <= rayRange then
 								local limit = (attackRange)
 								for _, ent in entitylib.List do
-									doAttack = ray.Instance:IsDescendantOf(ent.Character) and (localPos - ent.RootPart.Position).Magnitude <= rayRange
+									doAttack = ent.Targetable and ray.Instance:IsDescendantOf(ent.Character) and (localPos - ent.RootPart.Position).Magnitude <= rayRange
 									if doAttack then
 										break
 									end
@@ -1510,7 +1574,7 @@ run(function()
 	
 							doAttack = doAttack or bedwars.SwordController:getTargetInRegion(attackRange or 3.8 * 3, 0)
 							if doAttack then
-								bedwars.SwordController:swingSwordAtMouse(0.25 + math.random() / 8)
+								bedwars.SwordController:swingSwordAtMouse()
 							end
 						end
 					end
@@ -1525,8 +1589,8 @@ run(function()
 		Name = 'CPS',
 		Min = 1,
 		Max = 9,
-		DefaultMin = 7,
-		DefaultMax = 7
+		DefaultMin = 9,
+		DefaultMax = 9
 	})
 end)
 	
@@ -1734,7 +1798,7 @@ run(function()
 	local Time
 	
 	FastBreak = vape.Categories.Blatant:CreateModule({
-		Name = 'FastBreak',
+		Name = 'Fast Break',
 		Function = function(callback)
 			if callback then
 				repeat
@@ -2032,8 +2096,7 @@ run(function()
 	local AnimationSpeed
 	local AnimationTween
 	local Limit
-	local LegitAura
-	local Sync
+	local LegitAura = {}
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
 	local AttackRemote = {FireServer = function() end}
@@ -2059,7 +2122,7 @@ run(function()
 		end
 
 		if LegitAura.Enabled then
-			if (tick() - bedwars.SwordController.lastSwing) > 0.1 then return false end
+			if (tick() - bedwars.SwordController.lastSwing) > 0.2 then return false end
 		end
 
 		return sword, meta
@@ -2090,8 +2153,8 @@ run(function()
 							}
 						}
 					}
-					debug.setupvalue(bedwars.SwordController.playSwordEffect, 6, fake)
-					debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, fake)
+					debug.setupvalue(bedwars.SwordController.playSwordEffect, AutoCharge.Enabled and 2 or 6, fake)
+					--debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, fake)
 
 					task.spawn(function()
 						local started = false
@@ -2131,6 +2194,7 @@ run(function()
 					end)
 				end
 
+				local swingCooldown = 0
 				repeat
 					local attacked, sword, meta = {}, getAttackData()
 					Attacking = false
@@ -2165,9 +2229,9 @@ run(function()
 								if not Attacking then
 									Attacking = true
 									store.KillauraTarget = v
-									if not Swing.Enabled and AnimDelay <= tick() and not LegitAura.Enabled then
-										AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or (Sync.Enabled and 0.24 or 0.14))
-										bedwars.SwordController:playSwordEffect(meta, 0)
+									if not Swing.Enabled and AnimDelay < tick() and not LegitAura.Enabled then
+										AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or math.max(ChargeTime.Value, 0.11))
+										bedwars.SwordController:playSwordEffect(meta, false)
 										if meta.displayName:find(' Scythe') then
 											bedwars.ScytheController:playLocalAnimation()
 										end
@@ -2179,20 +2243,27 @@ run(function()
 								end
 
 								if delta.Magnitude > AttackRange.Value then continue end
+								if delta.Magnitude < 14.4 and (tick() - swingCooldown) < ChargeTime.Value then continue end
 
 								local actualRoot = v.Character.PrimaryPart
 								if actualRoot then
 									local dir = CFrame.lookAt(selfpos, actualRoot.Position).LookVector
 									local pos = selfpos + dir * math.max(delta.Magnitude - 14.399, 0)
+									swingCooldown = tick()
 									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 									store.attackReach = (delta.Magnitude * 100) // 1 / 100
 									store.attackReachUpdate = tick() + 1
-									pcall(function()
-										store.attackSpeed = meta.sword.attackSpeed
-									end)
+
+									if delta.Magnitude < 14.4 and ChargeTime.Value > 0.11 then
+										AnimDelay = tick()
+									end
+
+									store.attackSpeed = ChargeTime.Value
+
 									AttackRemote:FireServer({
 										weapon = sword.tool,
-										chargeRatio = ChargeTime.Value,
+										chargedAttack = {chargeRatio = 0},
+										lastSwingServerTimeDelta = 0.5,
 										entityInstance = v.Character,
 										validate = {
 											raycast = {
@@ -2226,7 +2297,8 @@ run(function()
 						entitylib.character.RootPart.CFrame = CFrame.lookAt(entitylib.character.RootPart.Position, Vector3.new(vec.X, entitylib.character.RootPart.Position.Y + 0.001, vec.Z))
 					end
 
-					task.wait(#attacked > 0 and #attacked * 0.02 or 1 / UpdateRate.Value)
+					--#attacked > 0 and #attacked * 0.02 or
+					task.wait(1 / UpdateRate.Value)
 				until not Killaura.Enabled
 			else
 				store.KillauraTarget = nil
@@ -2283,10 +2355,10 @@ run(function()
 		end
 	})
 	ChargeTime = Killaura:CreateSlider({
-		Name = 'Charge time',
+		Name = 'Swing time',
 		Min = 0,
-		Max = 1,
-		Default = 0.9,
+		Max = 0.5,
+		Default = 0.42,
 		Decimal = 100
 	})
 	AngleSlider = Killaura:CreateSlider({
@@ -2493,14 +2565,10 @@ run(function()
 		end,
 		Tooltip = 'Only attacks when the sword is held'
 	})
-	LegitAura = Killaura:CreateToggle({
+	--[[LegitAura = Killaura:CreateToggle({
 		Name = 'Swing only',
 		Tooltip = 'Only attacks while swinging manually'
-	})
-	Sync = Killaura:CreateToggle({
-		Name = 'Synced Animation',
-		Tooltip = 'Plays animation with hit attempt'
-	})
+	})]]
 end)
 	
 run(function()
@@ -5156,8 +5224,7 @@ run(function()
 		end
 	})
 	LimitItem = AutoSuffocate:CreateToggle({
-		Name = 'Limit to Items',
-		Default = true
+		Name = 'Limit to Items'
 	})
 end)
 	
@@ -5284,7 +5351,7 @@ run(function()
 		chest = chest and chest.Value or nil
 		local chestitems = chest and chest:GetChildren() or {}
 		if #chestitems > 1 and (Delays[chest] == nil or Delays[chest] < tick()) then
-			Delays[chest] = tick() + 0.3
+			Delays[chest] = tick() + 0.2
 			bedwars.Client:GetNamespace('Inventory'):Get('SetObservedChest'):SendToServer(chest)
 	
 			for _, v in chestitems do
@@ -7207,7 +7274,7 @@ run(function()
 				oldvalues = table.clone(tab)
 				oldfont = debug.getconstant(bedwars.DamageIndicator, 86)
 				debug.setconstant(bedwars.DamageIndicator, 86, Enum.Font[FontOption.Value])
-				debug.setconstant(bedwars.DamageIndicator, 105, Stroke.Enabled and 'Thickness' or 'Enabled')
+				debug.setconstant(bedwars.DamageIndicator, 119, Stroke.Enabled and 'Thickness' or 'Enabled')
 				tab.strokeThickness = Stroke.Enabled and 1 or false
 				tab.textSize = Size.Value
 				tab.blowUpSize = Size.Value
@@ -7220,7 +7287,7 @@ run(function()
 					tab[i] = v
 				end
 				debug.setconstant(bedwars.DamageIndicator, 86, oldfont)
-				debug.setconstant(bedwars.DamageIndicator, 105, 'Thickness')
+				debug.setconstant(bedwars.DamageIndicator, 119, 'Thickness')
 			end
 		end,
 		Tooltip = 'Customize the damage indicator'
@@ -7236,7 +7303,7 @@ run(function()
 		List = fontitems,
 		Function = function(val)
 			if DamageIndicator.Enabled then
-				debug.setconstant(bedwars.DamageIndicator, 82, val)
+				debug.setconstant(bedwars.DamageIndicator, 86, val)
 			end
 		end
 	})
@@ -7276,7 +7343,7 @@ run(function()
 		Name = 'Stroke',
 		Function = function(callback)
 			if DamageIndicator.Enabled then
-				debug.setconstant(bedwars.DamageIndicator, 102, callback and 'Thickness' or 'Enabled')
+				debug.setconstant(bedwars.DamageIndicator, 119, callback and 'Thickness' or 'Enabled')
 				tab.strokeThickness = callback and 1 or false
 			end
 		end
@@ -8262,11 +8329,10 @@ run(function()
 
 	InfiniteFly = vape.Categories.Blatant:CreateModule({
 		Name = 'Infinite Fly',
-		Tooltip = 'Allows you to hover in the air for eternity.',
+		Tooltip = 'Makes you go zoom.',
 		Function = function(call)
 			if call then
 				if not entitylib.isAlive or FlyLandTick > tick() or not isnetworkowner(entitylib.character.RootPart) then
-					notif('InfiniteFly', 'Can\'t Fly at this position.', 10, 'alert')
 					return InfiniteFly:Toggle()
 				end
 				local a, b = pcall(createClone)
@@ -8300,11 +8366,15 @@ run(function()
 					local moveDir = entitylib.character.Humanoid.MoveDirection
 					local velo = getSpeed()
 					local destination = (moveDir * math.max(FlySpeed.Value - velo, 0) * delta)
+					local airtime = reduceAirTime and 0 or (tick() - entitylib.character.AirTime)
 					clone.CFrame += destination
 					clone.AssemblyLinearVelocity = (moveDir * velo) + Vector3.new(0, mass, 0)
-					oldroot.CFrame = CFrame.lookAlong(Vector3.new(clone.Position.X, oldroot.Position.Y, clone.Position.Z), clone.CFrame.LookVector)
-					local airtime = reduceAirTime and 0 or (tick() - entitylib.character.AirTime)
-					if (airtime > 1.2 or workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck)) then
+
+					local check1 = (not workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck) and workspace:Raycast(oldroot.Position + (oldroot.CFrame.LookVector * 1.3), Vector3.new(0, -1000, 0), rayCheck))
+					local check2 = (workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck) and workspace:Raycast(oldroot.Position, Vector3.new(0, -1000, 0), rayCheck))
+
+					oldroot.CFrame = (check1 and not check2) and oldroot.CFrame or CFrame.lookAlong(Vector3.new(clone.Position.X, oldroot.Position.Y, clone.Position.Z), clone.CFrame.LookVector)
+					if (airtime > 1.2 or workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck)) and not check1 then
 						local ray = workspace:Raycast(clone.Position, Vector3.new(0, -1000, 0), rayCheck)
 						if ray then
 							oldroot.CFrame = CFrame.lookAlong(Vector3.new(oldroot.Position.X, ray.Position.Y + entitylib.character.HipHeight, oldroot.Position.Z), clone.CFrame.LookVector)
@@ -8388,14 +8458,15 @@ run(function()
 end)
 
 run(function()
-	local antihit = nil :: table
-	local antihitrange = nil :: table
-	local antihitairtime = nil :: table
-	local antihitsettings = nil :: table
-	local antihitgroundtime = nil :: table
-	local antihitautoair = nil :: table
+	local antihit
+	local antihitrange 
+	local antihitairtime 
+	local antihitsettings 
+	local antihitgroundtime 
+	local antihitautoair
 
 	local oldroot
+	local hip
 	local clone
 
 	local function createClone()
@@ -8448,7 +8519,7 @@ run(function()
 				task.wait()
 			end
 		end)
-		entitylib.character.Humanoid.HipHeight = 2
+		entitylib.character.Humanoid.HipHeight = hip or 2
 	end
 
 	local rayCheck = RaycastParams.new()
