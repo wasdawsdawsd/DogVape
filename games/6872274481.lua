@@ -9220,11 +9220,14 @@ run(function()
 								Players = true
 							})
 							if #plrs > 0 then
+								TpDown = true
 								canVelo = true
+								Near = (entitylib.character.RootPart.Position - Vector3.new(plrs[1].RootPart.X, entitylib.character.RootPart.Position.Y, plrs[1].RootPart.Z))
 								entitylib.character.RootPart.CFrame += getDirection(plrs[1].RootPart.Position - Vector3.new(0, 2, 0))
 								task.wait(.2)
 							end
 						end
+						TpDown = true
 						canVelo = false
 					end
 					if objective == 'player' then
