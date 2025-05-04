@@ -8819,8 +8819,10 @@ end)
 
 run(function()
 	local AutoWin
+	local Bridging = false
 
 	local AutoWinItems = {}
+	local TravelBlocks
 
 	local teamSize = #bedwars.QueueMeta[store.queueType].teams
 
@@ -8848,7 +8850,7 @@ run(function()
 	local function getBed()
 		local localPosition = entitylib.isAlive and entitylib.character.RootPart.Position or Vector3.zero
 		for _, v in collectionService:GetTagged('bed') do
-			if not v:GetAttribute('Team'..(lplr:GetAttribute('Team') or -1)..'NoBreak') and #getTeamAmount(v:GetAttribute('Id'):sub(0, 1)) > 0 then
+			if not v:GetAttribute('Team'..(lplr:GetAttribute('Team') or -1)..'NoBreak') then
 				return v
 			end
 		end
@@ -8999,12 +9001,42 @@ run(function()
 
 	local function canTransport(position, magnitude)
 		local wool = getWool()
-		
-		local woolItem = getItem(wool)
-		local canTransport = woolItem and woolItem.amount >= math.floor(((entitylib.character.RootPart.Position - position).Magnitude / magnitude))	
 
-		return canTransport or (entitylib.character.RootPart.Position - position).Magnitude <= 30
+		local woolItem = getItem(wool)
+		local canTransport = woolItem and woolItem.amount >= TravelBlocks[position]
+
+		return Bridging and true or canTransport or (entitylib.character.RootPart.Position - position).Magnitude <= 30
 	end
+	
+	TravelBlocks = setmetatable({}, {
+		__index = function(self, pos)
+			notif('AutoWin', 'Attempting to get coordinates', 8)
+			
+			rayCheck.FilterDescendantsInstances = {lplr.Character}
+
+			local lastpos = entitylib.character.RootPart.Position
+
+			local blocks = 4
+
+			for i = 1, 300 do
+				if (lastpos - pos).Magnitude <= 14 then break end
+
+				lastpos += getDirection(pos, 5) 
+
+				local ray = workspace:Raycast(lastpos + Vector3.new(0, 50, 0), Vector3.new(0, -500, 0), rayCheck)
+				if not ray then
+					blocks += 3
+				end
+			end
+
+			warn(blocks)
+
+			notif('AutoWin', 'Blocks required: '.. blocks, 8)
+
+			self[pos] = blocks
+			return self[pos]
+		end
+	})
 
 	AutoWin = vape.Categories.Utility:CreateModule({
 		Name = 'AutoWin',
@@ -9064,7 +9096,6 @@ run(function()
 
 				local CanTPDown = false
 				local Oldpos
-				local Bridging = false
 				repeat
 					task.wait(0)
 					if 
@@ -9078,12 +9109,14 @@ run(function()
 					end
 					local wool, woolAmount = getWool()
 					local objective = getObjective()
+					warn(objective)
 					if Oldpos and objective ~= 'heal' then
 						entitylib.character.RootPart.CFrame = Oldpos
 						Oldpos = nil
 					end
 					if objective == 'bed' then
 						local bed = getBed()
+						warn'rel'
 						if bed and hasRequiredGear() and canTransport(bed:GetPivot().Position, Bridging and 9e9 or 3.5) then
 							if not vape.Modules.Scaffold.Enabled and not workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) or workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) and vape.Modules.Scaffold.Enabled or vape.Modules.Scaffold.Enabled and (entitylib.character.RootPart.Position - bed:GetPivot().Position).Magnitude <= 35 then
 								vape.Modules.Scaffold:Toggle()
