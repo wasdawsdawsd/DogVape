@@ -8848,7 +8848,7 @@ run(function()
 	local function getBed()
 		local localPosition = entitylib.isAlive and entitylib.character.RootPart.Position or Vector3.zero
 		for _, v in collectionService:GetTagged('bed') do
-			if not v:GetAttribute('Team'..(lplr:GetAttribute('Team') or -1)..'NoBreak') and #getTeamAmount(v:GetAttribute('Id'):sub(0, 1)) > 0  then
+			if not v:GetAttribute('Team'..(lplr:GetAttribute('Team') or -1)..'NoBreak') and #getTeamAmount(v:GetAttribute('Id'):sub(0, 1)) > 0 then
 				return v
 			end
 		end
@@ -9092,7 +9092,12 @@ run(function()
 							Bridging = not Near
 							if Near then
 								canVelo = true
-								entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, bed:GetPivot().Position.Y + 15, entitylib.character.RootPart.CFrame.Z)
+								local better = workspace:Raycast(Vector3.new(entitylib.character.RootPart.Position.X, bed:GetPivot().Position.Y + 15, entitylib.character.RootPart.Position.Z), Vector3.new(0, -500, 0), rayCheck)
+								if better then
+									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, better.Position.Y, entitylib.character.RootPart.CFrame.Z)
+								else
+									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, bed:GetPivot().Position.Y + 4, entitylib.character.RootPart.CFrame.Z)
+								end
 							end
 							local newray = workspace:Raycast(entitylib.character.RootPart.Position + getDirection(bed:GetPivot().Position), Vector3.new(0, -50, 0), rayCheck)
 							local canTp = newray and true
@@ -9116,6 +9121,8 @@ run(function()
 							canVelo = true
 							if not Near then
 								TpDown = canTp
+							else
+								TpDown = false
 							end
 							task.wait(0.15)
 						elseif bed then
