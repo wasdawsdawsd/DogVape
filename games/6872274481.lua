@@ -8917,25 +8917,33 @@ run(function()
 
 	local function getShopNPC(custom)
 		local localPosition = custom or entitylib.character.RootPart.Position
+		local shop, lastmag, id = nil, 9e9, nil
 		for _, v in store.shop do
 			local mag = (v.RootPart.Position - localPosition).Magnitude 
-			if mag <= (getSelfBed() and 120 or 9e9) then
-				return v, mag, v.Id
+			if v.RootPart.Name:find('item') and mag <= (getSelfBed() and 120 or 9e9) and mag <= lastmag then
+				shop = v
+				lastmag = mag
+				id = v.Id
 			end
 		end
+		return shop, lastmag, id
 	end
 
 	local function getTeamGen(custom)
 		local localPosition = custom or entitylib.character.RootPart.Position
+		local lastMag = 9e9
+		local Tier = nil
 		for _ = 1, teamSize do
 			local tier = collectionService:GetTagged(`{_}_TeamOreGenerator`)
-			if tier then
+			if tier and tier[1] then
 				local mag = (localPosition - tier[1]:GetPivot().Position).Magnitude 
-				if mag <= (getSelfBed() and 120 or 9e9) then
-					return tier[1], mag 
+				if mag <= (getSelfBed() and 120 or 9e9) and mag < lastMag then
+					lastMag = mag
+					Tier = tier[1]
 				end
 			end
 		end
+		return Tier, lastMag
 	end
 
 	local function buyWool(shopid)
@@ -9043,6 +9051,7 @@ run(function()
 		Function = function(callback)
 			if callback then
 				AutoWin:Clean(lplr.CharacterAdded:Connect(function()
+					table.clear(TravelBlocks)
 					notif('AutoWin', 'Getting items', 7, 'info')
 					pauseTick = tick() + (0.85 * #AutoWinItems)
 					getStoredItems()
@@ -9127,7 +9136,7 @@ run(function()
 								canVelo = true
 								local better = workspace:Raycast(Vector3.new(entitylib.character.RootPart.Position.X, bed:GetPivot().Position.Y + 30, entitylib.character.RootPart.Position.Z), Vector3.new(0, -500, 0), rayCheck)
 								if better then
-									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, better.Position.Y + 2, entitylib.character.RootPart.CFrame.Z)
+									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, better.Position.Y + 6, entitylib.character.RootPart.CFrame.Z)
 								else
 									--entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, bed:GetPivot().Position.Y + 4, entitylib.character.RootPart.CFrame.Z)
 								end
