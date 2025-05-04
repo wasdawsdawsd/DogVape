@@ -8855,7 +8855,7 @@ run(function()
 	end
 
 	local function getSelfBed()
-		local id = lplr.Character:GetAttribute('Team')
+		local id = entitylib.isAlive and lplr.Character:GetAttribute('Team')
 		for _, v in collectionService:GetTagged('bed') do
 			if tonumber(id) == tonumber(v:GetAttribute('TeamId')) then
 				return v
@@ -9096,7 +9096,7 @@ run(function()
 							end
 							local newray = workspace:Raycast(entitylib.character.RootPart.Position + getDirection(bed:GetPivot().Position), Vector3.new(0, -50, 0), rayCheck)
 							local canTp = newray and true
-							if not TpDown then
+							if not TpDown and not Near then
 								local ray2 = workspace:Raycast(entitylib.character.RootPart.Position, getDirection(bed:GetPivot().Position), rayCheck)
 								if ray2 then
 									local new = workspace:Raycast(entitylib.character.RootPart.Position + getDirection(bed:GetPivot().Position), getDirection(bed:GetPivot().Position), rayCheck)
@@ -9114,7 +9114,9 @@ run(function()
 							entitylib.character.RootPart.CFrame += getDirection(bed:GetPivot().Position + Vector3.new(0, ((entitylib.character.RootPart.Position - bed:GetPivot().Position).Magnitude <= 20 and 0 or 60), 0))
 							task.wait(0.1)
 							canVelo = true
-							TpDown = canTp
+							if not Near then
+								TpDown = canTp
+							end
 							task.wait(0.15)
 						elseif bed then
 							if not vape.Modules.Scaffold.Enabled and not workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) or workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) and vape.Modules.Scaffold.Enabled then
