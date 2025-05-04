@@ -23,7 +23,7 @@ local contextActionService = cloneref(game:GetService('ContextActionService'))
 local coreGui = cloneref(game:GetService('CoreGui'))
 local starterGui = cloneref(game:GetService('StarterGui'))
 
-local isnetworkowner = not inputService.TouchEnabled and not table.find({'Velocity', 'Xeno'}, ({identifyexecutor()})[1]) and isnetworkowner or function(base)
+local isnetworkowner = not inputService.TouchEnabled and not table.find({'Velocity', 'Xeno', 'Volcano'}, ({identifyexecutor()})[1]) and isnetworkowner or function(base)
 	return true
 end
 
@@ -59,7 +59,8 @@ local store = {
 	inventories = {},
 	matchState = 0,
 	queueType = 'bedwars_test',
-	tools = {}
+	tools = {},
+	bank = {}
 }
 local Reach = {}
 local HitBoxes = {}
@@ -356,8 +357,8 @@ local function isTarget(plr)
 	return table.find(vape.Categories.Targets.ListEnabled, plr.Name) and true
 end
 
-local function notif(...) return
-	vape:CreateNotification(...)
+local function notif(...)
+	return vape:CreateNotification(...)
 end
 
 local function removeTags(str)
@@ -4397,7 +4398,7 @@ run(function()
 	end
 	
 	AutoPlay = vape.Categories.Utility:CreateModule({
-		Name = 'Auto Play',
+		Name = 'Auto Queue',
 		Function = function(callback)
 			if callback then
 				AutoPlay:Clean(vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
@@ -4670,6 +4671,7 @@ run(function()
 						for _, v in items do
 							if tick() - (v:GetAttribute('ClientDropTime') or 0) < 2 then continue end
 							if table.find(sigmaitems2, v:GetAttribute('DropTime')) then continue end
+							if table.find(store.bank, v:GetAttribute('DropTime')) then continue end
 							if isnetworkowner(v) and Network.Enabled and entitylib.character.Humanoid.Health > 0 then 
 								v.CFrame = CFrame.new(localPosition - Vector3.new(0, 3, 0)) 
 							end
@@ -8457,6 +8459,7 @@ run(function()
     })
 end)
 
+local AutoPlayAllow = nil
 run(function()
 	local antihit
 	local antihitrange 
@@ -8572,6 +8575,7 @@ run(function()
 				end))
 				repeat
 				  	if store.matchState == 0 or not entitylib.isAlive or tick() < FlyLandTick then task.wait() continue end
+					if vape.Modules['AutoWin'].Enabled and not AutoPlayAllow then return end
 					rayCheck.FilterDescendantsInstances = {lplr.Character, AntiFallPart}
 					local plr = entitylib.AllPosition({
 						Range = antihitrange.Value,
@@ -8810,5 +8814,464 @@ run(function()
 			end
 		end,
 		Tooltip = 'Automatically store items so you don\'t lose them.'
+	})
+end)
+
+run(function()
+	local AutoWin
+
+	local AutoWinItems = {}
+
+	local DropItem = bedwars.Client:Get('DropItem').instance
+	local PickupItem = bedwars.Client:Get('PickupItemDrop').instance
+	
+	local rayCheck = RaycastParams.new()
+	--rayCheck.RespectCanCollide = true
+	rayCheck.FilterType = Enum.RaycastFilterType.Exclude
+
+	local function getDirection(position, custom)
+		return CFrame.lookAt(entitylib.character.RootPart.Position, position).LookVector * math.min((entitylib.character.RootPart.Position - position).Magnitude, custom or 4)
+	end
+
+	local function getTeamAmount(id)
+		local plrs = {}
+		for _, v in playersService:GetPlayers() do
+			if tonumber(v:GetAttribute('Team')) == tonumber(id) then
+				table.insert(plrs, v)
+			end
+ 		end
+		return plrs
+	end
+
+	local function getBed()
+		local localPosition = entitylib.isAlive and entitylib.character.RootPart.Position or Vector3.zero
+		for _, v in collectionService:GetTagged('bed') do
+			if not v:GetAttribute('Team'..(lplr:GetAttribute('Team') or -1)..'NoBreak') and #getTeamAmount(v:GetAttribute('Id'):sub(0, 1)) > 0  then
+				return v
+			end
+		end
+	end
+
+	local function getSelfBed()
+		local id = lplr.Character:GetAttribute('Team')
+		for _, v in collectionService:GetTagged('bed') do
+			if tonumber(id) == tonumber(v:GetAttribute('TeamId')) then
+				return v
+			end
+		end 
+	end
+
+	local lowTick = tick()
+	local pauseTick = tick()
+
+	local function getObjective()
+		if entitylib.isAlive and entitylib.character.Humanoid.Health <= 30 or lowTick > tick() then
+			if tick() > lowTick then
+				lowTick = tick() + 8
+			end
+			return 'heal'
+		end
+		if getBed() then
+			return 'bed'
+		end
+		if getSelfBed() then
+			local plrs = entitylib.AllPosition({
+				Origin = getSelfBed():GetPivot().Position,
+				Range = 100,
+				Part = 'RootPart',
+				Players = true
+			})
+			if #plrs > 0 then
+				return 'protectbed'
+			end
+		end
+		if not getBed() then
+			return 'player'
+		end
+	end
+
+	local function getGroundAndAirSpots()
+		rayCheck.FilterDescendantsInstances = {lplr.Character}
+		
+		local localpos = entitylib.character.RootPart.Position
+		
+		local ground = workspace:Raycast(localpos + Vector3.new(0, 200, 0), Vector3.new(0, -400, 0), rayCheck)
+		
+		return (ground and ground.Position or localpos), localpos - Vector3.new(0, 100, 0)
+	end
+
+	local function storeItem(itemName)
+		local gameItem = getItem(itemName)
+		if gameItem then
+			table.insert(store.bank, workspace:GetServerTimeNow())
+			local item = DropItem:InvokeServer({
+				item = gameItem.tool,
+				amount = gameItem.amount
+			})
+		end
+	end
+
+	local function getShopNPC(custom)
+		local localPosition = custom or entitylib.character.RootPart.Position
+		for _, v in store.shop do
+			local mag = (v.RootPart.Position - localPosition).Magnitude 
+			if mag <= (getSelfBed() and 120 or 9e9) then
+				return v, mag, v.Id
+			end
+		end
+	end
+
+	local function getTeamGen(custom)
+		local localPosition = custom or entitylib.character.RootPart.Position
+		for _ = 1, #bedwars.QueueMeta[store.queueType].teams do
+			local tier = collectionService:GetTagged(`{_}_TeamOreGenerator`)
+			if tier then
+				local mag = (localPosition - tier[1]:GetPivot().Position).Magnitude 
+				if mag <= (getSelfBed() and 120 or 9e9) then
+					return tier[1], mag 
+				end
+			end
+		end
+	end
+
+	local function buyWool(shopid)
+		bedwars.Client:Get('BedwarsPurchaseItem'):CallServerAsync({
+			shopItem = {
+				currency = 'iron',
+				itemType = 'wool_white',
+				amount = 16,
+				price = 8,
+				category = 'Blocks'
+			},
+			shopId = shopid
+		}):andThen(function(suc)
+			if suc then
+				bedwars.SoundManager:playSound(bedwars.SoundList.BEDWARS_PURCHASE_ITEM)
+				bedwars.Store:dispatch({
+					type = 'BedwarsAddItemPurchased',
+					itemType = 'wool_white'
+				})
+				--bedwars.BedwarsShopController.alreadyPurchasedMap.wool_white = true
+			end
+		end)
+	end
+
+	local function getGearType()
+		local sword, armor = 'none', 'none'
+		if #collectionService:GetTagged('bed') <= 3 then
+			armor = 'leather'
+			sword = 'stone_sword'
+		end
+		if #collectionService:GetTagged('bed') <= 2 then
+			--sword = 'iron_sword'
+		end
+		return {sword = sword, armor = armor}
+	end
+
+	local function hasRequiredGear()
+		local gears = getGearType()
+		if gears.armor ~= 'none' and not store.inventory.inventory.armor[2] then
+			return false
+		end
+		warn(gears.sword)
+		if gears.sword ~= 'none' and (not getItem(gears.sword) and not getItem('iron_sword') and not getItem('diamond_sword')) then 
+			return false
+		end
+		return true
+	end
+
+	local function getStoredItems()
+		for _, v in AutoWinItems do
+			v.CFrame = entitylib.character.RootPart.CFrame
+			v.Anchored = false
+			v.Velocity = Vector3.zero
+			v.Transparency = 0
+			for _ = 1, 5 do 
+				PickupItem:InvokeServer({
+					itemDrop = v
+				})
+				task.wait(0.15)
+			end
+		end
+		table.clear(store.bank)
+	end
+
+	local function canTransport(position, magnitude)
+		local wool = getWool()
+		
+		local woolItem = getItem(wool)
+		local canTransport = getItem(wool).amount >= math.floor(((entitylib.character.RootPart.Position - position).Magnitude / magnitude))	
+
+		return canTransport or (entitylib.character.RootPart.Position - position).Magnitude <= 30
+	end
+
+	AutoWin = vape.Categories.Utility:CreateModule({
+		Name = 'AutoWin',
+		Function = function(callback)
+			if callback then
+				AutoWin:Clean(lplr.CharacterAdded:Connect(function()
+					notif('AutoWin', 'Getting items', 7, 'info')
+					pauseTick = tick() + (0.85 * #AutoWinItems)
+					getStoredItems()
+				end))
+				AutoWin:Clean(workspace.ItemDrops.ChildAdded:Connect(function(v)
+					task.wait()
+					for _, t in store.bank do
+						if isnetworkowner(v) and v:GetAttribute('DropTime') == t then
+							v.CFrame = v.CFrame + Vector3.new(0, 1000, 0)
+							v.Anchored = true
+							v.Transparency = 1
+							table.insert(AutoWinItems, v)
+						end
+					end
+				end))
+
+				local TpDown = false
+				local canVelo = false
+
+				local Near = false
+
+				AutoWin:Clean(runService.PreSimulation:Connect(function()
+					if getObjective() and canVelo then
+						entitylib.character.RootPart.AssemblyLinearVelocity = Vector3.zero
+					end
+				end))
+
+
+				task.spawn(function()
+					repeat
+						if entitylib.isAlive and TpDown then
+							local real = {}
+							for i,v in playersService:GetPlayers() do
+								pcall(function() table.insert(real, v.Character) end)
+							end
+							
+							rayCheck.FilterDescendantsInstances = real
+
+							local ray = workspace:Raycast(entitylib.character.RootPart.Position + Vector3.new(0, 50, 0), Vector3.new(0, -500, 0), rayCheck)
+							canVelo = true
+							if ray and (ray.Position.Y > entitylib.character.RootPart.Position.Y or Near)then
+								warn(ray.Instance)
+								local b = entitylib.character.RootPart.Position
+								entitylib.character.RootPart.CFrame = CFrame.new(b.X, ray.Position.Y + (entitylib.character.HipHeight or 3), b.Z)
+							end
+							canVelo = false
+						end
+						task.wait()
+					until not AutoWin.Enabled
+				end)
+
+				local CanTPDown = false
+				local Oldpos
+				local Bridging = false
+				repeat
+					task.wait(0)
+					if 
+						pauseTick > tick() 
+						or store.matchState == 0
+						or entitylib.isAlive and not isnetworkowner(lplr.Character.PrimaryPart)
+						or not entitylib.isAlive 
+					then 
+						lowTick = tick() - 0.1
+						continue 
+					end
+					local wool, woolAmount = getWool()
+					local objective = getObjective()
+					if Oldpos and objective ~= 'heal' then
+						entitylib.character.RootPart.CFrame = Oldpos
+						Oldpos = nil
+					end
+					if objective == 'bed' then
+						local bed = getBed()
+						if bed and hasRequiredGear() and canTransport(bed:GetPivot().Position, Bridging and 9e9 or 3.5) then
+							if not vape.Modules.Scaffold.Enabled and not workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) or workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) and vape.Modules.Scaffold.Enabled or vape.Modules.Scaffold.Enabled and (entitylib.character.RootPart.Position - bed:GetPivot().Position).Magnitude <= 35 then
+								vape.Modules.Scaffold:Toggle()
+							end
+							Near = (entitylib.character.RootPart.Position - Vector3.new(bed:GetPivot().Position.X, entitylib.character.RootPart.Position.Y, bed:GetPivot().Position.Z)).Magnitude <= 13
+							Bridging = not Near
+							if Near then
+								canVelo = true
+								entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, bed:GetPivot().Position.Y + 15, entitylib.character.RootPart.CFrame.Z)
+							end
+							local newray = workspace:Raycast(entitylib.character.RootPart.Position + getDirection(bed:GetPivot().Position), Vector3.new(0, -50, 0), rayCheck)
+							local canTp = newray and true
+							if not TpDown then
+								local ray2 = workspace:Raycast(entitylib.character.RootPart.Position, getDirection(bed:GetPivot().Position), rayCheck)
+								if ray2 then
+									local new = workspace:Raycast(entitylib.character.RootPart.Position + getDirection(bed:GetPivot().Position), getDirection(bed:GetPivot().Position), rayCheck)
+									if not new then
+										entitylib.character.RootPart.CFrame += (getDirection(bed:GetPivot().Position) + getDirection(bed:GetPivot().Position))
+									else
+										local new = workspace:Raycast(entitylib.character.RootPart.Position + getDirection(bed:GetPivot().Position), getDirection(bed:GetPivot().Position), rayCheck)
+										if not new then
+											entitylib.character.RootPart.CFrame += (getDirection(bed:GetPivot().Position) + getDirection(bed:GetPivot().Position))
+										end -- sorry for whoever is reading this :()
+									end
+									canTp = true
+								end
+							end
+							entitylib.character.RootPart.CFrame += getDirection(bed:GetPivot().Position + Vector3.new(0, ((entitylib.character.RootPart.Position - bed:GetPivot().Position).Magnitude <= 20 and 0 or 60), 0))
+							task.wait(0.1)
+							canVelo = true
+							TpDown = canTp
+							task.wait(0.15)
+						elseif bed then
+							if not vape.Modules.Scaffold.Enabled and not workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) or workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) and vape.Modules.Scaffold.Enabled then
+								vape.Modules.Scaffold:Toggle()
+							end
+							Near = false
+							Bridging = false
+							canVelo = false
+							TpDown = false
+							local npc, mag, id = getShopNPC()
+							local gen, genMag = getTeamGen()
+							if not npc or not gen then
+								pcall(function()
+									storeItem('iron')
+									storeItem(wool)
+									task.wait(0.4)
+									bedwars.Client:Get('ResetCharacter').instance:FireServer()
+								end)
+							else
+								if genMag >= 8 then
+									entitylib.character.RootPart.CFrame += getDirection(gen:GetPivot().Position)
+									task.wait(0.2)
+								else
+									local real = store.inventory.inventory.armor[2]
+									if getItem('iron') and getItem('iron').amount >= 8 then
+										if (entitylib.character.RootPart.Position - npc.RootPart.Position).Magnitude >= 20 then
+											for _ = 1, 2 do
+												entitylib.character.RootPart.CFrame += getDirection(npc.RootPart.Position - Vector3.new(0, 2, 0))
+												task.wait(.2)
+											end
+										end
+										if hasRequiredGear() then
+											buyWool(id)
+										end
+									end
+								end
+							end
+						end
+					end
+					if objective == 'protectbed'  then
+						Near = false
+						if (getSelfBed() and (entitylib.character.RootPart.Position - getSelfBed():GetPivot().Position).Magnitude >= 100) then
+							storeItem('iron')
+							storeItem(wool)
+							task.wait(0.4)
+							bedwars.Client:Get('ResetCharacter').instance:FireServer()
+						else
+							local plrs = entitylib.AllPosition({
+								Origin = getSelfBed():GetPivot().Position,
+								Range = 100,
+								Part = 'RootPart',
+								Players = true
+							})
+							if #plrs > 0 then
+								canVelo = true
+								entitylib.character.RootPart.CFrame += getDirection(plrs[1].RootPart.Position - Vector3.new(0, 2, 0))
+								task.wait(.2)
+							end
+						end
+						canVelo = false
+					end
+					if objective == 'player' then
+						local plrs = entitylib.AllPosition({
+							Range = math.huge,
+							Part = 'RootPart',
+							Players = true
+						})
+						if #plrs > 0 then
+							if hasRequiredGear() and canTransport(plrs[1].RootPart.Position, 3.5) then
+								rayCheck.FilterDescendantsInstances = {lplr.Character, plrs[1].Player.Character}
+								local target = plrs[1]
+								if not vape.Modules.Scaffold.Enabled and not workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) or workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) and vape.Modules.Scaffold.Enabled or vape.Modules.Scaffold.Enabled and (entitylib.character.RootPart.Position - plrs[1].RootPart.Position).Magnitude <= 22 then
+									vape.Modules.Scaffold:Toggle()
+								end
+								Near = (entitylib.character.RootPart.Position - Vector3.new(plrs[1].RootPart.Position.X, entitylib.character.RootPart.Position.Y, plrs[1].RootPart.Position.Z)).Magnitude <= 14
+								Bridging = not Near
+								if Near then
+									canVelo = true
+									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, plrs[1].RootPart.Position.Y + 1, entitylib.character.RootPart.CFrame.Z)
+								end
+								local newray = workspace:Raycast(entitylib.character.RootPart.Position + getDirection(target.RootPart.Position), Vector3.new(0, -50, 0), rayCheck)
+								local canTp = newray and true
+								if not TpDown then
+									local ray2 = workspace:Raycast(entitylib.character.RootPart.Position, getDirection(target.RootPart.Position), rayCheck)
+									if ray2 then
+										canTp = true
+									end
+								end
+								entitylib.character.RootPart.CFrame += getDirection(target.RootPart.Position)
+								if (entitylib.character.RootPart.Position - target.RootPart.Position).Magnitude <= 23 and workspace:Raycast(plrs[1].RootPart.Position, Vector3.new(0, -1000, 0), rayCheck) then
+									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, target.RootPart.CFrame.Y + 1, entitylib.character.RootPart.CFrame.Z)
+								end
+								task.wait(0.1)
+								canVelo = true
+								--TpDown = canTp
+								task.wait(0.15)
+							else
+								if vape.Modules.Scaffold.Enabled then
+									vape.Modules.Scaffold:Toggle()
+								end
+								Bridging = false
+								canVelo = false
+								TpDown = false
+								local npc, mag, id = getShopNPC()
+								local gen, genMag = getTeamGen()
+								if not npc or not gen then
+									storeItem('iron')
+									storeItem(wool)
+									task.wait(0.4)
+									warn('ass')
+									bedwars.Client:Get('ResetCharacter').instance:FireServer()
+								else
+									if genMag >= 8 then
+										entitylib.character.RootPart.CFrame += getDirection(gen:GetPivot().Position)
+										task.wait(0.2)
+									else
+										if getItem('iron') and getItem('iron').amount >= 8 then
+											if (entitylib.character.RootPart.Position - npc.RootPart.Position).Magnitude >= 14 then
+												for _ = 1, 4 do
+													entitylib.character.RootPart.CFrame += getDirection(npc.RootPart.Position - Vector3.new(0, 2, 0))
+													task.wait(.2)
+												end
+											end
+											if hasRequiredGear() then
+												buyWool(id)
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+					if objective == 'heal' then
+						AutoPlayAllow = false
+						local ground, air = getGroundAndAirSpots()
+
+						local airleft = (tick() - entitylib.character.AirTime)
+						canVelo = airleft < 2
+						warn(airleft)
+						TpDown = false
+						if airleft > 2 and Oldpos then
+							warn('tp to ground')
+ 							entitylib.character.RootPart.CFrame = Oldpos
+							task.wait(0.1)
+							CanTPDown = true
+						elseif CanTPDown or not Oldpos then
+							CanTPDown = false
+							Oldpos = entitylib.character.RootPart.CFrame
+							task.wait(0.05)
+							entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, air.Y, entitylib.character.RootPart.CFrame.Z)
+						end
+					else
+						CanTPDown = true
+						AutoPlayAllow = true
+					end
+				until not AutoWin.Enabled
+			end
+		end,
+		Tooltip = 'Automatically wins the game for you'
 	})
 end)
