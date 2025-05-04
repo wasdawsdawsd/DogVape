@@ -9183,7 +9183,7 @@ run(function()
 							Players = true
 						})
 						if #plrs > 0 then
-							if hasRequiredGear() and canTransport(plrs[1].RootPart.Position, 3.5) then
+							if hasRequiredGear() and canTransport(plrs[1].RootPart.Position, Bridging and 9e9 or 3.5) then
 								rayCheck.FilterDescendantsInstances = {lplr.Character, plrs[1].Player.Character}
 								local target = plrs[1]
 								if not vape.Modules.Scaffold.Enabled and not workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) or workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -15, 0), rayCheck) and vape.Modules.Scaffold.Enabled or vape.Modules.Scaffold.Enabled and (entitylib.character.RootPart.Position - plrs[1].RootPart.Position).Magnitude <= 22 then
