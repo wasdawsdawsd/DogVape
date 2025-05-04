@@ -9125,11 +9125,11 @@ run(function()
 							Bridging = not Near
 							if Near then
 								canVelo = true
-								local better = workspace:Raycast(Vector3.new(entitylib.character.RootPart.Position.X, bed:GetPivot().Position.Y + 15, entitylib.character.RootPart.Position.Z), Vector3.new(0, -500, 0), rayCheck)
+								local better = workspace:Raycast(Vector3.new(entitylib.character.RootPart.Position.X, bed:GetPivot().Position.Y + 30, entitylib.character.RootPart.Position.Z), Vector3.new(0, -500, 0), rayCheck)
 								if better then
-									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, better.Position.Y, entitylib.character.RootPart.CFrame.Z)
+									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, better.Position.Y + 2, entitylib.character.RootPart.CFrame.Z)
 								else
-									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, bed:GetPivot().Position.Y + 4, entitylib.character.RootPart.CFrame.Z)
+									--entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, bed:GetPivot().Position.Y + 4, entitylib.character.RootPart.CFrame.Z)
 								end
 							end
 							local newray = workspace:Raycast(entitylib.character.RootPart.Position + getDirection(bed:GetPivot().Position), Vector3.new(0, -50, 0), rayCheck)
