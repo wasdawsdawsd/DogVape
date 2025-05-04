@@ -8822,6 +8822,8 @@ run(function()
 
 	local AutoWinItems = {}
 
+	local teamSize = #bedwars.QueueMeta[store.queueType].teams
+
 	local DropItem = bedwars.Client:Get('DropItem').instance
 	local PickupItem = bedwars.Client:Get('PickupItemDrop').instance
 	
@@ -8923,7 +8925,7 @@ run(function()
 
 	local function getTeamGen(custom)
 		local localPosition = custom or entitylib.character.RootPart.Position
-		for _ = 1, #bedwars.QueueMeta[store.queueType].teams do
+		for _ = 1, teamSize do
 			local tier = collectionService:GetTagged(`{_}_TeamOreGenerator`)
 			if tier then
 				local mag = (localPosition - tier[1]:GetPivot().Position).Magnitude 
@@ -8958,11 +8960,11 @@ run(function()
 
 	local function getGearType()
 		local sword, armor = 'none', 'none'
-		if #collectionService:GetTagged('bed') <= 3 then
+		if #collectionService:GetTagged('bed') <= (teamSize - 1) then
 			armor = 'leather'
 			sword = 'stone_sword'
 		end
-		if #collectionService:GetTagged('bed') <= 2 then
+		if #collectionService:GetTagged('bed') <= (teamSize - 2) then
 			--sword = 'iron_sword'
 		end
 		return {sword = sword, armor = armor}
@@ -8973,7 +8975,6 @@ run(function()
 		if gears.armor ~= 'none' and not store.inventory.inventory.armor[2] then
 			return false
 		end
-		warn(gears.sword)
 		if gears.sword ~= 'none' and (not getItem(gears.sword) and not getItem('iron_sword') and not getItem('diamond_sword')) then 
 			return false
 		end
@@ -9000,7 +9001,7 @@ run(function()
 		local wool = getWool()
 		
 		local woolItem = getItem(wool)
-		local canTransport = getItem(wool).amount >= math.floor(((entitylib.character.RootPart.Position - position).Magnitude / magnitude))	
+		local canTransport = woolItem and woolItem.amount >= math.floor(((entitylib.character.RootPart.Position - position).Magnitude / magnitude))	
 
 		return canTransport or (entitylib.character.RootPart.Position - position).Magnitude <= 30
 	end
