@@ -8869,9 +8869,9 @@ run(function()
 	local pauseTick = tick()
 
 	local function getObjective()
-		if entitylib.isAlive and entitylib.character.Humanoid.Health <= 30 or lowTick > tick() then
+		if entitylib.isAlive and entitylib.character.Humanoid.Health <= 40 or lowTick > tick() then
 			if tick() > lowTick then
-				lowTick = tick() + 8
+				lowTick = tick() + 7
 			end
 			return 'heal'
 		end
@@ -9018,7 +9018,6 @@ run(function()
 	
 	TravelBlocks = setmetatable({}, {
 		__index = function(self, pos)
-			notif('AutoWin', 'Attempting to get coordinates', 8)
 			
 			rayCheck.FilterDescendantsInstances = {lplr.Character}
 
@@ -9039,7 +9038,6 @@ run(function()
 
 			warn(blocks)
 
-			notif('AutoWin', 'Blocks required: '.. blocks, 8)
 
 			self[pos] = blocks
 			return self[pos]
@@ -9134,7 +9132,7 @@ run(function()
 							Bridging = not Near
 							if Near then
 								canVelo = true
-								local better = workspace:Raycast(Vector3.new(entitylib.character.RootPart.Position.X, bed:GetPivot().Position.Y + 30, entitylib.character.RootPart.Position.Z), Vector3.new(0, -500, 0), rayCheck)
+								local better = workspace:Raycast(Vector3.new(entitylib.character.RootPart.Position.X, bed:GetPivot().Position.Y + 10, entitylib.character.RootPart.Position.Z), Vector3.new(0, -500, 0), rayCheck)
 								if better then
 									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, better.Position.Y + 6, entitylib.character.RootPart.CFrame.Z)
 								else
@@ -9192,7 +9190,7 @@ run(function()
 									local real = store.inventory.inventory.armor[2]
 									if getItem('iron') and getItem('iron').amount >= 8 then
 										if (entitylib.character.RootPart.Position - npc.RootPart.Position).Magnitude >= 20 then
-											for _ = 1, 2 do
+											for _ = 1, 4 do
 												entitylib.character.RootPart.CFrame += getDirection(npc.RootPart.Position - Vector3.new(0, 2, 0))
 												task.wait(.2)
 											end
@@ -9222,7 +9220,7 @@ run(function()
 							if #plrs > 0 then
 								TpDown = true
 								canVelo = true
-								Near = (entitylib.character.RootPart.Position - Vector3.new(plrs[1].RootPart.X, entitylib.character.RootPart.Position.Y, plrs[1].RootPart.Z))
+								Near = (entitylib.character.RootPart.Position - Vector3.new(plrs[1].RootPart.Position.X, entitylib.character.RootPart.Position.Y, plrs[1].RootPart.Position.Z))
 								entitylib.character.RootPart.CFrame += getDirection(plrs[1].RootPart.Position - Vector3.new(0, 2, 0))
 								task.wait(.2)
 							end
@@ -9257,7 +9255,9 @@ run(function()
 										canTp = true
 									end
 								end
-								entitylib.character.RootPart.CFrame += getDirection(target.RootPart.Position)
+								if workspace:Raycast(plrs[1].RootPart.Position, Vector3.new(0, -1000, 0), rayCheck) then
+									entitylib.character.RootPart.CFrame += getDirection(target.RootPart.Position)
+								end
 								if (entitylib.character.RootPart.Position - target.RootPart.Position).Magnitude <= 23 and workspace:Raycast(plrs[1].RootPart.Position, Vector3.new(0, -1000, 0), rayCheck) then
 									entitylib.character.RootPart.CFrame = CFrame.new(entitylib.character.RootPart.CFrame.X, target.RootPart.CFrame.Y + 1, entitylib.character.RootPart.CFrame.Z)
 								end
