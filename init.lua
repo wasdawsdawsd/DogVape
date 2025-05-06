@@ -1,5 +1,10 @@
 local license = ({...})[1] or {}
 
+if identifyexecutor():lower():find("delta") then
+	game:GetService("Players").LocalPlayer:Kick("Delta is unsupported, please use Krnl instead: https://krnl.cat/")
+	return
+end
+
 getgenv().username = license.Username or shared.username
 getgenv().password = license.Password or shared.password
 getgenv().bundller = license.Bundle or false
