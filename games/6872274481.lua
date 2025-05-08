@@ -23,7 +23,22 @@ local contextActionService = cloneref(game:GetService('ContextActionService'))
 local coreGui = cloneref(game:GetService('CoreGui'))
 local starterGui = cloneref(game:GetService('StarterGui'))
 
+local listfiles = listfiles
+if identifyexecutor() == 'Seliware' then
+	listfiles = function()
+		local values = {}
+		for i,v in values do
+			values[i] = v:gsub('\\', '/')
+		end
+		return values
+	end
+end
+
 local isnetworkowner = not inputService.TouchEnabled and not table.find({'Velocity', 'Xeno', 'Volcano'}, ({identifyexecutor()})[1]) and isnetworkowner or function(base)
+	if identifyexecutor() == 'Volcano' then
+		local suc, res = pcall(isnetworkowner, base)
+		return suc and res or false
+	end
 	return true
 end
 
@@ -70,7 +85,7 @@ local AutoChargeTime = {}
 local TrapDisabler
 local AntiFallPart
 local FlyLandTick = tick()
-local bedwars, remotes, sides, oldinvrender = {}, {}, {}
+local bedwars, remotes, sides, oldinvrender, oldSwing = {}, {}, {}
 
 local function addBlur(parent)
 	local blur = Instance.new('ImageLabel')
@@ -281,6 +296,10 @@ local damagedata = {
 	lastHit = tick(),
 	Multi = 0
 }
+
+for i,v in listfiles('newcatvape/communication') do
+	delfile(v)
+end
 
 local function getSpeed()
 	local multi, increase, modifiers = 0, true, bedwars.SprintController:getMovementStatusModifier():getModifiers()
@@ -641,6 +660,10 @@ run(function()
 				end
 			}
 		}
+
+		if ent.Player then
+			table.insert(tab, ent.Player:GetAttributeChangedSignal('PlayingAsKit'))
+		end
 
 		for name, val in char:GetAttributes() do
 			if name:find('Shield') and type(val) == 'number' then
@@ -1307,7 +1330,7 @@ end)
 
 run(function()
 	local old
-	local oldSwing
+
 	AutoCharge = vape.Categories.Combat:CreateModule({
 	    Name = 'Auto Charge',
 	    Function = function(callback)
@@ -2154,8 +2177,8 @@ run(function()
 							}
 						}
 					}
-					debug.setupvalue(bedwars.SwordController.playSwordEffect, AutoCharge.Enabled and 2 or 6, fake)
-					--debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, fake)
+					debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, AutoCharge.Enabled and 2 or 6, fake)
+					debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, fake)
 
 					task.spawn(function()
 						local started = false
@@ -2314,7 +2337,7 @@ run(function()
 						lplr.PlayerGui.MobileUI['2'].Visible = true
 					end)
 				end
-				debug.setupvalue(bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
+				debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
 				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit)
 				Attacking = false
 				if armC0 then
@@ -2570,6 +2593,36 @@ run(function()
 		Name = 'Swing only',
 		Tooltip = 'Only attacks while swinging manually'
 	})]]
+end)
+
+run(function()
+	local NoFall
+
+	local groundHit
+	task.spawn(function()
+		groundHit = bedwars.Client:Get(remotes.GroundHit).instance
+	end)
+
+	local tracked
+
+	NoFall = vape.Categories.Blatant:CreateModule({
+		Name = 'No Fall',
+		Function = function(callback)
+			if callback then
+				repeat
+					if entitylib.isAlive then
+						tracked = entitylib.character.Humanoid.FloorMaterial == Enum.Material.Air and math.min(tracked, entitylib.character.RootPart.AssemblyLinearVelocity.Y) or 0
+						if tracked < -85 then
+							entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
+							groundHit:FireServer(nil, Vector3.new(0, tracked, 0), workspace:GetServerTimeNow())
+						end
+					end
+					task.wait(0.03)
+				until not NoFall.Enabled
+			end
+		end,
+		Tooltip = 'Prevents you from taking fall damage.'
+	})
 end)
 	
 run(function()
@@ -3129,30 +3182,30 @@ run(function()
 		local BedFolder = Instance.new('Folder')
 		BedFolder.Parent = Folder
 		Reference[bed] = BedFolder
-		local bedparts = bed:GetChildren()
-		table.sort(bedparts, function(a, b) 
+		local parts = bed:GetChildren()
+		table.sort(parts, function(a, b) 
 			return a.Name > b.Name 
 		end)
 	
-		for _, part in bedparts do
+		for _, part in parts do
 			if part:IsA('BasePart') and part.Name ~= 'Blanket' then
-				local boxhandle = Instance.new('BoxHandleAdornment')
-				boxhandle.Size = part.Size + Vector3.new(.01, .01, .01)
-				boxhandle.AlwaysOnTop = true
-				boxhandle.ZIndex = 2
-				boxhandle.Visible = true
-				boxhandle.Adornee = part
-				boxhandle.Color3 = part.Color
+				local handle = Instance.new('BoxHandleAdornment')
+				handle.Size = part.Size + Vector3.new(.01, .01, .01)
+				handle.AlwaysOnTop = true
+				handle.ZIndex = 2
+				handle.Visible = true
+				handle.Adornee = part
+				handle.Color3 = part.Color
 				if part.Name == 'Legs' then
-					boxhandle.Color3 = Color3.fromRGB(167, 112, 64)
-					boxhandle.Size = part.Size + Vector3.new(.01, -1, .01)
-					boxhandle.CFrame = CFrame.new(0, -0.4, 0)
-					boxhandle.ZIndex = 0
+					handle.Color3 = Color3.fromRGB(167, 112, 64)
+					handle.Size = part.Size + Vector3.new(.01, -1, .01)
+					handle.CFrame = CFrame.new(0, -0.4, 0)
+					handle.ZIndex = 0
 				end
-				boxhandle.Parent = BedFolder
+				handle.Parent = BedFolder
 			end
 		end
-		table.clear(bedparts)
+		table.clear(parts)
 	end
 	
 	BedESP = vape.Categories.Render:CreateModule({
@@ -4496,10 +4549,10 @@ run(function()
 			if callback then
 				AutoToxic:Clean(vapeEvents.BedwarsBedBreak.Event:Connect(function(bedTable)
 					if Toggles.BedDestroyed.Enabled and bedTable.brokenBedTeam.id == lplr:GetAttribute('Team') then
-						sendMessage('BedDestroyed', (bedTable.player.DisplayName or bedTable.player.Name), 'how dare you >:( | <obj>')
+						sendMessage('BedDestroyed', (bedTable.player.DisplayName or bedTable.player.Name), ':( | <obj>')
 					elseif Toggles.Bed.Enabled and bedTable.player.UserId == lplr.UserId then
 						local team = bedwars.QueueMeta[store.queueType].teams[tonumber(bedTable.brokenBedTeam.id)]
-						sendMessage('Bed', team and team.displayName:lower() or 'white', 'nice bed lul | <obj>')
+						sendMessage('Bed', team and team.displayName:lower() or 'white', 'cat v5 ate ur bed, sorry it was hungry | <obj>')
 					end
 				end))
 				AutoToxic:Clean(vapeEvents.EntityDeathEvent.Event:Connect(function(deathTable)
@@ -4513,7 +4566,7 @@ run(function()
 								sendMessage('Death', (killer.DisplayName or killer.Name), 'my gaming chair subscription expired :( | <obj>')
 							end
 						elseif killer == lplr and Toggles.Kill.Enabled then
-							sendMessage('Kill', (killed.DisplayName or killed.Name), 'vxp on top | <obj>')
+							sendMessage('Kill', (killed.DisplayName or killed.Name), 'get cat v5 bro | <obj>')
 						end
 					end
 				end))
@@ -5020,6 +5073,8 @@ run(function()
 					v:SetBind('')
 				end
 			end
+		elseif Mode.Value == 'Lobby' then
+			textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('/lobby')
 		end
 	end
 	
@@ -5099,7 +5154,7 @@ run(function()
 	})
 	Mode = StaffDetector:CreateDropdown({
 		Name = 'Mode',
-		List = {'Uninject', 'Profile', 'AutoConfig', 'Notify'},
+		List = {'Uninject', 'Profile', 'AutoConfig', 'Notify', 'Lobby'},
 		Function = function(val)
 			if Profile.Object then
 				Profile.Object.Visible = val == 'Profile'
@@ -5867,7 +5922,7 @@ run(function()
 	end
 	
 	AutoBuy = vape.Categories.Inventory:CreateModule({
-		Name = 'AutoBuy',
+		Name = 'Auto Buy',
 		Function = function(callback)
 			if callback then
 				repeat task.wait() until store.queueType ~= 'bedwars_test'
@@ -7229,17 +7284,17 @@ run(function()
 		Name = 'Crosshair',
 		Function = function(callback)
 			if callback then 
-				old = debug.getconstant(bedwars.ViewmodelController.show, 25)
-				debug.setconstant(bedwars.ViewmodelController.show, 25, Image.Value)
-				debug.setconstant(bedwars.ViewmodelController.show, 37, Image.Value)
+				old = debug.getconstant(bedwars.ViewmodelController.showCrosshair, 25)
+				debug.setconstant(bedwars.ViewmodelController.showCrosshair, 25, Image.Value)
+				debug.setconstant(bedwars.ViewmodelController.showCrosshair, 37, Image.Value)
 			else
-				debug.setconstant(bedwars.ViewmodelController.show, 25, old)
-				debug.setconstant(bedwars.ViewmodelController.show, 37, old)
+				debug.setconstant(bedwars.ViewmodelController.showCrosshair, 25, old)
+				debug.setconstant(bedwars.ViewmodelController.showCrosshair, 37, old)
 				old = nil 
 			end
 			if bedwars.CameraPerspectiveController:getCameraPerspective() == 0 then
-				bedwars.ViewmodelController:hide()
-				bedwars.ViewmodelController:show()
+				bedwars.ViewmodelController:hideCrosshair()
+				bedwars.ViewmodelController:showCrosshair()
 			end
 		end,
 		Tooltip = 'Custom first person crosshair depending on the image choosen.'
@@ -7305,7 +7360,7 @@ run(function()
 		List = fontitems,
 		Function = function(val)
 			if DamageIndicator.Enabled then
-				debug.setconstant(bedwars.DamageIndicator, 86, val)
+				debug.setconstant(bedwars.DamageIndicator, 86, Enum.Font[val])
 			end
 		end
 	})
@@ -8460,6 +8515,7 @@ run(function()
 end)
 
 local AutoPlayAllow = nil
+local AutoWin = {Enabled = false}
 run(function()
 	local antihit
 	local antihitrange 
@@ -8575,7 +8631,7 @@ run(function()
 				end))
 				repeat
 				  	if store.matchState == 0 or not entitylib.isAlive or tick() < FlyLandTick then task.wait() continue end
-					if vape.Modules['AutoWin'].Enabled and not AutoPlayAllow then return end
+					if AutoWin.Enabled and not AutoPlayAllow then return end
 					rayCheck.FilterDescendantsInstances = {lplr.Character, AntiFallPart}
 					local plr = entitylib.AllPosition({
 						Range = antihitrange.Value,
@@ -8585,6 +8641,7 @@ run(function()
 						Limit = 1
 					})[1]
 					if entitylib.character.AirTime and plr and (tick() - entitylib.character.AirTime) < 2 or projectileHitting then
+						warn('should work?')
 						createClone()
 						if tpbackup then
 							tpbackup = false
@@ -8734,7 +8791,7 @@ run(function()
 						task.wait(0.1)
 						if entitylib.isAlive then
 							for _, v in store.shop do
-								if (v.RootPart.Position - entitylib.character.RootPart.Position).Magnitude <= 20 and not table.find(wowie, v.RootPart.Position) then
+								if (v.RootPart.Position - entitylib.character.RootPart.Position).Magnitude <= 45 and not table.find(wowie, v.RootPart.Position) then
 									table.insert(wowie, v.RootPart.Position)
 									explode = true
 								elseif explode and not alldropped then
@@ -8816,3 +8873,26 @@ run(function()
 		Tooltip = 'Automatically store items so you don\'t lose them.'
 	})
 end)
+
+--[[run(function()
+	local function isGoingTo(id) --> only works on multi instances btw
+		if not shared.CatAutoFarm then return false end
+		for i,v in listfiles('newcatvape/communication') do
+			local user = v:gsub('newcatvape/communication', ''):gsub('.txt', '')
+			if user ~= lplr.Name and tonumber(readfile(v)) == tonumber(id) then
+				return true
+			end
+		end
+	end
+
+	AutoWin = vape.Categories.Utility:CreateModule({
+		Name = 'Auto Win',
+		Function = function(callback)
+			if callback then
+				notif('AutoWin', 'Doesn\'t work rn', 10)																												
+				AutoWin:Toggle()
+			end
+		end,
+		Tooltip = 'Automatically wins the game for you'
+	})
+end)]]
