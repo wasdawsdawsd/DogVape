@@ -8059,3 +8059,22 @@ run(function()
 		Default = 'Workspace'
 	})
 end)
+
+run(function()
+	local Camera
+	local module = loadfile("newcatvape/libraries/camera.lua")()
+
+	Camera = vape.Legit:CreateModule({
+		Name = 'Better Camera',
+		Function = function(callback)
+			if callback then
+				module = loadfile("newcatvape/libraries/camera.lua")()
+				-- ^^^ incase rotation gets bugged
+				module.start()
+			else
+				module.stop()
+			end
+		end,
+		Tooltip = 'Makes the camera look better'
+	})
+end)
