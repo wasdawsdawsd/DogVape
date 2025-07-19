@@ -93,8 +93,9 @@ end
 
 if not getgenv().catvapedev then 
 	warn('Downloading CatVape')
-	if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 then
-		for _, folder in {'newcatvape', 'newcatvape/games', 'newcatvape/profiles', 'newcatvape/assets', 'newcatvape/libraries', 'newcatvape/guis'} do
+	if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 or not isfile('resetv2v2') then
+		writefile('resetv2v2', '')
+		for _, folder in {'newcatvape', 'newcatvape/games', 'newcatvape/profiles', 'newcatvape/assets', 'newcatvape/libraries', 'newcatvape/guis', 'newcatvape/libraries/Weather'} do
 			if not isfolder(folder) then
 				makefolder(folder)
 			end
