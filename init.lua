@@ -96,27 +96,22 @@ end
 
 if not getgenv().catvapedev then 
 	warn('Downloading CatVape')
-	if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 or not isfile('resetv2v2v3') then
-		writefile('resetv2v2v3', '')
-		warn('a')
+	if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 or not isfile('resetv9') then
+		writefile('resetv9', '')
 		for _, folder in {'newcatvape', 'newcatvape/games', 'newcatvape/profiles', 'newcatvape/assets', 'newcatvape/libraries', 'newcatvape/guis', 'newcatvape/libraries/Weather'} do
 			makefolder(folder)
-			task.wait(0.7)
 		end
-		warn('b')
 		writefile('newcatvape/profiles/commit.txt', commitdata.sha)
 		local files = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/contents', true))
 		for i,v in files do
 			if v.path == 'assets' or v.path:find('assets') then continue end
 			if not isfolderv2(v.name) then
-				warn('omg bro', v.path)
 				downloadFile('newcatvape/'..v.path)
 			else
 				makefolder('newcatvape/'.. v.path)
 				local files2 = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/contents/' .. v.path, true))
 				for i2 ,v2 in files2 do
 					if not isfolderv2(v2.path) then
-						warn('omg bro', v2.path)
 						downloadFile('newcatvape/'.. v2.path)
 					else
 						makefolder('newcatvape/'.. v2.path)
@@ -141,6 +136,9 @@ if not getgenv().catvapedev then
 					end
 				end
 			end
+		end
+		for i,v in httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/contents/profiles')) do
+			downloadFile('newcatvape/profiles/'.. v.name)
 		end
 	end
 	
