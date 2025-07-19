@@ -93,8 +93,8 @@ end
 
 if not getgenv().catvapedev then 
 	warn('Downloading CatVape')
-	if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 or not isfile('resetv2v2') then
-		writefile('resetv2v2', '')
+	if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 or not isfile('resetv2v2v3') then
+		writefile('resetv2v2v3', '')
 		for _, folder in {'newcatvape', 'newcatvape/games', 'newcatvape/profiles', 'newcatvape/assets', 'newcatvape/libraries', 'newcatvape/guis', 'newcatvape/libraries/Weather'} do
 			if not isfolder(folder) then
 				makefolder(folder)
@@ -103,7 +103,7 @@ if not getgenv().catvapedev then
 		writefile('newcatvape/profiles/commit.txt', commitdata.sha)
 		local files = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/contents', true))
 		for i,v in files do
-			if v.path == 'assets' or v.path:find('assets') or v.path == 'profiles' or v.path:find('profiles') then continue end
+			if v.path == 'assets' or v.path:find('assets') then continue end
 			if not isfolderv2(v.name) then
 				writefile('newcatvape/'.. v.name, downloadFile('newcatvape/'..v.path))
 			else
@@ -112,6 +112,26 @@ if not getgenv().catvapedev then
 				for i2 ,v2 in files2 do
 					if not isfolderv2(v2.path) then
 						writefile('newcatvape/'.. v2.path, downloadFile('newcatvape/'.. v2.path))
+					else
+						makefolder('newcatvape/'.. v2.path)
+						warn('real', v2.path, 'https://api.github.com/repos/new-qwertyui/CatV5/contents/' .. v2.path)
+						local files3 = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/contents/'.. v2.path, true))
+						for i3 ,v3 in files3 do
+							if not isfolderv2(v3.path) then
+								writefile('newcatvape/'.. v3.path, downloadFile('newcatvape/'.. v3.path))
+							else
+								makefolder('newcatvape/'.. v3.path)
+								warn('real', v3.path, 'https://api.github.com/repos/new-qwertyui/CatV5/contents/' .. v3.path)
+								local files4 = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/contents/'.. v3.path, true))
+								for i4 ,v4 in files4 do
+									if not isfolderv2(v4.path) then
+										writefile('newcatvape/'.. v4.path, downloadFile('newcatvape/'.. v4.path))
+									else
+										warn('nigga kys')		
+									end
+								end
+							end
+						end
 					end
 				end
 			end
