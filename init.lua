@@ -60,7 +60,7 @@ local commitdata = getcommit()
 local function downloadFile2(path, func, bypass)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'..(isfile('newcatvape/profiles/commit.txt') and readfile('newcatvape/profiles/commit.txt')) or 'main'..'/'..select(1, path:gsub('newcatvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -157,5 +157,9 @@ end
 getgenv().used_init = true
 
 warn('Successfully downloaded catvape')
+
+if not isfolder('newcatvape/communication') then
+	makefolder('newcatvape/communication')
+end
 
 return loadstring(downloadFile2('newcatvape/main.lua'), 'main')(license)
