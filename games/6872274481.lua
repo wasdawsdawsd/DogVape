@@ -5571,6 +5571,7 @@ run(function()
 								for _, v in chests do
 									if (localPosition - v.Position).Magnitude <= Range.Value then
 										lootChest(v:FindFirstChild('ChestFolderValue'))
+										task.wait(.06)
 									end
 								end
 							end
