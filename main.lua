@@ -61,17 +61,18 @@ local function finishLoading()
 		if (not teleportedServers) and (not shared.VapeIndependent) then
 			teleportedServers = true
 			local teleportScript = [[
-				shared.vapereload = true
 				shared.VapeDeveloper = true
-				shared.catvapedev = true
-				if shared.VapeDeveloper then
-					loadstring(readfile('newcatvape/init.lua'), 'init')()
-				else
-					loadstring(game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/init.lua', true), 'init')()
-				end
+				loadfile('newcatvape/init.lua')({
+					Developer = false
+				})
 			]]
-			if shared.VapeDeveloper then
-				teleportScript = 'shared.VapeDeveloper = true\n'..teleportScript
+			if getgenv().catvapedev then
+				teleportScript = [[
+					shared.VapeDeveloper = true
+					loadfile('newcatvape/init.lua')({
+						Developer = true
+					})
+				]]
 			end
 			if shared.VapeCustomProfile then
 				teleportScript = 'shared.VapeCustomProfile = "'..shared.VapeCustomProfile..'"\n'..teleportScript

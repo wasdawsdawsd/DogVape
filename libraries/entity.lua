@@ -131,7 +131,7 @@ entitylib.EntityMouse = function(entitysettings)
 			if not entitysettings.NPCs and v.NPC then continue end
 			if not v.Targetable then continue end
 			local position, vis = gameCamera.WorldToViewportPoint(gameCamera, v[entitysettings.Part].Position)
-			if not vis then continue end
+			if not vis and not v.NPC then continue end
 			local mag = (mouseLocation - Vector2.new(position.x, position.y)).Magnitude
 			if mag > entitysettings.Range then continue end
 			if entitylib.isVulnerable(v) then

@@ -213,6 +213,12 @@ local init: () -> table = function()
 				table.insert(self.Connections, {
 					Disconnect = callback
 				})
+			elseif typeof(callback) == 'table' and rawget(callback, 'func') then
+				table.insert(self.Connections, {
+					Disconnect = function()
+						restorefunction(rawget(callback, 'func'))
+					end
+				})
 			else
 				table.insert(self.Connections, callback)
 			end
@@ -277,7 +283,7 @@ local init: () -> table = function()
 	end
 	
 	local function createMobileButton(buttonapi, position)
-		if not inputService.TouchEnabled then return end
+		if not inputService.KeyboardEnabled then return end
 		local heldbutton = false
 		local button = Instance.new('TextButton')
 		button.Size = UDim2.fromOffset(40, 40)
@@ -338,7 +344,7 @@ local init: () -> table = function()
 		end
 		return assetfunction(path)
 	end	
-	getcustomasset = not inputService.TouchEnabled and assetfunction and function(path)
+	getcustomasset = not inputService.KeyboardEnabled and assetfunction and function(path)
 		return downloadFile(path, assetfunction)
 	end or identifyexecutor():lower():find("delta") and assetfunction and function(path)
 		return downloadFile(path, assetfunction)
@@ -3910,7 +3916,7 @@ local init: () -> table = function()
 			modulebutton.MouseButton2Click:Connect(function()
 				modulechildren.Visible = not modulechildren.Visible
 			end)
-			if inputService.TouchEnabled then
+			if inputService.KeyboardEnabled then
 				local heldbutton = false
 				modulebutton.MouseButton1Down:Connect(function()
 					heldbutton = true
@@ -5448,23 +5454,34 @@ local init: () -> table = function()
 		self.Loaded = savecheck
 		self.Categories.Main.Options.Bind:SetBind(self.Keybind)
 	
-		if inputService.TouchEnabled and #self.Keybind == 1 and self.Keybind[1] == 'RightShift' then
+		local main = game:GetService('CoreGui'):WaitForChild('TopBarApp', 10):WaitForChild('TopBarApp'):WaitForChild('MenuIconHolder'):WaitForChild('TriggerPoint'):WaitForChild('Background')
+		--> ud code btw pls dontt get mad
+
+		if not inputService.KeyboardEnabled then
 			local button = Instance.new('TextButton')
-			button.Size = UDim2.fromOffset(32, 32)
-			button.Position = UDim2.new(1, -90, 0, 4)
-			button.BackgroundColor3 = Color3.new()
-			button.BackgroundTransparency = 0.5
+			button.Size = UDim2.fromOffset(44, 44)
+			button.Position = UDim2.fromOffset(170, 11)
+			button.BackgroundColor3 = main.BackgroundColor3
+			button.ZIndex = 500
+			button.BackgroundTransparency = main.BackgroundTransparency
 			button.Text = ''
 			button.Parent = gui
+
 			local image = Instance.new('ImageLabel')
 			image.Size = UDim2.fromOffset(26, 26)
-			image.Position = UDim2.fromOffset(3, 3)
+			image.AnchorPoint = Vector2.new(0.5, 0.5)
+			image.Position = UDim2.fromScale(0.5, 0.5)
+			image.ZIndex = 500
 			image.BackgroundTransparency = 1
 			image.Image = getcustomasset('newcatvape/assets/new/vape.png')
 			image.Parent = button
+
 			local buttoncorner = Instance.new('UICorner')
 			buttoncorner.Parent = button
+			buttoncorner.CornerRadius = UDim.new(1, 0)
+
 			self.VapeButton = button
+
 			button.MouseButton1Click:Connect(function()
 				if self.ThreadFix then
 					setthreadidentity(8)
@@ -5853,14 +5870,12 @@ local init: () -> table = function()
 		Name = 'Reset current profile',
 		Function = function()
 		mainapi.Save = function() end
-			if isfile('newcatvape/profiles/'..mainapi.Profile..mainapi.Place..'.txt') and delfile then
+			if isfile('newcatvape/profiles/'..mainapi.Profile..mainapi.Place..'.txt') then
 				delfile('newcatvape/profiles/'..mainapi.Profile..mainapi.Place..'.txt')
 			end
 			shared.vapereload = true
 			loadfile("newcatvape/init.lua")({
-				Username = username,
-				Password = password,
-				Developer = shared.catvapedev
+				Developer = getgenv().catvapedev
 			})
 		end,
 		Tooltip = 'This will set your profile to the default settings of Vape'
@@ -5873,13 +5888,10 @@ local init: () -> table = function()
 		Tooltip = 'Removes vape from the current game'
 	})
 	general:CreateButton({
-		Name = 'Reinject',
+		Name = 'Re Inject',
 		Function = function()
-			shared.vapereload = true
-			loadfile("newcatvape/init.lua")({
-				Username = username,
-				Password = password,
-				Developer = shared.catvapedev
+			loadfile('newcatvape/init.lua')({
+				Developer = getgenv().catvapedev
 			})
 		end,
 		Tooltip = 'Reloads vape for debugging purposes'

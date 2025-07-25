@@ -218,12 +218,14 @@ if not isfunctionhooked(listfiles) then
 		end
 		return list
 	end)
+
+	vape:Clean({func = listfiles})
 end
 
 for i,v in listfiles('newcatvape/libraries/Weather') do
 	warn(v)
 	local real = v:gsub('newcatvape/libraries/Weather/', ''):gsub('.lua', '')
-	weatherlib[real] = loadfile(v)()
+	weatherlib[real] = loadfile(v, real)()
 end
 
 local whitelist = {
