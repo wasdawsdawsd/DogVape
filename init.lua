@@ -82,14 +82,19 @@ local function yield(path: string) : ()
 end
 
 if not developer then
-    if not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 or not isfolder('newcatvape/profiles') or not isfile('newcatvape/profiles/commit.txt') or readfile('newcatvape/profiles/commit.txt') ~= commitdata.sha then
+    local newuser = not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 or not isfolder('newcatvape/profiles') or not isfile('newcatvape/profiles/commit.txt')
+    if newuser or readfile('newcatvape/profiles/commit.txt') ~= commitdata.sha then
         makefolder('newcatvape')
+        local blacklist = {'assets', '.vscode', 'README.md'}
+        if not newuser then
+            table.insert(blacklist, 'profiles')
+        end
         local contents = request({
             Url = `https://api.github.com/repos/new-qwertyui/CatV5/contents`,
             Method = 'GET'
         }) :: {Body: string, StatusCode: number}
         for _, v: table in httpService:JSONDecode(contents.Body) do
-            if not table.find({'assets', '.vscode', 'README.md'}, v.path) then
+            if not table.find(blacklist, v.path) then
                 yield(v.path)
             end
         end

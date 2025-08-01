@@ -825,7 +825,37 @@ run(function()
 		VisualizerUtils = require(lplr.PlayerScripts.TS.lib.visualizer['visualizer-utils']).VisualizerUtils,
 		WeldTable = require(replicatedStorage.TS.util['weld-util']).WeldUtil,
 		WinEffectMeta = require(replicatedStorage.TS.locker['win-effect']['win-effect-meta']).WinEffectMeta,
-		ZapNetworking = require(lplr.PlayerScripts.TS.lib.network)
+		ZapNetworking = require(lplr.PlayerScripts.TS.lib.network),
+		TaskTable = {
+			collect_iron = {
+				type = 'collect',
+				item = 'iron',
+				amount = 5
+			},
+			buy_blocks = {
+				type = 'buy',
+				item = 'wool_white',
+				amount = 8
+			},
+			buy_sword = {
+				type = 'buy',
+				item = 'stone_sword',
+				amount = 1
+			},
+			buy_armor = {
+				type = 'buy',
+				item = 'leather_armor',
+				amount = 1
+			},
+			select_blocks = {
+				type = 'hotbar',
+				item = 'wool_white'
+			},
+			place_block = {
+				type = 'place',
+				item = 'wool_white'
+			}
+		}
 	}, {
 		__index = function(self, ind)
 			rawset(self, ind, Knit.Controllers[ind])
@@ -1260,7 +1290,7 @@ run(function()
 				local root = (store.rootpart and store.rootpart.Parent) and store.rootpart or entitylib.character.RootPart
 
 				rayCheck.FilterDescendantsInstances = {lplr.Character, root}
-				entitylib.character.AirTime = workspace:Raycast(root.Position, Vector3.new(0, -4, 0), rayCheck) ~= nil and tick() or entitylib.character.AirTime--entitylib.character.Humanoid.FloorMaterial ~= Enum.Material.Air and tick() or entitylib.character.AirTime
+				entitylib.character.AirTime = entitylib.character.Humanoid.FloorMaterial ~= Enum.Material.Air and tick() or entitylib.character.AirTime--workspace:Raycast(root.Position, Vector3.new(0, -4, 0), rayCheck) ~= nil and tick() or entitylib.character.AirTime--
 			end
 
 			for _, v in entitylib.List do
@@ -1986,7 +2016,7 @@ run(function()
 										if ray and TP.Enabled then
 											tpToggle = false
 											oldy = root.Position.Y
-											tpTick = tick() + 0.11
+											tpTick = tick() + 0.07
 											root.CFrame = CFrame.lookAlong(Vector3.new(root.Position.X, ray.Position.Y + entitylib.character.HipHeight, root.Position.Z), root.CFrame.LookVector)
 										end
 									end
@@ -2680,9 +2710,8 @@ run(function()
 end)
 
 local NoFall
+local Mode
 run(function()
-	local Mode
-
 	local rayParams = RaycastParams.new()
 	local tracked
 
@@ -2746,7 +2775,7 @@ run(function()
 			if callback then
 				local tracked = 0
 				local extraGravity = 0
-				if Mode.Value == 'Spoof' then
+				if Mode.Value == 'Spoof' or Mode.Value == 'BHop' then
 					NoFall:Clean(runService.PreSimulation:Connect(function(dt)
 						if entitylib.isAlive then
 							local root = entitylib.character.RootPart
@@ -2770,7 +2799,7 @@ run(function()
 					local rootylevel = nil
 				
 					NoFall:Clean(runService.PostSimulation:Connect(function()
-						if ((workspace:GetServerTimeNow() - lplr:GetAttribute('LastTeleported')) < 2 or getgenv().antihitclone or tick() < FlyLandTick or InfiniteFly.Enabled or not entitylib.isAlive or not isnetworkowner((oldroot and oldroot.Parent) and oldroot or entitylib.character.RootPart) or pingSpiking) and oldroot and oldroot.Parent then
+						if ((workspace:GetServerTimeNow() - lplr:GetAttribute('LastTeleported')) < 0.5 or getgenv().antihitclone or tick() < FlyLandTick or InfiniteFly.Enabled or not entitylib.isAlive or not isnetworkowner((oldroot and oldroot.Parent) and oldroot or entitylib.character.RootPart) or pingSpiking) and oldroot and oldroot.Parent then
 							destroyClone()
 							return
 						end
@@ -2781,7 +2810,7 @@ run(function()
 					end))
 
 					repeat
-						if (workspace:GetServerTimeNow() - lplr:GetAttribute('LastTeleported')) < 2 or getgenv().antihitclone or (tick() < FlyLandTick or InfiniteFly.Enabled) or not entitylib.isAlive or not isnetworkowner((oldroot and oldroot.Parent) and oldroot or entitylib.character.RootPart) or pingSpiking then
+						if (workspace:GetServerTimeNow() - lplr:GetAttribute('LastTeleported')) < 0.5 or getgenv().antihitclone or (tick() < FlyLandTick or InfiniteFly.Enabled) or not entitylib.isAlive or not isnetworkowner((oldroot and oldroot.Parent) and oldroot or entitylib.character.RootPart) or pingSpiking then
 							task.wait()
 							continue
 						else
@@ -2815,7 +2844,7 @@ run(function()
 
 	Mode = NoFall:CreateDropdown({
 		Name = 'Mode',
-		List = {'Spoof', 'Packet'},
+		List = {'Spoof', 'Packet', 'BHop'},
 		Default = 'Spoof',
 		Function = function()
 			if NoFall.Enabled then
@@ -2831,6 +2860,9 @@ local namecall; namecall = hookmetamethod(game, '__namecall', function(self, ...
 		local args = {...}
 		if args[3] then
 			args[3] = 1/1
+			if Mode.Value == 'BHop' then
+				entitylib.character.RootPart.AssemblyLinearVelocity = Vector3.new(0, args[1].Position.Y + (entitylib.character.RootPart.Size.Y / 2 + entitylib.character.Humanoid.HipHeight + 0.25 * 3), 0)
+			end
 		end
 		return namecall(self, unpack(args))
 	end
@@ -5682,16 +5714,13 @@ run(function()
 	
 			for _, v in chestitems do
 				if v:IsA('Accessory') then
+					if pingSpiking then break end
 					bedwars.Client:GetNamespace('Inventory'):Get('ChestGetItem'):CallServer(chest, v)					
-					Delays[chest] = tick() + 0.5	
 					task.wait()
 				end
 			end	
 
 			bedwars.Client:GetNamespace('Inventory'):Get('SetObservedChest'):SendToServer(nil)
-			if (entitylib.character.RootPart.Position - part.Position).Magnitude > Range.Value then
-				task.wait(0.4)
-			end
 		end
 	end
 	
@@ -5712,6 +5741,7 @@ run(function()
 								local localPosition = entitylib.character.RootPart.Position
 								for _, v in chests do
 									if (localPosition - v.Position).Magnitude <= Range.Value then
+										if pingSpiking then break end
 										lootChest(v:FindFirstChild('ChestFolderValue'), v)
 									end
 								end
@@ -7836,9 +7866,11 @@ end)
 	
 run(function()
 	vape.Legit:CreateModule({
-		Name = 'HitFix',
+		Name = 'Hit Fix',
 		Function = function(callback)
+			table.foreach(debug.getupvalues(bedwars.SwordController.swingSwordAtMouse), print)
 			debug.setconstant(bedwars.SwordController.swingSwordAtMouse, 23, callback and 'raycast' or 'Raycast')
+			warn(type(bedwars.QueryUtil))
 			debug.setupvalue(bedwars.SwordController.swingSwordAtMouse, 4, callback and bedwars.QueryUtil or workspace)
 		end,
 		Tooltip = 'Changes the raycast function to the correct one'
