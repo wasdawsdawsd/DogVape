@@ -242,10 +242,34 @@ local whitelist = {
 	localprio = 0,
 	said = {}
 }
+
+local downButton
+do
+    if inputService.TouchEnabled and lplr.PlayerGui:FindFirstChild('TouchGui') then
+        downButton = lplr.PlayerGui.TouchGui.TouchControlFrame.JumpButton:Clone()
+        downButton.Parent = lplr.PlayerGui.TouchGui.TouchControlFrame
+        downButton.Name = 'DownButton'
+        downButton.Position = UDim2.new(1, -190, 1, -90)
+        downButton.Visible = false
+        downButton.ImageRectOffset = Vector2.new(0, 146)
+        downButton.Image = 'rbxassetid://116011397928605'
+        
+        vape:Clean(downButton.MouseButton1Down:Connect(function()
+            downButton.ImageRectOffset = Vector2.new(146, 146)
+        end))
+        vape:Clean(downButton.MouseButton1Up:Connect(function()
+            downButton.ImageRectOffset = Vector2.new(0, 146)
+        end))
+        
+        vape:Clean(downButton)
+    end
+end
+
 vape.Libraries.entity = entitylib
 vape.Libraries.whitelist = whitelist
 vape.Libraries.prediction = prediction
 vape.Libraries.hash = hash
+vape.DownButton = downButton
 vape.Libraries.auraanims = {
 	Normal = {
 		{CFrame = CFrame.new(-0.17, -0.14, -0.12) * CFrame.Angles(math.rad(-53), math.rad(50), math.rad(-64)), Time = 0.1},
@@ -1840,6 +1864,9 @@ run(function()
 							up = jumpButton.ImageRectOffset.X == 146 and 1 or 0
 						end))
 					end)
+					Fly:Clean(downButton:GetPropertyChangedSignal('ImageRectOffset'):Connect(function()
+						down = downButton.ImageRectOffset.X == 146 and 1 or 0
+					end))
 				end
 			else
 				YLevel, OldYLevel = nil, nil
@@ -2045,7 +2072,7 @@ run(function()
 	
 	local function jump()
 		local state = entitylib.isAlive and entitylib.character.Humanoid:GetState() or nil
-		if state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed then
+		--if state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.Landed then
 			if Mode.Value == 'Velocity' then
 				entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 				entitylib.character.RootPart.Velocity = Vector3.new(entitylib.character.RootPart.Velocity.X, Value.Value, entitylib.character.RootPart.Velocity.Z)
@@ -2059,7 +2086,7 @@ run(function()
 					end
 				until start <= 0
 			end
-		end
+		--end
 	end
 	
 	HighJump = vape.Categories.Blatant:CreateModule({
@@ -6896,24 +6923,27 @@ run(function()
 	local FadeIn
 	local FadeOut
 	local trail, point, point2
+
+	local function createTrail()
+		point = Instance.new('Attachment')
+		point.Position = Vector3.new(0, Thickness.Value - 2.7, 0)
+		point2 = Instance.new('Attachment')
+		point2.Position = Vector3.new(0, -Thickness.Value - 2.7, 0)
+		trail = Instance.new('Trail')
+		trail.Texture = Texture.Value == '' and 'http://www.roblox.com/asset/?id=14166981368' or Texture.Value
+		trail.TextureMode = Enum.TextureMode.Static
+		trail.Color = ColorSequence.new(Color3.fromHSV(FadeIn.Hue, FadeIn.Sat, FadeIn.Value), Color3.fromHSV(FadeOut.Hue, FadeOut.Sat, FadeOut.Value))
+		trail.Lifetime = Lifetime.Value
+		trail.Attachment0 = point
+		trail.Attachment1 = point2
+		trail.FaceCamera = true
+	end
 	
 	Breadcrumbs = vape.Legit:CreateModule({
 		Name = 'Breadcrumbs',
 		Function = function(callback)
 			if callback then
-				point = Instance.new('Attachment')
-				point.Position = Vector3.new(0, Thickness.Value - 2.7, 0)
-				point2 = Instance.new('Attachment')
-				point2.Position = Vector3.new(0, -Thickness.Value - 2.7, 0)
-				trail = Instance.new('Trail')
-				trail.Texture = Texture.Value == '' and 'http://www.roblox.com/asset/?id=14166981368' or Texture.Value
-				trail.TextureMode = Enum.TextureMode.Static
-				trail.Color = ColorSequence.new(Color3.fromHSV(FadeIn.Hue, FadeIn.Sat, FadeIn.Value), Color3.fromHSV(FadeOut.Hue, FadeOut.Sat, FadeOut.Value))
-				trail.Lifetime = Lifetime.Value
-				trail.Attachment0 = point
-				trail.Attachment1 = point2
-				trail.FaceCamera = true
-	
+				pcall(createTrail)
 				Breadcrumbs:Clean(trail)
 				Breadcrumbs:Clean(point)
 				Breadcrumbs:Clean(point2)
@@ -6922,15 +6952,19 @@ run(function()
 					point2.Parent = ent.HumanoidRootPart
 					trail.Parent = gameCamera
 				end))
+				
 				repeat
+					if not trail or not trail.Parent then
+						pcall(createTrail)
+					end
 					if entitylib.isAlive then
 						point.Parent = lplr.Character.PrimaryPart
 						point2.Parent = lplr.Character.PrimaryPart
 					end
 					task.wait()
 				until not Breadcrumbs.Enabled
-				if entitylib.isAlive then
 				
+				if entitylib.isAlive then
 					trail.Parent = gameCamera
 				end
 			else

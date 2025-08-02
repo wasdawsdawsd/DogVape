@@ -20,10 +20,11 @@ if not success or commitdata == nil then
 end
 
 local downloader = Instance.new('TextLabel', Instance.new('ScreenGui', gethui()))
-downloader.Size = UDim2.new(1, 0, 0, 40)
+downloader.Size = UDim2.new(1, 0, -0.08, 0)
 downloader.BackgroundTransparency = 1
 downloader.TextStrokeTransparency = 0
 downloader.TextSize = 20
+downloader.Text = 'Downloading newcatvape'
 downloader.TextColor3 = Color3.new(1, 1, 1)
 downloader.Font = Enum.Font.Arial
 
@@ -43,7 +44,7 @@ end
 local function downloadFile(path: string) : string
 	if not developer or not isfile(`newcatvape/{path}`) then
         local suc, res = pcall(function()
-            return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..commitdata.sha..'/'..select(1, path:gsub('newcatvape/', '')), true)
+            return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..commitdata.sha..'/'..path:gsub('newcatvape/', ''):gsub(' ', '%%20'), true)
         end)
         if (not suc or res == '404: Not Found') then
             return 
@@ -64,9 +65,12 @@ local function gitisfolder(path: string) : boolean
 end
 
 local function yield(path: string) : ()
-    downloader.Text = `Downloading newcatvape/{path}`
+    if path == nil then
+        downloader.Text = 'You have exceeded the limit, Please try again in 30 mins!'
+        repeat task.wait() until false
+    end
+    downloader.Text = `{isfile('newcatvape/path') and 'Updating' or 'Downloading'} newcatvape/{path}`
     if gitisfolder(path) then
-        warn('Folder', path)
         makefolder(`newcatvape/{path}`)
         local contents = request({
             Url = `https://api.github.com/repos/new-qwertyui/CatV5/contents/{path}`,
@@ -76,23 +80,31 @@ local function yield(path: string) : ()
             yield(v.path)
         end
     else
-        warn('File', path)
         downloadFile(`newcatvape/{path}`)
     end
 end
 
+if not developer and not isfile('eiqrhjqpr') then
+    pcall(delfolder, 'newcatvape')
+end
+
+writefile('eiqrhjqpr', 'true')
+
 if not developer then
     local newuser = not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 or not isfolder('newcatvape/profiles') or not isfile('newcatvape/profiles/commit.txt')
     if newuser or readfile('newcatvape/profiles/commit.txt') ~= commitdata.sha then
-        makefolder('newcatvape')
+        makefolder('newcatvape')   
+
         local blacklist = {'assets', '.vscode', 'README.md'}
-        if not newuser then
-            table.insert(blacklist, 'profiles')
-        end
         local contents = request({
             Url = `https://api.github.com/repos/new-qwertyui/CatV5/contents`,
             Method = 'GET'
         }) :: {Body: string, StatusCode: number}
+
+        if not newuser then
+            table.insert(blacklist, 'profiles')
+        end
+
         for _, v: table in httpService:JSONDecode(contents.Body) do
             if not table.find(blacklist, v.path) then
                 yield(v.path)
@@ -105,6 +117,8 @@ if not developer then
 		writefile('newcatvape/profiles/commit.txt', 'main')
     end
 end
+
+writefile('newcatvapereset', 'True')
 
 downloader:Destroy()
 
