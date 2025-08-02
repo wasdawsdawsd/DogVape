@@ -222,11 +222,11 @@ if not isfunctionhooked(listfiles) then
 	vape:Clean({func = listfiles})
 end
 
-for i,v in listfiles('newcatvape/libraries/Weather') do
+--[[for i,v in listfiles('newcatvape/libraries/Weather') do
 	warn(v)
 	local real = v:gsub('newcatvape/libraries/Weather/', ''):gsub('.lua', '')
 	weatherlib[real] = loadfile(v, real)()
-end
+end]]
 
 local whitelist = {
 	alreadychecked = {},
@@ -8117,7 +8117,7 @@ run(function()
 	})
 end)
 
-run(function()
+--[[run(function()
 	local weather
 	local oldatmosphere = {}
 	local oldclouds = {}
@@ -8281,4 +8281,4 @@ run(function()
 			end
 		end,
 	})
-end)
+end)]]
