@@ -1,6 +1,4 @@
-if identifyexecutor() == 'Swift' then
-	getgenv().getcustomasset = nil
-end
+
 local init: () -> table = function()
 	local mainapi = {
 		Categories = {},
@@ -337,6 +335,8 @@ local init: () -> table = function()
 		end
 		return (func or readfile)(path)
 	end
+	
+	local blacklistedexecs = {'Fluxus', 'Krnl'}
 
 	customassetfunction = function(path)
 		if not isfile(path) then
@@ -344,11 +344,11 @@ local init: () -> table = function()
 		end
 		return assetfunction(path)
 	end	
-	getcustomasset = not inputService.KeyboardEnabled and assetfunction and function(path)
-		return downloadFile(path, assetfunction)
-	end or identifyexecutor():lower():find("delta") and assetfunction and function(path)
-		return downloadFile(path, assetfunction)
-	end or function(path)
+	local getexecutorname = function()
+		local name, ver = identifyexecutor()
+		return name
+	end
+	getcustomasset = not table.find(blacklistedexecs, getexecutorname()) and assetfunction or function(path)
 		return getcustomassets[path] or ''
 	end
 	
@@ -5454,7 +5454,7 @@ local init: () -> table = function()
 		self.Loaded = savecheck
 		self.Categories.Main.Options.Bind:SetBind(self.Keybind)
 	
-		local main = game:GetService('CoreGui'):WaitForChild('TopBarApp', 10):WaitForChild('TopBarApp'):WaitForChild('MenuIconHolder'):WaitForChild('TriggerPoint'):WaitForChild('Background')
+		local main = game:GetService('CoreGui'):WaitForChild('TopBarApp', 10):WaitForChild('TopBarApp'):WaitForChild('MenuIconHolder'):WaitForChild('TriggerPoint'):FindFirstChild('ImageButton')
 		--> ud code btw pls dontt get mad
 
 		if not inputService.KeyboardEnabled then
