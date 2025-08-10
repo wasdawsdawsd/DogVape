@@ -1,4 +1,5 @@
 
+local init: () -> table = function()
 	local mainapi = {
 		Categories = {},
 		GUIColor = {
@@ -347,7 +348,12 @@
 		local name, ver = identifyexecutor()
 		return name
 	end
-	getcustomasset = not table.find(blacklistedexecs, getexecutorname()) and assetfunction or function(path)
+	getcustomasset = not table.find(blacklistedexecs, getexecutorname()) and assetfunction and function(v)
+		if not isfile(v) then
+			downloadFile(v)
+		end
+		return assetfunction(v)
+	end or function(path)
 		return getcustomassets[path] or ''
 	end
 	
@@ -7337,3 +7343,16 @@
 	end))
 	
 	return mainapi
+end;
+local gui: table? = {};
+for _: number = 1, 4 do
+	local suc, res = pcall(init);
+	if suc then 
+		gui = res;
+		break;
+	elseif not suc and _ == 4 then
+		error('Cat: Failed to load "newcatvape/gui/new.lua" | '.. res);
+	end;
+	task.wait(0.1);
+end;
+return gui;
