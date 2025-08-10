@@ -245,7 +245,7 @@ local whitelist = {
 
 local downButton
 do
-    if inputService.TouchEnabled and lplr.PlayerGui:FindFirstChild('TouchGui') then
+    if inputService.TouchEnabled and lplr.PlayerGui:FindFirstChild('TouchGui') and lplr.PlayerGui.TouchGui:FindFirstChild('JumpButton') then
         downButton = lplr.PlayerGui.TouchGui.TouchControlFrame.JumpButton:Clone()
         downButton.Parent = lplr.PlayerGui.TouchGui.TouchControlFrame
         downButton.Name = 'DownButton'
