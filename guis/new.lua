@@ -281,7 +281,7 @@ local init: () -> table = function()
 	end
 	
 	local function createMobileButton(buttonapi, position)
-		if not inputService.KeyboardEnabled then return end
+		if inputService.KeyboardEnabled then return end
 		local heldbutton = false
 		local button = Instance.new('TextButton')
 		button.Size = UDim2.fromOffset(40, 40)
@@ -338,19 +338,18 @@ local init: () -> table = function()
 	
 	local blacklistedexecs = {'Fluxus', 'Krnl'}
 
-	customassetfunction = function(path)
-		if not isfile(path) then
-			return downloadFile(path, assetfunction)
-		end
-		return assetfunction(path)
-	end	
 	local getexecutorname = function()
 		local name, ver = identifyexecutor()
 		return name
 	end
 	getcustomasset = not table.find(blacklistedexecs, getexecutorname()) and assetfunction and function(v)
 		if not isfile(v) then
-			downloadFile(v)
+			local suc = pcall(function()
+				downloadFile(v)
+			end)
+			if not suc then
+				return getcustomassets[v] or ''
+			end
 		end
 		return assetfunction(v)
 	end or function(path)
@@ -3921,7 +3920,7 @@ local init: () -> table = function()
 			modulebutton.MouseButton2Click:Connect(function()
 				modulechildren.Visible = not modulechildren.Visible
 			end)
-			if inputService.KeyboardEnabled then
+			if not inputService.KeyboardEnabled then
 				local heldbutton = false
 				modulebutton.MouseButton1Down:Connect(function()
 					heldbutton = true
@@ -5459,10 +5458,10 @@ local init: () -> table = function()
 		self.Loaded = savecheck
 		self.Categories.Main.Options.Bind:SetBind(self.Keybind)
 	
-		local main = game:GetService('CoreGui'):WaitForChild('TopBarApp', 10):WaitForChild('TopBarApp'):WaitForChild('MenuIconHolder'):WaitForChild('TriggerPoint'):FindFirstChild('ImageButton')
+		local main = game:GetService('CoreGui'):WaitForChild('TopBarApp', 10):WaitForChild('TopBarApp'):WaitForChild('MenuIconHolder'):WaitForChild('TriggerPoint'):FindFirstChildOfClass('ImageButton')
 		--> ud code btw pls dontt get mad
 
-		if not inputService.KeyboardEnabled then
+		if not inputService.KeyboardEnabled or catvapedev then
 			local button = Instance.new('TextButton')
 			button.Size = UDim2.fromOffset(44, 44)
 			button.Position = UDim2.fromOffset(170, 11)
