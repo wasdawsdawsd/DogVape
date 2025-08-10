@@ -1,5 +1,4 @@
 
-local init: () -> table = function()
 	local mainapi = {
 		Categories = {},
 		GUIColor = {
@@ -7338,16 +7337,3 @@ local init: () -> table = function()
 	end))
 	
 	return mainapi
-end;
-local gui: table? = {};
-for _: number = 1, 4 do
-	local suc, res = pcall(init);
-	if suc then 
-		gui = res;
-		break;
-	elseif not suc and _ == 4 then
-		error('Cat: Failed to load "newcatvape/gui/new.lua" | '.. res);
-	end;
-	task.wait(0.1);
-end;
-return gui;
