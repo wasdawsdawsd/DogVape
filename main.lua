@@ -66,7 +66,7 @@ local function finishLoading()
 					Developer = false
 				})
 			]]
-			if getgenv().catvapedev then
+			if getgenv().DogVapedev then
 				teleportScript = [[
 					shared.VapeDeveloper = true
 					loadfile('DogVape/init.lua')({
