@@ -24,14 +24,14 @@ downloader.Size = UDim2.new(1, 0, -0.08, 0)
 downloader.BackgroundTransparency = 1
 downloader.TextStrokeTransparency = 0
 downloader.TextSize = 20
-downloader.Text = 'Downloading newcatvape'
+downloader.Text = 'Downloading DogVape'
 downloader.TextColor3 = Color3.new(1, 1, 1)
 downloader.Font = Enum.Font.Arial
 
 local function downloadFile2(path: string) : string
 	if not isfile(path) or not developer then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha.. '/'.. path:gsub('newcatvape/', ''))
+			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha.. '/'.. path:gsub('DogVape/', ''))
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -42,9 +42,9 @@ local function downloadFile2(path: string) : string
 end
 
 local function downloadFile(path: string) : string
-	if not developer or not isfile(`newcatvape/{path}`) then
+	if not developer or not isfile(`DogVape/{path}`) then
         local suc, res = pcall(function()
-            return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..commitdata.sha..'/'..path:gsub('newcatvape/', ''):gsub(' ', '%%20'), true)
+            return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..commitdata.sha..'/'..path:gsub('DogVape/', ''):gsub(' ', '%%20'), true)
         end)
         if (not suc or res == '404: Not Found') then
             return 
@@ -57,7 +57,7 @@ end
 local function gitisfolder(path: string) : boolean
     local suc, body = pcall(function()
         return request({
-            Url = 'https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha.. '/'.. path:gsub('newcatvape/', ''),
+            Url = 'https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha.. '/'.. path:gsub('DogVape/', ''),
             Method = 'GET'
         })
     end)
@@ -69,9 +69,9 @@ local function yield(path: string) : ()
         downloader.Text = 'You have exceeded the limit, Please try again in 30 mins!'
         repeat task.wait() until false
     end
-    downloader.Text = `{isfile('newcatvape/path') and 'Updating' or 'Downloading'} newcatvape/{path}`
+    downloader.Text = `{isfile('DogVape/path') and 'Updating' or 'Downloading'} DogVape/{path}`
     if gitisfolder(path) then
-        makefolder(`newcatvape/{path}`)
+        makefolder(`DogVape/{path}`)
         local contents = request({
             Url = `https://api.github.com/repos/new-qwertyui/CatV5/contents/{path}`,
             Method = 'GET'
@@ -80,20 +80,20 @@ local function yield(path: string) : ()
             yield(v.path)
         end
     else
-        downloadFile(`newcatvape/{path}`)
+        downloadFile(`DogVape/{path}`)
     end
 end
 
 if not developer and not isfile('eiqrhjqpr') then
-    pcall(delfolder, 'newcatvape')
+    pcall(delfolder, 'DogVape')
 end
 
 writefile('eiqrhjqpr', 'true')
 
 if not developer then
-    local newuser = not isfolder('newcatvape') or #listfiles('newcatvape') <= 6 or not isfolder('newcatvape/profiles') or not isfile('newcatvape/profiles/commit.txt')
-    if newuser or readfile('newcatvape/profiles/commit.txt') ~= commitdata.sha then
-        makefolder('newcatvape')   
+    local newuser = not isfolder('DogVape') or #listfiles('DogVape') <= 6 or not isfolder('DogVape/profiles') or not isfile('DogVape/profiles/commit.txt')
+    if newuser or readfile('DogVape/profiles/commit.txt') ~= commitdata.sha then
+        makefolder('DogVape')   
 
         local blacklist = {'assets', '.vscode', 'README.md'}
         local contents = request({
@@ -110,15 +110,15 @@ if not developer then
                 yield(v.path)
             end
         end
-        writefile(`newcatvape/profiles/commit.txt`, commitdata.sha)
+        writefile(`DogVape/profiles/commit.txt`, commitdata.sha)
     end
 
     if commitdata.sha == 'main' then
-		writefile('newcatvape/profiles/commit.txt', 'main')
+		writefile('DogVape/profiles/commit.txt', 'main')
     end
 end
 
-writefile('newcatvapereset', 'True')
+writefile('DogVapereset', 'True')
 
 downloader:Destroy()
 
@@ -126,8 +126,8 @@ shared.VapeDeveloper = true
 getgenv().used_init = true
 getgenv().catvapedev = developer
 
-if not isfolder('newcatvape/communication') then
-	makefolder('newcatvape/communication')
+if not isfolder('DogVape/communication') then
+	makefolder('DogVape/communication')
 end
 
-return loadstring(downloadFile2('newcatvape/main.lua'), 'main')(license)
+return loadstring(downloadFile2('DogVape/main.lua'), 'main')(license)
