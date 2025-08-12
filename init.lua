@@ -1,5 +1,5 @@
 local license = ({...})[1] or {}
-local developer = getgenv().catvapedev or license.Developer or false
+local developer = getgenv().DogVapedev or license.Developer or false
 
 local cloneref = cloneref or function(ref) return ref end
 local gethui = gethui or function() return game:GetService('Players').LocalPlayer.PlayerGui end
@@ -124,7 +124,7 @@ downloader:Destroy()
 
 shared.VapeDeveloper = true
 getgenv().used_init = true
-getgenv().catvapedev = developer
+getgenv().DogVapedev = developer
 
 if not isfolder('DogVape/communication') then
 	makefolder('DogVape/communication')
